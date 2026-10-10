@@ -4,18 +4,24 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: Arial, sans-serif;
     background: #f5f9f3;
     color: #17351f;
+    line-height: 1.5;
 }
 
+/* Navbar */
 .navbar {
-    height: 70px;
-    padding: 0 8%;
+    min-height: 70px;
+    padding: 12px 8%;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 12px;
     background: white;
     border-bottom: 1px solid #e5e5e5;
 }
@@ -24,26 +30,35 @@ body {
     font-size: 26px;
     font-weight: bold;
     color: #16823b;
+    white-space: nowrap;
+}
+
+.navbar label {
+    margin-left: auto;
+    font-weight: bold;
+    white-space: nowrap;
 }
 
 .navbar select {
-    padding: 10px 15px;
+    min-width: 125px;
+    padding: 10px 14px;
     border: 1px solid #ccc;
     border-radius: 8px;
     background: white;
+    color: #17351f;
+    font-size: 14px;
+    cursor: pointer;
 }
 
+/* Hero section */
 .hero {
     min-height: 500px;
     padding: 70px 8%;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background: linear-gradient(
-        135deg,
-        #eaf8e8,
-        #ffffff
-    );
+    gap: 30px;
+    background: linear-gradient(135deg, #eaf8e8, #ffffff);
 }
 
 .hero-content {
@@ -57,8 +72,8 @@ body {
 }
 
 .hero h1 {
-    font-size: 60px;
-    line-height: 1.05;
+    font-size: clamp(36px, 5vw, 60px);
+    line-height: 1.1;
     margin-bottom: 25px;
 }
 
@@ -74,10 +89,11 @@ body {
 }
 
 .hero-icon {
-    font-size: 180px;
-    padding: 50px;
+    font-size: 150px;
+    padding: 20px;
 }
 
+/* Buttons */
 .primary-button {
     border: none;
     background: #16823b;
@@ -87,7 +103,7 @@ body {
     font-size: 16px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.2s;
+    transition: background 0.2s, transform 0.2s;
 }
 
 .primary-button:hover {
@@ -95,10 +111,17 @@ body {
     transform: translateY(-2px);
 }
 
+.primary-button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+}
+
+/* Feature cards */
 .features {
     padding: 60px 8%;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 20px;
 }
 
@@ -123,6 +146,7 @@ body {
     line-height: 1.5;
 }
 
+/* Crop analyzer */
 .analyzer {
     padding: 80px 8%;
     background: white;
@@ -134,7 +158,7 @@ body {
 }
 
 .section-title h2 {
-    font-size: 40px;
+    font-size: clamp(28px, 4vw, 40px);
     margin-bottom: 10px;
 }
 
@@ -143,6 +167,7 @@ body {
 }
 
 .analyzer-card {
+    width: 100%;
     max-width: 700px;
     margin: auto;
     padding: 35px;
@@ -153,41 +178,78 @@ body {
 
 .analyzer-card label {
     display: block;
-    margin-bottom: 8px;
-    margin-top: 20px;
+    margin: 20px 0 8px;
     font-weight: bold;
 }
 
-.analyzer-card input,
+.analyzer-card input:not([type="file"]),
 .analyzer-card textarea {
+    display: block;
     width: 100%;
     padding: 13px;
     border: 1px solid #d5ddd5;
     border-radius: 8px;
+    font: inherit;
     font-size: 15px;
+    background: white;
+    color: #17351f;
+}
+
+.analyzer-card input:focus,
+.analyzer-card textarea:focus,
+.navbar select:focus {
+    outline: 2px solid #16823b;
+    outline-offset: 2px;
 }
 
 .analyzer-card textarea {
     resize: vertical;
+    min-height: 120px;
+}
+
+.analyzer-card input[type="file"] {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: 1px dashed #8ab996;
+    border-radius: 8px;
+    background: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+.analyzer-card input[type="file"]::file-selector-button {
+    margin-right: 12px;
+    padding: 9px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #e5f5e7;
+    color: #10632d;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .analyze-button {
-    margin-top: 25px;
+    display: block;
     width: 100%;
+    margin-top: 25px;
 }
 
+/* Analysis result */
 .result {
     margin-top: 25px;
     padding: 20px;
     border-radius: 10px;
     background: #e9f7e9;
     border-left: 5px solid #16823b;
+    overflow-wrap: anywhere;
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
+/* Footer */
 footer {
     padding: 30px;
     text-align: center;
@@ -195,22 +257,129 @@ footer {
     color: white;
 }
 
-@media (max-width: 800px) {
-
-    .hero {
-        text-align: center;
-        flex-direction: column;
-    }
-
-    .hero h1 {
-        font-size: 42px;
+/* Responsive layout */
+@media (max-width: 900px) {
+    .features {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .hero-icon {
-        font-size: 100px;
+        font-size: 110px;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 600px) {
+    .navbar {
+        padding: 14px 5%;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .logo {
+        font-size: 22px;
+    }
+
+    .navbar label {
+        margin-left: auto;
+        font-size: 14px;
+    }
+
+    .navbar select {
+        min-width: 100px;
+        max-width: 130px;
+        padding: 9px;
+    }
+
+    .hero {
+        min-height: auto;
+        padding: 55px 6%;
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .hero h1 {
+        font-size: 38px;
+    }
+
+    .description {
+        font-size: 16px;
+    }
+
+    .hero-icon {
+        font-size: 85px;
     }
 
     .features {
+        padding: 35px 6%;
         grid-template-columns: 1fr;
     }
+
+    .feature-card {
+        padding: 24px;
+    }
+
+    .analyzer {
+        padding: 55px 6%;
+    }
+
+    .analyzer-card {
+        padding: 22px;
+    }
+
+    .section-title h2 {
+        font-size: 30px;
+    }
+
+    .primary-button {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+    }
+}
+
+
+
+.image-options {
+    display: grid;
+    gap: 10px;
+}
+
+.image-options label {
+    display: block;
+    margin: 12px 0 0;
+    padding: 13px;
+    border: 1px solid #16823b;
+    border-radius: 8px;
+    color: #16823b;
+    background: white;
+    text-align: center;
+    cursor: pointer;
+}
+
+.image-options input[type="file"] {
+    width: 100%;
+    max-width: 100%;
+}
+
+#imagePreview {
+    display: block;
+    max-width: 100%;
+    max-height: 320px;
+    object-fit: contain;
+    margin-top: 16px;
+    border-radius: 10px;
+}
+
+#imagePreview.hidden,
+#removeImage.hidden {
+    display: none;
+}
+
+#removeImage {
+    margin-top: 10px;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
 }
