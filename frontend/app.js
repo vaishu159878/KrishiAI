@@ -1,5 +1,78 @@
 
-const API_URL = "http://127.0.0.1:8000";
+const API_URL = "/api";
+
+let selectedImage = null;
+let previewUrl = null;
+
+function showImagePreview(file) {
+    const preview = document.getElementById("imagePreview");
+    const removeButton = document.getElementById("removeImage");
+
+    // Release the previous preview URL.
+    if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+    }
+
+    if (!file) {
+        selectedImage = null;
+        preview.removeAttribute("src");
+        preview.classList.add("hidden");
+        removeButton.classList.add("hidden");
+        return;
+    }
+
+    // Accept image files only.
+    if (!file.type || !file.type.startsWith("image/")) {
+        selectedImage = null;
+
+        document.getElementById("image").value = "";
+        document.getElementById("cameraInput").value = "";
+
+        preview.removeAttribute("src");
+        preview.classList.add("hidden");
+        removeButton.classList.add("hidden");
+
+        alert("Please select a valid image.");
+        return;
+    }
+
+    selectedImage = file;
+    previewUrl = URL.createObjectURL(file);
+
+    preview.src = previewUrl;
+    preview.classList.remove("hidden");
+    removeButton.classList.remove("hidden");
+}
+
+// Handle choosing a photo from the gallery.
+document.getElementById("image").addEventListener("change", event => {
+    const file = event.target.files[0];
+
+    if (file) {
+        document.getElementById("cameraInput").value = "";
+        showImagePreview(file);
+    }
+});
+
+// Handle taking a new photo with the camera.
+document.getElementById("cameraInput").addEventListener("change", event => {
+    const file = event.target.files[0];
+
+    if (file) {
+        document.getElementById("image").value = "";
+        showImagePreview(file);
+    }
+});
+
+// Remove the currently selected photo.
+document.getElementById("removeImage").addEventListener("click", () => {
+    document.getElementById("image").value = "";
+    document.getElementById("cameraInput").value = "";
+
+    showImagePreview(null);
+});
+
 
 const translations = {
     en: {
@@ -184,18 +257,18 @@ function scrollToAnalyzer() {
 
 // Change the complete static UI immediately.
 
+
 document.getElementById("language").addEventListener("change", event => {
-    // Update all website translations
     setLanguage(event.target.value);
 
-    // Clear the previous crop details
     document.getElementById("crop").value = "";
     document.getElementById("problem").value = "";
 
-    // Clear the selected image
     document.getElementById("image").value = "";
+    document.getElementById("cameraInput").value = "";
 
-    // Clear the previous analysis result
+    showImagePreview(null);
+
     const result = document.getElementById("result");
     result.innerHTML = "";
     result.classList.add("hidden");
@@ -215,7 +288,7 @@ async function analyzeCrop() {
     const result = document.getElementById("result");
 
 
-if (!crop && !problem && imageInput.files.length === 0) {
+if (!crop && !problem && !selectedImage) {
     result.classList.remove("hidden");
 
     result.innerHTML = `
@@ -232,8 +305,8 @@ if (!crop && !problem && imageInput.files.length === 0) {
     formData.append("problem", problem);
     formData.append("language", language);
 
-    if (imageInput.files.length > 0) {
-        formData.append("image", imageInput.files[0]);
+    if (selectedImage) {
+        formData.append("image", selectedImage);
     }
 
     result.classList.remove("hidden");
