@@ -1,0 +1,161 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiAI - AI Farming Assistant</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="logo">🌱 KrishiAI</div>
+
+        <label for="language" data-i18n="languageLabel">
+            Language
+        </label>
+
+        <select id="language" aria-label="Select language">
+            <option value="en">English</option>
+            <option value="mr">मराठी</option>
+            <option value="hi">हिंदी</option>
+        </select>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <p class="tagline" data-i18n="tagline">
+                    🌾 AI-Powered Agriculture
+                </p>
+
+                <h1>
+                    <span data-i18n="heroTitle">Your AI Farming</span>
+                    <span data-i18n="heroTitleAccent">Assistant</span>
+                </h1>
+
+                <p class="description" data-i18n="heroDescription">
+                    Get simple agricultural guidance, crop problem analysis,
+                    disease identification and weather-related insights.
+                </p>
+
+                <button
+                    class="primary-button"
+                    id="scrollButton"
+                    type="button"
+                    onclick="scrollToAnalyzer()"
+                    data-i18n="heroButton">
+                    Analyze Crop Problem →
+                </button>
+            </div>
+
+            <div class="hero-icon">🌱</div>
+        </section>
+
+        <section class="features">
+            <div class="feature-card">
+                <div class="feature-icon">📷</div>
+                <h3 data-i18n="featureImageTitle">Upload Crop Image</h3>
+                <p data-i18n="featureImageDescription">
+                    Upload a crop photo for analysis.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3 data-i18n="featureAITitle">AI Guidance</h3>
+                <p data-i18n="featureAIDescription">
+                    Get simple agricultural recommendations.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌦️</div>
+                <h3 data-i18n="featureWeatherTitle">Weather Insights</h3>
+                <p data-i18n="featureWeatherDescription">
+                    Understand weather-related crop risks.
+                </p>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🌐</div>
+                <h3 data-i18n="featureLanguageTitle">Multiple Languages</h3>
+                <p data-i18n="featureLanguageDescription">
+                    Marathi, Hindi and English support.
+                </p>
+            </div>
+        </section>
+
+        <section id="analyzer" class="analyzer">
+            <div class="section-title">
+                <p class="tagline" data-i18n="analysisTagline">
+                    🔍 Crop Analysis
+                </p>
+
+                <h2 data-i18n="analysisTitle">
+                    Describe Your Crop Problem
+                </h2>
+
+                <p data-i18n="analysisDescription">
+                    Tell KrishiAI what is happening to your crop.
+                </p>
+            </div>
+
+            <div class="analyzer-card">
+                <label for="crop" data-i18n="cropLabel">
+                    Crop Name
+                </label>
+
+                <input
+                    type="text"
+                    id="crop"
+                    data-i18n-placeholder="cropPlaceholder"
+                    placeholder="Example: Tomato">
+
+                <label for="problem" data-i18n="problemLabel">
+                    Describe the Problem
+                </label>
+
+                <textarea
+                    id="problem"
+                    rows="6"
+                    data-i18n-placeholder="problemPlaceholder"
+                    placeholder="Example: Tomato leaves are turning yellow..."></textarea>
+
+                <label for="image" data-i18n="imageLabel">
+                    Upload Crop Image
+                </label>
+
+                <input
+                    type="file"
+                    id="image"
+                    accept="image/*">
+
+                <button
+                    class="primary-button analyze-button"
+                    id="analyzeButton"
+                    type="button"
+                    onclick="analyzeCrop()"
+                    data-i18n="analyzeButton">
+                    🤖 Analyze with KrishiAI
+                </button>
+
+                <div
+                    id="result"
+                    class="result hidden"
+                    aria-live="polite">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p data-i18n="footer">
+            🌱 KrishiAI — AI-powered agricultural assistance for Indian farmers
+        </p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
