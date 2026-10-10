@@ -177,6 +177,12 @@ Important safety requirements:
 - Encourage checking the product label and consulting a qualified
   local agricultural expert or Krishi Vigyan Kendra (KVK) before
   applying agricultural chemicals.
+- Never provide specific pesticide or fertilizer dosages based
+  only on an image or an unconfirmed diagnosis.
+- Do not recommend burning infected plant material.
+- Recommend safe general practices and advise farmers to
+  consult a qualified agricultural expert or KVK for treatment.
+- Clearly distinguish possible causes from confirmed diagnoses.
 - This guidance does not replace professional agricultural advice.
 
 Return the complete response in {selected_language}.
