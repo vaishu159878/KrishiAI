@@ -123,14 +123,42 @@
                     data-i18n-placeholder="problemPlaceholder"
                     placeholder="Example: Tomato leaves are turning yellow..."></textarea>
 
+
                 <label for="image" data-i18n="imageLabel">
                     Upload Crop Image
                 </label>
 
+            <div class="image-options">
+                <label for="image" class="image-option-button">
+                    📁 Choose Photo
+                </label>
                 <input
                     type="file"
                     id="image"
                     accept="image/*">
+
+                <label for="cameraInput" class="image-option-button">
+                    📷 Take Photo
+                </label>
+                <input
+                    type="file"
+                    id="cameraInput"
+                    accept="image/*"
+                    capture="environment">
+            </div>
+
+            <img
+                id="imagePreview"
+                class="hidden"
+                alt="Selected crop photo preview">
+
+            <button
+                type="button"
+                id="removeImage"
+                class="hidden">
+                Remove Photo
+            </button>
+
 
                 <button
                     class="primary-button analyze-button"
