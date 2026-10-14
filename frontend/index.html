@@ -1,22 +1,27 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>KrishiAI - AI Farming Assistant</title>
-    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#16823b">
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css?v=3">
 </head>
 
 <body>
     <header class="navbar">
         <div class="logo">🌱 KrishiAI</div>
 
-        <label for="language" data-i18n="languageLabel">
-            Language
-        </label>
+        <div class="language-switcher" role="group" aria-labelledby="languageLabel">
+            <span id="languageLabel" class="language-label" data-i18n="languageLabel">Language</span>
+            <button type="button" class="language-button active" data-lang="en" aria-pressed="true">English</button>
+            <button type="button" class="language-button" data-lang="mr" aria-pressed="false">मराठी</button>
+            <button type="button" class="language-button" data-lang="hi" aria-pressed="false">हिंदी</button>
+        </div>
 
-        <select id="language" aria-label="Select language">
+        <!-- Hidden: the language buttons above control this value -->
+        <select id="language" hidden aria-hidden="true" tabindex="-1">
             <option value="en">English</option>
             <option value="mr">मराठी</option>
             <option value="hi">हिंदी</option>
@@ -87,6 +92,75 @@
             </div>
         </section>
 
+        <!-- User Authentication -->
+        <section id="authSection" class="history-section">
+            <div class="history-header">
+                <div>
+                    <p class="tagline" data-i18n="authTagline">Your Account</p>
+                    <h2 id="authHeading">Login or Create Account</h2>
+                    <p id="authSubheading">Sign in to save and view your personal crop analyses.</p>
+                </div>
+            </div>
+
+            <p id="authStatus" role="status" aria-live="polite"></p>
+
+            <div id="authForms">
+                <form id="loginForm">
+                    <h3 data-i18n="loginTitle">Login</h3>
+
+                    <label for="loginEmail" data-i18n="emailLabel">Email</label>
+                    <input id="loginEmail" name="email" type="email"
+                           autocomplete="email" required>
+
+                    <label for="loginPassword" data-i18n="passwordLabel">Password</label>
+                    <input id="loginPassword" name="password" type="password"
+                           autocomplete="current-password" required>
+
+                    <button type="submit" data-i18n="loginButton">Login</button>
+                </form>
+
+                <hr>
+
+                <form id="registerForm">
+                    <h3 data-i18n="registerTitle">Create Account</h3>
+
+                    <label for="registerUsername" data-i18n="usernameLabel">Username</label>
+                    <input id="registerUsername" name="username" type="text"
+                           minlength="3" maxlength="100"
+                           autocomplete="username" required>
+
+                    <label for="registerEmail" data-i18n="emailLabel">Email</label>
+                    <input id="registerEmail" name="email" type="email"
+                           autocomplete="email" required>
+
+                    <label for="registerPassword" data-i18n="passwordLabel">Password</label>
+                    <input id="registerPassword" name="password" type="password"
+                           minlength="8" maxlength="128"
+                           autocomplete="new-password" required>
+
+                    <small class="field-hint" data-i18n="passwordHint">At least 8 characters.</small>
+
+                    <button type="submit" data-i18n="registerButton">Create Account</button>
+                </form>
+            </div>
+
+            <div id="accountPanel" class="account-panel" hidden>
+                <div class="account-card">
+                    <div class="account-avatar">👨‍🌾</div>
+                    <div class="account-details">
+                        <div class="account-header-row">
+                            <h3 id="accountName" class="account-username"></h3>
+                            <span class="account-status-badge" data-i18n="activeSession">🟢 Active Account</span>
+                        </div>
+                        <p id="accountEmail" class="account-email"></p>
+                    </div>
+                    <button id="logoutButton" type="button" class="logout-button" data-i18n="logoutButton">
+                        🚪 Logout
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <section id="analyzer" class="analyzer">
             <div class="section-title">
                 <p class="tagline" data-i18n="analysisTagline">
@@ -113,9 +187,17 @@
                     data-i18n-placeholder="cropPlaceholder"
                     placeholder="Example: Tomato">
 
-                <label for="problem" data-i18n="problemLabel">
-                    Describe the Problem
-                </label>
+                <div class="field-header">
+                    <label for="problem" data-i18n="problemLabel">
+                        Describe the Problem
+                    </label>
+                    <button type="button" id="voiceButton" class="voice-button" onclick="toggleVoiceInput()" title="Speak problem">
+                        <span class="voice-icon">🎙️</span>
+                        <span id="voiceButtonText" data-i18n="voiceStart">Speak Problem</span>
+                    </button>
+                </div>
+
+                <div id="voiceStatus" class="voice-status hidden" role="status" aria-live="polite"></div>
 
                 <textarea
                     id="problem"
@@ -176,6 +258,279 @@
                 </div>
             </div>
         </section>
+
+        <!-- Fertilizer & Dosage Calculator -->
+        <section id="fertilizerSection" class="fertilizer-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="fertTagline">🧪 Smart Nutrition</p>
+                <h2 data-i18n="fertTitle">Fertilizer & Dosage Calculator</h2>
+                <p data-i18n="fertDescription">
+                    Calculate exact bags of Urea, DAP, Potash and organic compost for your crop and land size based on ICAR guidelines.
+                </p>
+            </div>
+
+            <div class="fertilizer-card">
+                <form id="fertilizerForm" onsubmit="event.preventDefault(); calculateFertilizer();">
+                    <div class="fert-input-grid">
+                        <div class="fert-field">
+                            <label for="fertCrop" data-i18n="fertCropLabel">Select Crop</label>
+                            <select id="fertCrop" required>
+                                <option value="wheat">🌾 Wheat (गहू / गेहूं)</option>
+                                <option value="rice">🍚 Rice / Paddy (भात / धान)</option>
+                                <option value="sugarcane">🎋 Sugarcane (ऊस / गन्ना)</option>
+                                <option value="cotton">☁️ Cotton (कापूस / कपास)</option>
+                                <option value="soybean">🌱 Soybean (सोयाबीन)</option>
+                                <option value="tomato">🍅 Tomato (टोमॅटो / टमाटर)</option>
+                                <option value="onion">🧅 Onion (कांदा / प्याज)</option>
+                                <option value="maize">🌽 Maize (मका / मक्का)</option>
+                                <option value="potato">🥔 Potato (बटाटा / आलू)</option>
+                            </select>
+                        </div>
+
+                        <div class="fert-field">
+                            <label for="fertArea" data-i18n="fertAreaLabel">Farm Size / Area</label>
+                            <input id="fertArea" type="number" min="0.1" max="10000" step="0.1" value="1" required placeholder="e.g. 1">
+                        </div>
+
+                        <div class="fert-field">
+                            <label for="fertUnit" data-i18n="fertUnitLabel">Land Unit</label>
+                            <select id="fertUnit">
+                                <option value="acre" data-i18n="unitAcre">Acres (एकर)</option>
+                                <option value="guntha" data-i18n="unitGuntha">Gunthas (गुंठा - 1/40 Acre)</option>
+                                <option value="hectare" data-i18n="unitHectare">Hectares (हेक्टर)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="fertCalculateButton" class="primary-button fert-calculate-btn">
+                        <span id="fertButtonText" data-i18n="fertCalculateBtn">🧪 Calculate Fertilizer Dosage</span>
+                    </button>
+                </form>
+
+                <p id="fertStatus" role="status" aria-live="polite" class="field-hint"></p>
+
+                <!-- Results container -->
+                <div id="fertResult" class="fert-result hidden" aria-live="polite">
+                    <div class="fert-result-header">
+                        <div class="fert-crop-badge">
+                            <span id="fertResultIcon" class="fert-badge-icon">🌾</span>
+                            <div>
+                                <h3 id="fertResultTitle" class="fert-badge-title"></h3>
+                                <p id="fertResultArea" class="fert-badge-sub"></p>
+                            </div>
+                        </div>
+
+                        <div class="fert-action-buttons">
+                            <button type="button" id="fertAudioBtn" class="action-btn voice-speak-btn" onclick="readFertilizerAloud()">
+                                <span class="voice-icon">🔊</span>
+                                <span id="fertAudioBtnText" data-i18n="listenDosage">Listen to Dosage</span>
+                            </button>
+                            <button type="button" id="fertWhatsappBtn" class="action-btn whatsapp-share-btn" onclick="shareFertilizerWhatsApp()">
+                                <span>📲</span>
+                                <span data-i18n="shareDosage">Share on WhatsApp</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Commercial Fertilizer Bags Summary -->
+                    <h4 class="fert-section-subtitle" data-i18n="fertBagsTitle">🛍️ Commercial Fertilizer Bags to Purchase:</h4>
+                    <div class="fert-bags-grid">
+                        <div class="fert-bag-card urea-card">
+                            <div class="bag-header">
+                                <span class="bag-tag urea-tag">Urea</span>
+                                <span class="bag-grade">46% N (Neem Coated)</span>
+                            </div>
+                            <div class="bag-main">
+                                <span id="fertUreaBags" class="bag-number">0</span>
+                                <span class="bag-unit" data-i18n="bagsLabel">Bags (45 kg)</span>
+                            </div>
+                            <div id="fertUreaKg" class="bag-kg">0 kg total</div>
+                        </div>
+
+                        <div class="fert-bag-card dap-card">
+                            <div class="bag-header">
+                                <span class="bag-tag dap-tag">DAP</span>
+                                <span class="bag-grade">18:46:0</span>
+                            </div>
+                            <div class="bag-main">
+                                <span id="fertDapBags" class="bag-number">0</span>
+                                <span class="bag-unit" data-i18n="bagsLabel">Bags (50 kg)</span>
+                            </div>
+                            <div id="fertDapKg" class="bag-kg">0 kg total</div>
+                        </div>
+
+                        <div class="fert-bag-card mop-card">
+                            <div class="bag-header">
+                                <span class="bag-tag mop-tag">MOP (Potash)</span>
+                                <span class="bag-grade">60% K₂O</span>
+                            </div>
+                            <div class="bag-main">
+                                <span id="fertMopBags" class="bag-number">0</span>
+                                <span class="bag-unit" data-i18n="bagsLabel">Bags (50 kg)</span>
+                            </div>
+                            <div id="fertMopKg" class="bag-kg">0 kg total</div>
+                        </div>
+                    </div>
+
+                    <!-- Pure Nutrients & Secondary -->
+                    <div class="fert-details-row">
+                        <div class="fert-nutrient-box">
+                            <span class="fert-box-label" data-i18n="pureNutrients">Pure Nutrients (N-P-K):</span>
+                            <span id="fertNpkText" class="fert-box-val"></span>
+                        </div>
+                        <div class="fert-nutrient-box">
+                            <span class="fert-box-label" data-i18n="microNutrient">Micro / Secondary Nutrient:</span>
+                            <span id="fertSpecialNutrient" class="fert-box-val"></span>
+                        </div>
+                    </div>
+
+                    <!-- Split Dosing Schedule -->
+                    <h4 class="fert-section-subtitle" data-i18n="fertScheduleTitle">📅 When & How to Apply (Split Schedule):</h4>
+                    <div id="fertScheduleList" class="fert-schedule-timeline"></div>
+
+                    <!-- Organic & Soil Health Boosters -->
+                    <div class="fert-organic-card">
+                        <div class="fert-organic-header">
+                            <span>🌱</span>
+                            <strong data-i18n="organicBoostersTitle">Organic & Soil Health Boosters</strong>
+                        </div>
+                        <p id="fertFymText" class="fert-fym-highlight"></p>
+                        <p id="fertOrganicTips" class="fert-organic-text"></p>
+                    </div>
+
+                    <div class="fert-disclaimer">
+                        <small data-i18n="fertDisclaimer">⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+
+
+
+
+        <!-- Weather insights -->
+        <section id="weatherSection" class="weather-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="weatherTagline">🌦️ Weather Insights</p>
+                <h2 data-i18n="weatherTitle">Weather for Your Farm</h2>
+                <p data-i18n="weatherDescription">
+                    Search for your village or town to see the forecast and simple farming tips.
+                </p>
+            </div>
+
+            <div class="weather-card">
+                <label for="weatherSearch" data-i18n="weatherSearchLabel">Village or town</label>
+
+                <div class="weather-search-row">
+                    <input
+                        id="weatherSearch"
+                        type="search"
+                        autocomplete="off"
+                        maxlength="80"
+                        data-i18n-placeholder="weatherSearchPlaceholder"
+                        placeholder="Example: Kolhapur">
+
+                    <button
+                        id="weatherSearchButton"
+                        class="primary-button"
+                        type="button"
+                        data-i18n="weatherSearchButton">
+                        Search
+                    </button>
+                </div>
+
+                <p id="weatherStatus" role="status" aria-live="polite"></p>
+
+                <div id="weatherPlaces" class="weather-places"></div>
+
+                <div id="weatherResult" class="weather-result hidden" aria-live="polite"></div>
+
+                <small class="field-hint" data-i18n="weatherCredit">Weather data: Open-Meteo.com</small>
+            </div>
+        </section>
+
+        <!-- Recent Analysis History -->
+        <section id="historySection" class="history-section">
+            <div class="history-header">
+                <div>
+                    <p class="tagline" data-i18n="recordsTagline">📚 Your Records</p>
+                    <h2 data-i18n="historyTitle">Recent Crop Analyses</h2>
+                    <p data-i18n="historyDescription">View your previously saved crop recommendations.</p>
+                </div>
+                <button id="refreshHistory" type="button" data-i18n="refreshHistory">
+                    Refresh History
+                </button>
+            </div>
+
+            <p id="historyStatus" role="status" aria-live="polite">
+                Loading your saved analyses...
+            </p>
+
+
+	    <div class="history-filter">
+    	    	<label for="historyLanguageFilter" data-i18n="filterLabel">Filter by language:</label>
+    	    	<select id="historyLanguageFilter">
+        	    <option value="all" data-i18n="allLanguages">All languages</option>
+        	    <option value="en">English</option>
+        	    <option value="mr">मराठी (Marathi)</option>
+        	    <option value="hi">हिन्दी (Hindi)</option>
+    	    	</select>
+	    </div>
+
+
+            <div id="historyList" class="history-list"></div>
+        </section>
+
+        <!-- Emergency Farmer Helplines -->
+        <section id="helplineSection" class="helpline-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="helplineTagline">📞 24/7 Expert Support</p>
+                <h2 data-i18n="helplineTitle">Emergency Farmer Helplines</h2>
+                <p data-i18n="helplineDescription">
+                    Speak directly with agricultural experts and government advisors for immediate emergency assistance.
+                </p>
+            </div>
+
+            <div class="helpline-grid">
+                <div class="helpline-card">
+                    <div class="helpline-icon">🌾</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="kccTitle">Kisan Call Center (KCC)</h3>
+                        <p class="helpline-desc" data-i18n="kccDesc">Government of India toll-free helpline. Free consultation in 22 languages from 6 AM to 10 PM daily.</p>
+                        <span class="helpline-number">1800-180-1551</span>
+                    </div>
+                    <a href="tel:18001801551" class="helpline-call-button" data-i18n="callNow">
+                        📞 Call Now
+                    </a>
+                </div>
+
+                <div class="helpline-card">
+                    <div class="helpline-icon">🛡️</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="pmfbyTitle">Crop Insurance Helpline (PMFBY)</h3>
+                        <p class="helpline-desc" data-i18n="pmfbyDesc">Assistance for crop damage claims, drought/flood insurance claims, and policy status.</p>
+                        <span class="helpline-number">14447</span>
+                    </div>
+                    <a href="tel:14447" class="helpline-call-button" data-i18n="callNow">
+                        📞 Call Now
+                    </a>
+                </div>
+
+                <div class="helpline-card">
+                    <div class="helpline-icon">🔬</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="kvkTitle">Krishi Vigyan Kendra (KVK)</h3>
+                        <p class="helpline-desc" data-i18n="kvkDesc">District agricultural research centers for seed testing, pest outbreaks, and soil health consultation.</p>
+                        <span class="helpline-number">District KVK Network</span>
+                    </div>
+                    <a href="https://kvk.icar.gov.in" target="_blank" rel="noopener noreferrer" class="helpline-link-button" data-i18n="findKvk">
+                        🌐 Find Your KVK
+                    </a>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <footer>
@@ -184,6 +539,6 @@
         </p>
     </footer>
 
-    <script src="app.js"></script>
+    <script src="app.js?v=3"></script>
 </body>
 </html>
