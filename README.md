@@ -1,5 +1,7 @@
 # 🌱 KrishiAI – AI-Powered Agricultural Assistant
 
+[![KrishiAI CI](https://github.com/vaishu159878/KrishiAI/actions/workflows/ci.yaml/badge.svg)](https://github.com/vaishu159878/KrishiAI/actions/workflows/ci.yaml)
+
 Hi everyone! 👋
 
 I'm building **KrishiAI** as part of the **TrainWithShubham DevOps Hackathon**. The idea behind this project is to use artificial intelligence and modern DevOps practices to empower Indian farmers with simple, accessible crop health guidance, weather insights, and agricultural advisory in their local language.
@@ -209,8 +211,8 @@ Building KrishiAI has given me practical experience with real-world DevOps pract
 - [x] Smart Fertilizer & Dosage Calculator (ICAR standards, Acres/Gunthas/Ha)
 - [x] Docker & Nginx multi-container setup
 - [x] Progressive Web App (PWA) with offline shell
-- [ ] Automated CI/CD pipeline using GitHub Actions
-- [ ] Automated test suite with `pytest`
+- [x] Automated CI/CD pipeline using GitHub Actions
+- [x] Automated test suite with `pytest` (16 unit tests)
 - [ ] Cloud deployment to AWS Elastic Beanstalk / ECS
 - [ ] Application monitoring with AWS CloudWatch / Prometheus
 
