@@ -109,12 +109,14 @@ function prepareImage(file) {
 }
 // ---- End photo compression ----------------------------------------------
 
-// Keep the login token for this browser tab's session.
-let authToken = sessionStorage.getItem("krishiai_access_token");
+// Keep the login token persistent across tab reloads & background tab suspends.
+let authToken = localStorage.getItem("krishiai_access_token") || sessionStorage.getItem("krishiai_access_token");
 let currentUser = null;
 
 try {
-    currentUser = JSON.parse(sessionStorage.getItem("krishiai_user") || "null");
+    currentUser = JSON.parse(
+        localStorage.getItem("krishiai_user") || sessionStorage.getItem("krishiai_user") || "null"
+    );
 } catch {
     currentUser = null;
 }
@@ -137,6 +139,8 @@ function clearSession(message) {
     authToken = null;
     currentUser = null;
 
+    localStorage.removeItem("krishiai_access_token");
+    localStorage.removeItem("krishiai_user");
     sessionStorage.removeItem("krishiai_access_token");
     sessionStorage.removeItem("krishiai_user");
 
@@ -176,7 +180,7 @@ async function restoreLoginSession() {
                 });
                 if (response.ok) {
                     currentUser = await response.json();
-                    sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+                    localStorage.setItem("krishiai_user", JSON.stringify(currentUser));
                     updateAuthUI();
                 } else if (response.status === 401) {
                     clearSession(t("sessionExpired"));
@@ -241,7 +245,7 @@ function updateAuthUI() {
                             username: username || "",
                             email: email || ""
                         };
-                        sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+                        localStorage.setItem("krishiai_user", JSON.stringify(currentUser));
                     }
                 }
             } catch (e) {
@@ -344,8 +348,8 @@ async function authenticate(endpoint, form) {
     authToken = data.access_token;
     currentUser = data.user;
 
-    sessionStorage.setItem("krishiai_access_token", authToken);
-    sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+    localStorage.setItem("krishiai_access_token", authToken);
+    localStorage.setItem("krishiai_user", JSON.stringify(currentUser));
 
     updateAuthUI();
     setAuthStatus(t("loginSuccess"));
@@ -617,7 +621,15 @@ const translations = {
         fertDisclaimer: "⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).",
         fertError: "Please enter a valid area.",
         fertSuccess: "Dosage calculated successfully.",
-        fymTonnesText: "Recommended FYM / Compost: {tonnes} tonnes"
+        fymTonnesText: "Recommended FYM / Compost: {tonnes} tonnes",
+        privacyTitle: "Privacy & Data Control",
+        privacyNotice: "Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.",
+        clearHistoryButton: "🗑️ Clear All History",
+        deleteAccountButton: "⚠️ Delete Account",
+        confirmClearHistory: "Are you sure you want to delete all your saved crop analyses?",
+        confirmDeleteAccount: "Are you sure you want to permanently delete your KrishiAI account and all data? This cannot be undone.",
+        historyClearedSuccess: "All crop analysis history has been deleted.",
+        accountDeletedSuccess: "Your account and all associated data have been permanently deleted."
     },
 
     mr: {
@@ -793,7 +805,15 @@ const translations = {
         fertDisclaimer: "⚠️ हे प्रमाण ICAR आणि कृषी विद्यापीठांच्या शिफारशींवर आधारित आहे. अचूक खत व्यवस्थापनासाठी जवळच्या कृषी विज्ञान केंद्रात (KVK) दर २ वर्षांनी माती परीक्षण अवश्य करा.",
         fertError: "कृपया योग्य क्षेत्रफळ प्रविष्ट करा.",
         fertSuccess: "खताचे प्रमाण यशस्वीरीत्या मोजले.",
-        fymTonnesText: "शिफारस केलेले शेणखत / कंपोस्ट: {tonnes} टन"
+        fymTonnesText: "शिफारस केलेले शेणखत / कंपोस्ट: {tonnes} टन",
+        privacyTitle: "गोपनीयता आणि डेटा नियंत्रण",
+        privacyNotice: "तुमच्या पिकाची माहिती आणि विश्लेषण इतिहास तुमच्या खात्यात सुरक्षित साठवला जातो. व्हॉइस इनपुट ब्राऊझरची स्पीच सेवा वापरते (जी ऑडिओ डिव्हाइस/गुगलच्या स्पीच सर्व्हरवर पाठवते). तुम्ही तुमचा इतिहास किंवा खाते कधीही हटवू शकता.",
+        clearHistoryButton: "🗑️ संपूर्ण इतिहास हटवा",
+        deleteAccountButton: "⚠️ खाते कायमचे हटवा",
+        confirmClearHistory: "तुम्हाला खरोखर सर्व जतन केलेले पीक विश्लेषण हटवायचे आहे का?",
+        confirmDeleteAccount: "तुम्हाला तुमचे KrishiAI खाते आणि सर्व डेटा कायमचा हटवायचा आहे का? ही क्रिया पूर्ववत केली जाऊ शकत नाही.",
+        historyClearedSuccess: "सर्व पीक विश्लेषण इतिहास यशस्वीपणे हटवला आहे.",
+        accountDeletedSuccess: "तुमचे खाते आणि सर्व डेटा कायमचा हटवला गेला आहे."
     },
 
     hi: {
@@ -969,7 +989,15 @@ const translations = {
         fertDisclaimer: "⚠️ यह सिफारिश ICAR और कृषि विश्वविद्यालयों के मानकों पर आधारित है। सटीक खेती के लिए निकटतम कृषि विज्ञान केंद्र (KVK) पर हर 2 वर्ष में मिट्टी की जाँच अवश्य कराएँ।",
         fertError: "कृपया सही क्षेत्रफल दर्ज करें।",
         fertSuccess: "खाद की खुराक की गणना सफल रही।",
-        fymTonnesText: "अनुशंसित गोबर की खाद / कंपोस्ट: {tonnes} टन"
+        fymTonnesText: "अनुशंसित गोबर की खाद / कंपोस्ट: {tonnes} टन",
+        privacyTitle: "गोपनीयता और डेटा नियंत्रण",
+        privacyNotice: "आपकी फसल का विवरण और निदान इतिहास आपके निजी खाते में सुरक्षित संग्रहीत रहता है। वॉयस इनपुट ब्राउज़र की वाक् पहचान सेवा का उपयोग करता है (जो ऑडियो को डिवाइस/गूगल के स्पीच सर्वर पर भेजता है)। आप कभी भी अपना इतिहास या खाता हटा सकते हैं।",
+        clearHistoryButton: "🗑️ सारा इतिहास हटाएं",
+        deleteAccountButton: "⚠️ खाता हमेशा के लिए हटाएं",
+        confirmClearHistory: "क्या आप वाकई अपने सभी सहेजे गए फसल विश्लेषण हटाना चाहते हैं?",
+        confirmDeleteAccount: "क्या आप वाकई अपना KrishiAI खाता और सारा डेटा हमेशा के लिए हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।",
+        historyClearedSuccess: "सभी फसल विश्लेषण इतिहास सफलतापूर्वक हटा दिया गया है।",
+        accountDeletedSuccess: "आपका खाता और सारा डेटा हमेशा के लिए हटा दिया गया है।"
     }
 };
 
@@ -1740,6 +1768,15 @@ if (!crop && !problem && !selectedImage) {
     formData.append("problem", problem);
     formData.append("language", language);
 
+    if (lastWeather && lastWeather.current) {
+        const placeStr = selectedPlace ? `${placeLabel(selectedPlace)}: ` : "";
+        let weatherSummary = `${placeStr}Temp ${Math.round(lastWeather.current.temperature)}°C, Humidity ${Math.round(lastWeather.current.humidity)}%, Rain ${lastWeather.current.rain_mm}mm, Wind ${Math.round(lastWeather.current.wind_kmh)}km/h, Condition: ${lastWeather.current.weather_group || ""}`;
+        if (weatherSummary.length > 800) {
+            weatherSummary = weatherSummary.substring(0, 800);
+        }
+        formData.append("weather_context", weatherSummary);
+    }
+
     if (selectedImage) {
         formData.append("image", selectedImage);
     }
@@ -1753,11 +1790,11 @@ if (!crop && !problem && !selectedImage) {
 
     try {
         const response = await fetch(`${API_URL}/analyze`, {
-        method: "POST",
-        headers: {
-        "Authorization": `Bearer ${authToken}`
-        },
-        body: formData
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${authToken}`
+            },
+            body: formData
         });
 
         if (response.status === 401) {
@@ -1769,6 +1806,28 @@ if (!crop && !problem && !selectedImage) {
             result.innerHTML = `
                 <h3>${escapeHtml(t("errorTitle"))}</h3>
                 <p>${escapeHtml(t("errImageTooLarge"))}</p>
+            `;
+            return;
+        }
+
+        if (response.status === 429) {
+            const errData = await response.json().catch(() => ({}));
+            result.innerHTML = `
+                <h3>${escapeHtml(t("errorTitle"))}</h3>
+                <p>⚠️ ${escapeHtml(getErrorMessage(errData, "Daily analysis quota reached. Please try again tomorrow."))}</p>
+            `;
+            return;
+        }
+
+        if (response.status === 503) {
+            const errData = await response.json().catch(() => ({}));
+            result.innerHTML = `
+                <h3>${escapeHtml(t("warningTitle"))}</h3>
+                <div class="warning">
+                    ⚠️ ${escapeHtml(getErrorMessage(errData, t("connectionError")))}
+                </div>
+                <hr>
+                <small>${escapeHtml(t("disclaimer"))}</small>
             `;
             return;
         }
@@ -2029,7 +2088,7 @@ function renderAnalysisHistory(records) {
             ? new Date(record.created_at).toLocaleString()
             : t("dateUnavailable");
 
-        const analysis = escapeHtml(record.analysis || "");
+        const analysis = record.analysis || "";
 
         return `
             <article class="history-card">
@@ -2058,6 +2117,52 @@ document.getElementById("historyLanguageFilter").addEventListener(
     "change",
     () => renderAnalysisHistory(window.krishiAIHistoryRecords || [])
 );
+
+async function confirmClearHistory() {
+    if (!authToken) return;
+    if (!confirm(t("confirmClearHistory"))) return;
+
+    try {
+        const response = await fetch(`${API_URL}/history`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+            window.krishiAIHistoryRecords = [];
+            renderAnalysisHistory([]);
+            setAuthStatus(t("historyClearedSuccess"));
+            alert(t("historyClearedSuccess"));
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert(getErrorMessage(data, "Could not clear history."));
+        }
+    } catch (err) {
+        console.error("Failed to clear history:", err);
+        alert(t("connectionError"));
+    }
+}
+
+async function confirmDeleteAccount() {
+    if (!authToken) return;
+    if (!confirm(t("confirmDeleteAccount"))) return;
+
+    try {
+        const response = await fetch(`${API_URL}/auth/me`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${authToken}` }
+        });
+        if (response.ok) {
+            clearSession(t("accountDeletedSuccess"));
+            alert(t("accountDeletedSuccess"));
+        } else {
+            const data = await response.json().catch(() => ({}));
+            alert(getErrorMessage(data, "Could not delete account."));
+        }
+    } catch (err) {
+        console.error("Failed to delete account:", err);
+        alert(t("connectionError"));
+    }
+}
 
 // ---- Fertilizer & Dosage Calculator -------------------------------------
 let lastFertilizerData = null;
