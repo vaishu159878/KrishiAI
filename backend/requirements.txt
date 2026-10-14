@@ -29,7 +29,7 @@ typing_extensions==4.16.0
 urllib3==2.8.0
 uvicorn==0.54.0
 websockets==16.1.1
-psycopg2-binary
-pwdlib[argon2]
-PyJWT
-email-validator
+psycopg2-binary==2.9.13
+pwdlib[argon2]==0.3.1
+PyJWT==2.15.1
+email-validator==2.3.0
