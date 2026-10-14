@@ -1,0 +1,18 @@
+{
+  "name": "KrishiAI - AI Farming Assistant",
+  "short_name": "KrishiAI",
+  "description": "AI-Powered Agricultural Assistant for Indian Farmers",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f9f3",
+  "theme_color": "#16823b",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
