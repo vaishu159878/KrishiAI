@@ -1,10 +1,379 @@
-
 const API_URL = "/api";
 
 let selectedImage = null;
 let previewUrl = null;
 
+// ---- Photo compression --------------------------------------------------
+// Phone cameras produce 3-8 MB photos. Shrinking them in the browser makes
+// uploads far faster and more reliable on weak mobile connections.
+const MAX_IMAGE_SIDE = 1600;
+const IMAGE_QUALITY = 0.82;
+const SKIP_COMPRESSION_BELOW = 400 * 1024; // bytes
+
+let imageJob = 0;                    // lets a newer photo cancel an older job
+let imageReady = Promise.resolve();  // resolves when selectedImage is final
+
+function loadViaImageElement(file) {
+    return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+
+        img.onload = () => {
+            URL.revokeObjectURL(url);
+            resolve({
+                source: img,
+                width: img.naturalWidth,
+                height: img.naturalHeight
+            });
+        };
+
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error("Could not read image"));
+        };
+
+        img.src = url;
+    });
+}
+
+async function loadImage(file) {
+    if (window.createImageBitmap) {
+        try {
+            // "from-image" applies the camera's rotation information.
+            const bitmap = await createImageBitmap(file, {
+                imageOrientation: "from-image"
+            });
+
+            return { source: bitmap, width: bitmap.width, height: bitmap.height };
+        } catch (error) {
+            // Fall through to the <img> based loader.
+        }
+    }
+
+    return loadViaImageElement(file);
+}
+
+// Returns a smaller JPEG, or the original file if that is not possible.
+async function compressImage(file) {
+    if (file.size < SKIP_COMPRESSION_BELOW) {
+        return file;
+    }
+
+    try {
+        const image = await loadImage(file);
+        const longestSide = Math.max(image.width, image.height);
+        const scale = Math.min(1, MAX_IMAGE_SIDE / longestSide);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext("2d");
+        context.fillStyle = "#ffffff"; // PNG transparency becomes white
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.drawImage(image.source, 0, 0, canvas.width, canvas.height);
+
+        if (image.source.close) {
+            image.source.close();
+        }
+
+        const blob = await new Promise(resolve =>
+            canvas.toBlob(resolve, "image/jpeg", IMAGE_QUALITY)
+        );
+
+        if (!blob || blob.size >= file.size) {
+            return file;
+        }
+
+        const baseName = (file.name || "crop-photo").replace(/\.[^.]+$/, "");
+
+        return new File([blob], `${baseName}.jpg`, {
+            type: "image/jpeg",
+            lastModified: Date.now()
+        });
+    } catch (error) {
+        return file; // never block the farmer because compression failed
+    }
+}
+
+function prepareImage(file) {
+    const job = ++imageJob;
+
+    selectedImage = file; // use the original until compression finishes
+
+    imageReady = compressImage(file).then(compressed => {
+        if (job === imageJob) {
+            selectedImage = compressed;
+        }
+    });
+}
+// ---- End photo compression ----------------------------------------------
+
+// Keep the login token for this browser tab's session.
+let authToken = sessionStorage.getItem("krishiai_access_token");
+let currentUser = null;
+
+try {
+    currentUser = JSON.parse(sessionStorage.getItem("krishiai_user") || "null");
+} catch {
+    currentUser = null;
+}
+
+// Turn FastAPI error responses (string or validation array) into text.
+function getErrorMessage(data, fallback) {
+    if (typeof data?.detail === "string") {
+        return data.detail;
+    }
+
+    if (Array.isArray(data?.detail) && data.detail[0]?.msg) {
+        return data.detail[0].msg;
+    }
+
+    return fallback;
+}
+
+// Remove the token AND every piece of the previous user's data from the page.
+function clearSession(message) {
+    authToken = null;
+    currentUser = null;
+
+    sessionStorage.removeItem("krishiai_access_token");
+    sessionStorage.removeItem("krishiai_user");
+
+    window.krishiAIHistoryRecords = [];
+    document.getElementById("historyList").innerHTML = "";
+
+    clearWeather();
+    document.getElementById("historyStatus").textContent = t("historyLogin");
+
+    const result = document.getElementById("result");
+    result.innerHTML = "";
+    result.classList.add("hidden");
+
+    updateAuthUI();
+
+    if (message) {
+        setAuthStatus(message);
+    }
+}
+
+function handleSessionExpired() {
+    clearSession(t("sessionExpired"));
+
+    document.getElementById("authSection").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+}
+
+async function restoreLoginSession() {
+    updateAuthUI();
+    if (authToken) {
+        if (!currentUser) {
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: { Authorization: `Bearer ${authToken}` }
+                });
+                if (response.ok) {
+                    currentUser = await response.json();
+                    sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+                    updateAuthUI();
+                } else if (response.status === 401) {
+                    clearSession(t("sessionExpired"));
+                    return;
+                }
+            } catch (error) {
+                // Ignore background network error on page load
+            }
+        }
+        await loadAnalysisHistory();
+    }
+}
+
+let authStatusTimeout = null;
+
+function setAuthStatus(message) {
+    const el = document.getElementById("authStatus");
+    if (!el) return;
+    el.textContent = message;
+
+    if (authStatusTimeout) {
+        clearTimeout(authStatusTimeout);
+        authStatusTimeout = null;
+    }
+
+    if (message && (message === t("loginSuccess") || message === t("accountCreated"))) {
+        authStatusTimeout = setTimeout(() => {
+            if (el.textContent === message) {
+                el.textContent = "";
+            }
+        }, 4000);
+    }
+}
+
+function updateAuthUI() {
+    const authForms = document.getElementById("authForms");
+    const accountPanel = document.getElementById("accountPanel");
+    const authHeading = document.getElementById("authHeading");
+    const authSubheading = document.getElementById("authSubheading");
+    const accountName = document.getElementById("accountName");
+    const accountEmail = document.getElementById("accountEmail");
+
+    const isLoggedIn = Boolean(authToken);
+    if (authForms) authForms.hidden = isLoggedIn;
+    if (accountPanel) accountPanel.hidden = !isLoggedIn;
+
+    if (isLoggedIn) {
+        let username = currentUser?.username;
+        let email = currentUser?.email;
+
+        // Fallback: If currentUser isn't in memory, attempt reading claims from token
+        if (!username && authToken) {
+            try {
+                const parts = authToken.split(".");
+                if (parts.length === 3) {
+                    const payload = JSON.parse(atob(parts[1]));
+                    if (payload.username) username = payload.username;
+                    if (payload.email) email = payload.email;
+                    if (!currentUser && (username || email)) {
+                        currentUser = {
+                            id: payload.sub,
+                            username: username || "",
+                            email: email || ""
+                        };
+                        sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+                    }
+                }
+            } catch (e) {
+                // Ignore decoding error
+            }
+        }
+
+        const displayName = username || t("farmerUser");
+        const displayEmail = email || "";
+
+        if (authHeading) {
+            authHeading.textContent = t("authTitleLoggedIn").replace("{username}", displayName);
+        }
+        if (authSubheading) {
+            authSubheading.textContent = t("authDescLoggedIn");
+        }
+        if (accountName) {
+            accountName.textContent = displayName;
+        }
+        if (accountEmail) {
+            accountEmail.textContent = displayEmail;
+        }
+    } else {
+        if (authHeading) {
+            authHeading.textContent = t("authTitle");
+        }
+        if (authSubheading) {
+            authSubheading.textContent = t("authDescription");
+        }
+        if (accountName) {
+            accountName.textContent = "";
+        }
+        if (accountEmail) {
+            accountEmail.textContent = "";
+        }
+    }
+}
+
+function getAuthErrorMessage(endpoint, status) {
+    if (endpoint === "login" && status === 401) {
+        return t("errInvalidLogin");
+    }
+
+    if (status === 429) {
+        return t("errTooManyAttempts");
+    }
+
+    if (endpoint === "register" && status === 409) {
+        return t("errExists");
+    }
+
+    if (status === 400 || status === 422) {
+        return t("errCheckDetails");
+    }
+
+    return t("errAuthFailed");
+}
+
+async function authenticate(endpoint, form) {
+    const formData = new FormData(form);
+    const body = Object.fromEntries(formData.entries());
+
+    setAuthStatus(t("authWait"));
+
+    let response;
+
+    try {
+        response = await fetch(`${API_URL}/auth/${endpoint}`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+    } catch (error) {
+        setAuthStatus(t("errConnection"));
+        return;
+    }
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        setAuthStatus(getAuthErrorMessage(endpoint, response.status));
+        return;
+    }
+
+    if (endpoint === "register") {
+        setAuthStatus(t("accountCreated"));
+        const regEmail = body.email;
+        form.reset();
+        if (regEmail) {
+            const loginEmailInput = document.getElementById("loginEmail");
+            const loginPassInput = document.getElementById("loginPassword");
+            if (loginEmailInput) loginEmailInput.value = regEmail;
+            if (loginPassInput) loginPassInput.focus();
+        }
+        return;
+    }
+
+    authToken = data.access_token;
+    currentUser = data.user;
+
+    sessionStorage.setItem("krishiai_access_token", authToken);
+    sessionStorage.setItem("krishiai_user", JSON.stringify(currentUser));
+
+    updateAuthUI();
+    setAuthStatus(t("loginSuccess"));
+
+    restoreWeather();
+
+    form.reset();
+
+    await loadAnalysisHistory();
+}
+
+document.getElementById("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    await authenticate("login", event.currentTarget);
+});
+
+document.getElementById("registerForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    await authenticate("register", event.currentTarget);
+});
+
+document.getElementById("logoutButton").addEventListener("click", () => {
+    clearSession(t("loggedOut"));
+});
+
 function showImagePreview(file) {
+    imageJob++; // cancel any compression that is still running
+
     const preview = document.getElementById("imagePreview");
     const removeButton = document.getElementById("removeImage");
 
@@ -37,7 +406,7 @@ function showImagePreview(file) {
         return;
     }
 
-    selectedImage = file;
+    prepareImage(file);
     previewUrl = URL.createObjectURL(file);
 
     preview.src = previewUrl;
@@ -113,7 +482,142 @@ const translations = {
         errorTitle: "❌ Analysis Failed",
         connectionError: "Unable to connect to the KrishiAI analysis service.",
         serverError: "Please make sure the backend server is running.",
-        noAnalysis: "No analysis was returned by the AI service."
+        noAnalysis: "No analysis was returned by the AI service.",
+
+        authTagline: "Your Account",
+        authTitle: "Login or Create Account",
+        authDescription: "Sign in to save and view your personal crop analyses.",
+        authTitleLoggedIn: "Welcome, {username}! 👨‍🌾",
+        authDescLoggedIn: "Your account is active. Your crop analyses and records are saved automatically.",
+        activeSession: "🟢 Active Account",
+        loginTitle: "Login",
+        emailLabel: "Email",
+        passwordLabel: "Password",
+        usernameLabel: "Username",
+        loginButton: "Login",
+        registerTitle: "Create Account",
+        registerButton: "Create Account",
+        passwordHint: "At least 8 characters.",
+        logoutButton: "Logout",
+        authWait: "Please wait...",
+        loginSuccess: "Login successful.",
+        accountCreated: "Account created. Please log in.",
+        loggedOut: "You have logged out.",
+        sessionExpired: "Your session expired. Please log in again.",
+        loginRequired: "Please log in to analyze your crop.",
+        loggedInAs: "Logged in as",
+        yourAccount: "your account",
+        farmerUser: "Farmer",
+        errInvalidLogin: "Invalid email or password.",
+        errExists: "That username or email is already registered.",
+        errCheckDetails: "Please check your details. Username: at least 3 characters. Password: at least 8 characters, and not a common password.",
+        errAuthFailed: "Authentication failed.",
+        errConnection: "Unable to connect to the server.",
+        errTooManyAttempts: "Too many failed attempts. Please wait a few minutes and try again.",
+        errImageTooLarge: "The photo is too large. Please choose a smaller photo (up to 5 MB).",
+        weatherTagline: "🌦️ Weather Insights",
+        weatherTitle: "Weather for Your Farm",
+        weatherDescription: "Search for your village or town to see the forecast and simple farming tips.",
+        weatherSearchLabel: "Village or town",
+        weatherSearchPlaceholder: "Example: Kolhapur",
+        weatherSearchButton: "Search",
+        weatherLoginRequired: "Please log in to see weather insights.",
+        weatherShortQuery: "Please type at least 2 letters.",
+        weatherSearching: "Searching...",
+        weatherNoPlaces: "No place found. Try another spelling or a nearby town.",
+        weatherChoose: "Choose your place:",
+        weatherLoading: "Loading weather...",
+        weatherError: "Unable to load weather. Please try again.",
+        weatherNow: "Right now",
+        weatherHumidity: "Humidity",
+        weatherWind: "Wind",
+        weatherRain: "Rain",
+        weatherForecastTitle: "Next 5 days",
+        weatherAdviceTitle: "Farming tips",
+        weatherNoAdvice: "No special weather warnings. Normal farming work can continue.",
+        weatherToday: "Today",
+        weatherTomorrow: "Tomorrow",
+        weatherNote: "These are general tips. For exact advice, ask your local agriculture office (Krishi Vigyan Kendra). Always follow the label when spraying.",
+        weatherCredit: "Weather data: Open-Meteo.com",
+        wx_clear: "Clear sky",
+        wx_cloudy: "Cloudy",
+        wx_fog: "Fog",
+        wx_drizzle: "Light drizzle",
+        wx_rain: "Rain",
+        wx_showers: "Rain showers",
+        wx_thunder: "Thunderstorm",
+        wx_snow: "Snow",
+        advice_heavy_rain: "Heavy rain expected. Delay spraying and fertilizer, and make sure water can drain from your field.",
+        advice_rain_expected: "Rain is likely soon. Avoid spraying or fertilizing just before the rain.",
+        advice_heat: "Very hot days ahead. Water early in the morning or in the evening, and mulch to protect the soil.",
+        advice_cold: "Cold nights ahead. Protect young plants and avoid watering late in the evening.",
+        advice_strong_wind: "Strong wind expected. Do not spray on windy days, and support tall crops.",
+        advice_humid_disease: "Humid weather increases the risk of fungal disease. Check leaves regularly for spots or mold.",
+        advice_dry_spell: "Little or no rain for the next 5 days. Plan your irrigation.",
+        advice_good_spray_window: "Good day for spraying: little wind and no rain.",
+        recordsTagline: "📚 Your Records",
+        historyTitle: "Recent Crop Analyses",
+        historyDescription: "View your previously saved crop recommendations.",
+        refreshHistory: "Refresh History",
+        filterLabel: "Filter by language:",
+        allLanguages: "All languages",
+        historyLogin: "Log in to view your saved analyses.",
+        historyLoading: "Loading saved analyses...",
+        historyNone: "No saved analyses yet.",
+        historyNoneLanguage: "No analyses found for this language.",
+        historyShowing: "Showing {shown} of {total} saved analysis record(s).",
+        historyError: "Unable to load history. Please try refreshing.",
+        historyProblem: "Problem:",
+        historyLanguage: "Language:",
+        historyDate: "Date:",
+        historyView: "View recommendations",
+        notSpecified: "Not specified",
+        dateUnavailable: "Date unavailable",
+        voiceStart: "🎙️ Speak Problem",
+        voiceStop: "⏹️ Stop Listening",
+        voiceListening: "🔴 Listening... Please speak now",
+        voiceNotSupported: "Voice recognition is not supported in this browser. Please use Chrome or Edge.",
+        voicePermissionDenied: "Microphone permission was denied. Please allow microphone access in your browser settings.",
+        voiceNoSpeech: "No speech detected. Please tap and try speaking again.",
+        voiceError: "Voice input error. Please try again.",
+        ttsPlay: "🔊 Listen to Advice",
+        ttsStop: "⏹️ Stop Audio",
+        ttsNotSupported: "Audio playback is not supported in this browser.",
+        shareWhatsApp: "WhatsApp Share",
+        helplineTagline: "📞 24/7 Expert Support",
+        helplineTitle: "Emergency Farmer Helplines",
+        helplineDescription: "Speak directly with agricultural experts and government advisors for immediate emergency assistance.",
+        kccTitle: "Kisan Call Center (KCC)",
+        kccDesc: "Government of India toll-free helpline. Free consultation in 22 languages from 6 AM to 10 PM daily.",
+        pmfbyTitle: "Crop Insurance Helpline (PMFBY)",
+        pmfbyDesc: "Assistance for crop damage claims, drought/flood insurance claims, and policy status.",
+        kvkTitle: "Krishi Vigyan Kendra (KVK)",
+        kvkDesc: "District agricultural research centers for seed testing, pest outbreaks, and soil health consultation.",
+        callNow: "📞 Call Now",
+        findKvk: "🌐 Find Your KVK",
+        fertTagline: "🧪 Smart Nutrition",
+        fertTitle: "Fertilizer & Dosage Calculator",
+        fertDescription: "Calculate exact bags of Urea, DAP, Potash and organic compost for your crop and land size based on ICAR guidelines.",
+        fertCropLabel: "Select Crop",
+        fertAreaLabel: "Farm Size / Area",
+        fertUnitLabel: "Land Unit",
+        unitAcre: "Acres (एकर)",
+        unitGuntha: "Gunthas (गुंठा - 1/40 Acre)",
+        unitHectare: "Hectares (हेक्टर)",
+        fertCalculateBtn: "🧪 Calculate Fertilizer Dosage",
+        fertCalculating: "Calculating...",
+        listenDosage: "Listen to Dosage",
+        shareDosage: "Share on WhatsApp",
+        fertBagsTitle: "🛍️ Commercial Fertilizer Bags to Purchase:",
+        bagsLabel: "Bags",
+        pureNutrients: "Pure Nutrients (N-P-K):",
+        microNutrient: "Micro / Secondary Nutrient:",
+        fertScheduleTitle: "📅 When & How to Apply (Split Schedule):",
+        organicBoostersTitle: "Organic & Soil Health Boosters",
+        fertDisclaimer: "⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).",
+        fertError: "Please enter a valid area.",
+        fertSuccess: "Dosage calculated successfully.",
+        fymTonnesText: "Recommended FYM / Compost: {tonnes} tonnes"
     },
 
     mr: {
@@ -154,7 +658,142 @@ const translations = {
         errorTitle: "❌ विश्लेषण अयशस्वी",
         connectionError: "KrishiAI विश्लेषण सेवेशी संपर्क साधता आला नाही.",
         serverError: "कृपया बॅकएंड सर्व्हर सुरू आहे का ते तपासा.",
-        noAnalysis: "AI सेवेकडून कोणतेही विश्लेषण मिळाले नाही."
+        noAnalysis: "AI सेवेकडून कोणतेही विश्लेषण मिळाले नाही.",
+
+        authTagline: "तुमचे खाते",
+        authTitle: "लॉगिन करा किंवा खाते तयार करा",
+        authDescription: "तुमची पीक विश्लेषणे जतन करण्यासाठी आणि पाहण्यासाठी साइन इन करा.",
+        authTitleLoggedIn: "स्वागत आहे, {username}! 👨‍🌾",
+        authDescLoggedIn: "तुमचे खाते सक्रिय आहे. तुमची पीक विश्लेषणे सुरक्षितपणे जतन केली जात आहेत.",
+        activeSession: "🟢 सक्रिय खाते",
+        loginTitle: "लॉगिन",
+        emailLabel: "ईमेल",
+        passwordLabel: "पासवर्ड",
+        usernameLabel: "वापरकर्ता नाव",
+        loginButton: "लॉगिन करा",
+        registerTitle: "खाते तयार करा",
+        registerButton: "खाते तयार करा",
+        passwordHint: "किमान 8 अक्षरे.",
+        logoutButton: "लॉगआउट",
+        authWait: "कृपया थांबा...",
+        loginSuccess: "लॉगिन यशस्वी झाले.",
+        accountCreated: "खाते तयार झाले. कृपया लॉगिन करा.",
+        loggedOut: "तुम्ही लॉगआउट केले आहे.",
+        sessionExpired: "तुमचे सत्र संपले आहे. कृपया पुन्हा लॉगिन करा.",
+        loginRequired: "पिकाचे विश्लेषण करण्यासाठी कृपया लॉगिन करा.",
+        loggedInAs: "लॉगिन केलेले खाते:",
+        yourAccount: "तुमचे खाते",
+        farmerUser: "शेतकरी",
+        errInvalidLogin: "ईमेल किंवा पासवर्ड चुकीचा आहे.",
+        errExists: "हे वापरकर्ता नाव किंवा ईमेल आधीच नोंदणीकृत आहे.",
+        errCheckDetails: "कृपया तुमची माहिती तपासा. वापरकर्ता नाव किमान 3 अक्षरांचे आणि पासवर्ड किमान 8 अक्षरांचा असावा; सहज ओळखता येणारा पासवर्ड वापरू नका.",
+        errAuthFailed: "ओळख पडताळणी अयशस्वी झाली.",
+        errConnection: "सर्व्हरशी संपर्क साधता आला नाही.",
+        errTooManyAttempts: "खूप वेळा चुकीचा प्रयत्न झाला. कृपया काही मिनिटे थांबून पुन्हा प्रयत्न करा.",
+        errImageTooLarge: "फोटो खूप मोठा आहे. कृपया लहान फोटो निवडा (जास्तीत जास्त 5 MB).",
+        weatherTagline: "🌦️ हवामान माहिती",
+        weatherTitle: "तुमच्या शेतासाठी हवामान",
+        weatherDescription: "तुमचे गाव किंवा शहर शोधा आणि हवामानाचा अंदाज व सोपे शेती सल्ले पहा.",
+        weatherSearchLabel: "गाव किंवा शहर",
+        weatherSearchPlaceholder: "उदा: कोल्हापूर",
+        weatherSearchButton: "शोधा",
+        weatherLoginRequired: "हवामान माहिती पाहण्यासाठी कृपया लॉगिन करा.",
+        weatherShortQuery: "कृपया किमान 2 अक्षरे लिहा.",
+        weatherSearching: "शोधत आहे...",
+        weatherNoPlaces: "ठिकाण सापडले नाही. दुसरे स्पेलिंग किंवा जवळचे शहर वापरून पहा.",
+        weatherChoose: "तुमचे ठिकाण निवडा:",
+        weatherLoading: "हवामान लोड होत आहे...",
+        weatherError: "हवामान लोड करता आले नाही. कृपया पुन्हा प्रयत्न करा.",
+        weatherNow: "सध्या",
+        weatherHumidity: "आर्द्रता",
+        weatherWind: "वारा",
+        weatherRain: "पाऊस",
+        weatherForecastTitle: "पुढील 5 दिवस",
+        weatherAdviceTitle: "शेती सल्ले",
+        weatherNoAdvice: "विशेष हवामान इशारे नाहीत. शेतीची नेहमीची कामे सुरू ठेवता येतील.",
+        weatherToday: "आज",
+        weatherTomorrow: "उद्या",
+        weatherNote: "ही सर्वसाधारण माहिती आहे. अचूक सल्ल्यासाठी तुमच्या स्थानिक कृषी कार्यालयाशी (कृषी विज्ञान केंद्र) संपर्क साधा. फवारणी करताना नेहमी औषधाच्या लेबलवरील सूचना पाळा.",
+        weatherCredit: "हवामान माहिती: Open-Meteo.com",
+        wx_clear: "स्वच्छ आकाश",
+        wx_cloudy: "ढगाळ",
+        wx_fog: "धुके",
+        wx_drizzle: "भुरभुर पाऊस",
+        wx_rain: "पाऊस",
+        wx_showers: "पावसाच्या सरी",
+        wx_thunder: "मेघगर्जनेसह पाऊस",
+        wx_snow: "बर्फवृष्टी",
+        advice_heavy_rain: "जोरदार पावसाची शक्यता आहे. फवारणी आणि खत देणे पुढे ढकला आणि शेतातील पाण्याचा निचरा होईल याची खात्री करा.",
+        advice_rain_expected: "लवकरच पाऊस पडण्याची शक्यता आहे. पावसाच्या आधी फवारणी किंवा खत देणे टाळा.",
+        advice_heat: "पुढील दिवस खूप उष्ण राहतील. सकाळी लवकर किंवा संध्याकाळी पाणी द्या आणि जमिनीवर आच्छादन (मल्चिंग) करा.",
+        advice_cold: "पुढील रात्री थंड राहतील. कोवळ्या रोपांचे संरक्षण करा आणि संध्याकाळी उशिरा पाणी देणे टाळा.",
+        advice_strong_wind: "जोरदार वारा अपेक्षित आहे. वाऱ्याच्या दिवशी फवारणी करू नका आणि उंच पिकांना आधार द्या.",
+        advice_humid_disease: "दमट हवामानामुळे बुरशीजन्य रोगांचा धोका वाढतो. पानांवर डाग किंवा बुरशी दिसते का ते नियमित तपासा.",
+        advice_dry_spell: "पुढील 5 दिवस पाऊस कमी किंवा नाही. सिंचनाचे नियोजन करा.",
+        advice_good_spray_window: "फवारणीसाठी चांगला दिवस: वारा कमी आणि पाऊस नाही.",
+        recordsTagline: "📚 तुमच्या नोंदी",
+        historyTitle: "अलीकडील पीक विश्लेषणे",
+        historyDescription: "तुम्ही आधी जतन केलेल्या पीक शिफारसी पहा.",
+        refreshHistory: "यादी रीफ्रेश करा",
+        filterLabel: "भाषेनुसार फिल्टर करा:",
+        allLanguages: "सर्व भाषा",
+        historyLogin: "जतन केलेली विश्लेषणे पाहण्यासाठी लॉगिन करा.",
+        historyLoading: "जतन केलेली विश्लेषणे लोड होत आहेत...",
+        historyNone: "अजून कोणतेही विश्लेषण जतन केलेले नाही.",
+        historyNoneLanguage: "या भाषेतील कोणतेही विश्लेषण आढळले नाही.",
+        historyShowing: "एकूण {total} पैकी {shown} जतन केलेल्या नोंदी दाखवत आहे.",
+        historyError: "यादी लोड करता आली नाही. कृपया रीफ्रेश करून पहा.",
+        historyProblem: "समस्या:",
+        historyLanguage: "भाषा:",
+        historyDate: "तारीख:",
+        historyView: "शिफारसी पहा",
+        notSpecified: "नमूद केलेले नाही",
+        dateUnavailable: "तारीख उपलब्ध नाही",
+        voiceStart: "🎙️ समस्या बोला",
+        voiceStop: "⏹️ बोलणे थांबवा",
+        voiceListening: "🔴 ऐकत आहे... कृपया आता बोला",
+        voiceNotSupported: "या ब्राउझरमध्ये व्हॉइस इनपुट उपलब्ध नाही. कृपया Chrome किंवा Edge वापरा.",
+        voicePermissionDenied: "मायक्रोफोन परवानगी नाकारली गेली. कृपया ब्राउझरमध्ये मायक्रोफोन सुरू करा.",
+        voiceNoSpeech: "कोणताही आवाज आला नाही. कृपया पुन्हा प्रयत्न करा.",
+        voiceError: "व्हॉइस इनपुटमध्ये अडचण आली. कृपया पुन्हा प्रयत्न करा.",
+        ttsPlay: "🔊 मार्गदर्शन ऐका",
+        ttsStop: "⏹️ आवाज थांबवा",
+        ttsNotSupported: "या ब्राउझरमध्ये ऑडिओ प्लेबॅक उपलब्ध नाही.",
+        shareWhatsApp: "व्हॉट्सॲपवर पाठवा",
+        helplineTagline: "📞 २४/७ तज्ज्ञ सहाय्य",
+        helplineTitle: "शेतकरी मदत क्रमांक (हेल्पलाइन)",
+        helplineDescription: "तातडीच्या मदतीसाठी कृषी शास्त्रज्ञ आणि शासकीय सल्लागारांशी थेट संपर्क साधा.",
+        kccTitle: "किसान कॉल सेंटर (KCC)",
+        kccDesc: "भारत सरकारची मोफत टोल-फ्री हेल्पलाइन. सकाळी ६ ते रात्री १० पर्यंत २२ भाषांमध्ये मोफत मार्गदर्शन.",
+        pmfbyTitle: "पीक विमा हेल्पलाइन (PMFBY)",
+        pmfbyDesc: "पीक नुकसान भरपाई, दुष्काळ किंवा अतिवृष्टी विमा दावे आणि पॉलिसी माहितीसाठी.",
+        kvkTitle: "कृषी विज्ञान केंद्र (KVK)",
+        kvkDesc: "जिल्हास्तरीय कृषी संशोधन केंद्र - बियाणे, कीड प्रादुर्भाव आणि माती परीक्षण सल्ल्यासाठी.",
+        callNow: "📞 आता कॉल करा",
+        findKvk: "🌐 तुमचे KVK शोधा",
+        fertTagline: "🧪 स्मार्ट खत व्यवस्थापन",
+        fertTitle: "खताचे प्रमाण कॅल्क्युलेटर",
+        fertDescription: "ICAR च्या मार्गदर्शक तत्त्वांनुसार तुमच्या पिकासाठी आणि जमिनीसाठी युरिया, DAP, पोटॅश आणि सेंद्रिय खतांच्या अचूक गोण्या मोजा.",
+        fertCropLabel: "पीक निवडा",
+        fertAreaLabel: "शेताचे क्षेत्रफळ",
+        fertUnitLabel: "क्षेत्रफळ एकक",
+        unitAcre: "एकर (Acres)",
+        unitGuntha: "गुंठे (Gunthas - १/४० एकर)",
+        unitHectare: "हेक्टर (Hectares)",
+        fertCalculateBtn: "🧪 खताचे प्रमाण मोजा",
+        fertCalculating: "हिशोब करत आहे...",
+        listenDosage: "डोस ऐका",
+        shareDosage: "व्हॉट्सॲपवर पाठवा",
+        fertBagsTitle: "🛍️ खरेदी करावयाच्या रासायनिक खतांच्या गोण्या:",
+        bagsLabel: "गोण्या",
+        pureNutrients: "शुद्ध अन्नद्रव्ये (नत्र-स्फुरद-पालाश):",
+        microNutrient: "सूक्ष्म / दुय्यम अन्नद्रव्य:",
+        fertScheduleTitle: "📅 खत देण्याचे वेळापत्रक (विभागून द्या):",
+        organicBoostersTitle: "सेंद्रिय खते व जमीन आरोग्य सुधारक",
+        fertDisclaimer: "⚠️ हे प्रमाण ICAR आणि कृषी विद्यापीठांच्या शिफारशींवर आधारित आहे. अचूक खत व्यवस्थापनासाठी जवळच्या कृषी विज्ञान केंद्रात (KVK) दर २ वर्षांनी माती परीक्षण अवश्य करा.",
+        fertError: "कृपया योग्य क्षेत्रफळ प्रविष्ट करा.",
+        fertSuccess: "खताचे प्रमाण यशस्वीरीत्या मोजले.",
+        fymTonnesText: "शिफारस केलेले शेणखत / कंपोस्ट: {tonnes} टन"
     },
 
     hi: {
@@ -195,7 +834,142 @@ const translations = {
         errorTitle: "❌ विश्लेषण विफल",
         connectionError: "KrishiAI विश्लेषण सेवा से संपर्क नहीं हो पाया।",
         serverError: "कृपया जाँचें कि बैकएंड सर्वर चालू है या नहीं।",
-        noAnalysis: "AI सेवा से कोई विश्लेषण प्राप्त नहीं हुआ।"
+        noAnalysis: "AI सेवा से कोई विश्लेषण प्राप्त नहीं हुआ।",
+
+        authTagline: "आपका खाता",
+        authTitle: "लॉगिन करें या खाता बनाएँ",
+        authDescription: "अपने फसल विश्लेषण सहेजने और देखने के लिए साइन इन करें।",
+        authTitleLoggedIn: "स्वागत है, {username}! 👨‍🌾",
+        authDescLoggedIn: "आपका खाता सक्रिय है। आपके फसल विश्लेषण सुरक्षित रूप से सहेजे जा रहे हैं।",
+        activeSession: "🟢 सक्रिय खाता",
+        loginTitle: "लॉगिन",
+        emailLabel: "ईमेल",
+        passwordLabel: "पासवर्ड",
+        usernameLabel: "उपयोगकर्ता नाम",
+        loginButton: "लॉगिन करें",
+        registerTitle: "खाता बनाएँ",
+        registerButton: "खाता बनाएँ",
+        passwordHint: "कम से कम 8 अक्षर।",
+        logoutButton: "लॉगआउट",
+        authWait: "कृपया प्रतीक्षा करें...",
+        loginSuccess: "लॉगिन सफल रहा।",
+        accountCreated: "खाता बन गया। कृपया लॉगिन करें।",
+        loggedOut: "आप लॉगआउट हो गए हैं।",
+        sessionExpired: "आपका सत्र समाप्त हो गया है। कृपया फिर से लॉगिन करें।",
+        loginRequired: "फसल का विश्लेषण करने के लिए कृपया लॉगिन करें।",
+        loggedInAs: "लॉगिन किया हुआ खाता:",
+        yourAccount: "आपका खाता",
+        farmerUser: "किसान",
+        errInvalidLogin: "ईमेल या पासवर्ड गलत है।",
+        errExists: "यह उपयोगकर्ता नाम या ईमेल पहले से पंजीकृत है।",
+        errCheckDetails: "कृपया अपनी जानकारी जाँचें। उपयोगकर्ता नाम कम से कम 3 अक्षर का और पासवर्ड कम से कम 8 अक्षर का होना चाहिए; आसानी से अनुमान लगाया जा सकने वाला पासवर्ड न रखें।",
+        errAuthFailed: "पहचान की पुष्टि नहीं हो सकी।",
+        errConnection: "सर्वर से संपर्क नहीं हो पाया।",
+        errTooManyAttempts: "बहुत बार गलत प्रयास हो चुका है। कृपया कुछ मिनट रुककर फिर से प्रयास करें।",
+        errImageTooLarge: "फ़ोटो बहुत बड़ी है। कृपया छोटी फ़ोटो चुनें (अधिकतम 5 MB)।",
+        weatherTagline: "🌦️ मौसम की जानकारी",
+        weatherTitle: "आपके खेत का मौसम",
+        weatherDescription: "अपना गाँव या शहर खोजें और मौसम का पूर्वानुमान व आसान खेती सलाह देखें।",
+        weatherSearchLabel: "गाँव या शहर",
+        weatherSearchPlaceholder: "जैसे: कोल्हापुर",
+        weatherSearchButton: "खोजें",
+        weatherLoginRequired: "मौसम की जानकारी देखने के लिए कृपया लॉगिन करें।",
+        weatherShortQuery: "कृपया कम से कम 2 अक्षर लिखें।",
+        weatherSearching: "खोज रहे हैं...",
+        weatherNoPlaces: "जगह नहीं मिली। दूसरी वर्तनी या पास का शहर आज़माएँ।",
+        weatherChoose: "अपनी जगह चुनें:",
+        weatherLoading: "मौसम लोड हो रहा है...",
+        weatherError: "मौसम लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
+        weatherNow: "अभी",
+        weatherHumidity: "नमी",
+        weatherWind: "हवा",
+        weatherRain: "बारिश",
+        weatherForecastTitle: "अगले 5 दिन",
+        weatherAdviceTitle: "खेती की सलाह",
+        weatherNoAdvice: "कोई विशेष मौसम चेतावनी नहीं है। खेती के सामान्य काम जारी रख सकते हैं।",
+        weatherToday: "आज",
+        weatherTomorrow: "कल",
+        weatherNote: "यह सामान्य जानकारी है। सटीक सलाह के लिए अपने स्थानीय कृषि कार्यालय (कृषि विज्ञान केंद्र) से संपर्क करें। छिड़काव करते समय हमेशा दवा के लेबल के निर्देश मानें।",
+        weatherCredit: "मौसम डेटा: Open-Meteo.com",
+        wx_clear: "साफ़ आसमान",
+        wx_cloudy: "बादल",
+        wx_fog: "कोहरा",
+        wx_drizzle: "हल्की फुहार",
+        wx_rain: "बारिश",
+        wx_showers: "बौछारें",
+        wx_thunder: "बिजली के साथ बारिश",
+        wx_snow: "बर्फ़बारी",
+        advice_heavy_rain: "भारी बारिश की संभावना है। छिड़काव और खाद डालना टालें और खेत से पानी निकलने की व्यवस्था रखें।",
+        advice_rain_expected: "जल्द बारिश की संभावना है। बारिश से ठीक पहले छिड़काव या खाद डालने से बचें।",
+        advice_heat: "आने वाले दिन बहुत गर्म रहेंगे। सुबह जल्दी या शाम को सिंचाई करें और मिट्टी पर मल्चिंग करें।",
+        advice_cold: "आने वाली रातें ठंडी रहेंगी। छोटे पौधों को बचाएँ और शाम को देर से पानी देने से बचें।",
+        advice_strong_wind: "तेज़ हवा चलने की संभावना है। हवा वाले दिन छिड़काव न करें और ऊँची फसलों को सहारा दें।",
+        advice_humid_disease: "नमी भरे मौसम में फफूँदी रोगों का खतरा बढ़ जाता है। पत्तियों पर धब्बे या फफूँद की नियमित जाँच करें।",
+        advice_dry_spell: "अगले 5 दिन बारिश बहुत कम या नहीं होगी। सिंचाई की योजना बनाएँ।",
+        advice_good_spray_window: "छिड़काव के लिए अच्छा दिन: हवा कम और बारिश नहीं।",
+        recordsTagline: "📚 आपके रिकॉर्ड",
+        historyTitle: "हाल के फसल विश्लेषण",
+        historyDescription: "पहले सहेजी गई अपनी फसल सिफारिशें देखें।",
+        refreshHistory: "सूची रीफ़्रेश करें",
+        filterLabel: "भाषा के अनुसार फ़िल्टर करें:",
+        allLanguages: "सभी भाषाएँ",
+        historyLogin: "सहेजे गए विश्लेषण देखने के लिए लॉगिन करें।",
+        historyLoading: "सहेजे गए विश्लेषण लोड हो रहे हैं...",
+        historyNone: "अभी तक कोई विश्लेषण सहेजा नहीं गया है।",
+        historyNoneLanguage: "इस भाषा में कोई विश्लेषण नहीं मिला।",
+        historyShowing: "कुल {total} में से {shown} सहेजे गए रिकॉर्ड दिखा रहे हैं।",
+        historyError: "सूची लोड नहीं हो सकी। कृपया रीफ़्रेश करके देखें।",
+        historyProblem: "समस्या:",
+        historyLanguage: "भाषा:",
+        historyDate: "तारीख:",
+        historyView: "सिफारिशें देखें",
+        notSpecified: "उल्लेख नहीं किया गया",
+        dateUnavailable: "तारीख उपलब्ध नहीं",
+        voiceStart: "🎙️ समस्या बोलें",
+        voiceStop: "⏹️ बोलना रोकें",
+        voiceListening: "🔴 सुन रहा हूँ... कृपया अब बोलें",
+        voiceNotSupported: "इस ब्राउज़र में वॉइस इनपुट उपलब्ध नहीं है। कृपया Chrome या Edge का उपयोग करें।",
+        voicePermissionDenied: "माइक्रोफ़ोन की अनुमति नहीं मिली। कृपया ब्राउज़र सेटिंग्स में माइक्रोफ़ोन चालू करें।",
+        voiceNoSpeech: "कोई आवाज़ नहीं मिली। कृपया पुनः प्रयास करें।",
+        voiceError: "वॉइस इनपुट में त्रुटि आई। कृपया पुनः प्रयास करें।",
+        ttsPlay: "🔊 मार्गदर्शन सुनें",
+        ttsStop: "⏹️ आवाज़ रोकें",
+        ttsNotSupported: "इस ब्राउज़र में ऑडियो प्लेबैक उपलब्ध नहीं है।",
+        shareWhatsApp: "व्हाट्सएप पर साझा करें",
+        helplineTagline: "📞 24/7 विशेषज्ञ सहायता",
+        helplineTitle: "आपातकालीन किसान हेल्पलाइन",
+        helplineDescription: "तत्काल आपातकालीन सहायता के लिए कृषि विशेषज्ञों और सरकारी सलाहकारों से सीधे बात करें।",
+        kccTitle: "किसान कॉल सेंटर (KCC)",
+        kccDesc: "भारत सरकार की टोल-फ्री हेल्पलाइन। सुबह 6 से रात 10 बजे तक 22 भाषाओं में निःशुल्क मार्गदर्शन।",
+        pmfbyTitle: "फसल बीमा हेल्पलाइन (PMFBY)",
+        pmfbyDesc: "फसल नुकसान मुआवजे, सूखा/बाढ़ बीमा दावों और पॉलिसी की स्थिति के लिए।",
+        kvkTitle: "कृषि विज्ञान केंद्र (KVK)",
+        kvkDesc: "जिला कृषि अनुसंधान केंद्र - बीज परीक्षण, कीट प्रकोप और मृदा स्वास्थ्य सलाह के लिए।",
+        callNow: "📞 अभी कॉल करें",
+        findKvk: "🌐 अपना KVK खोजें",
+        fertTagline: "🧪 स्मार्ट पोषण प्रबंधन",
+        fertTitle: "खाद और खुराक कैलकुलेटर",
+        fertDescription: "ICAR दिशानिर्देशों के अनुसार अपनी फसल और खेत के आकार के लिए यूरिया, डीएपी, पोटाश और जैविक खाद के सही बोरों की गणना करें।",
+        fertCropLabel: "फसल चुनें",
+        fertAreaLabel: "खेत का आकार / क्षेत्रफल",
+        fertUnitLabel: "इकाई",
+        unitAcre: "एकड़ (Acres)",
+        unitGuntha: "गुंठा (Gunthas)",
+        unitHectare: "हेक्टेयर (Hectares)",
+        fertCalculateBtn: "🧪 खाद की मात्रा निकालें",
+        fertCalculating: "गणना की जा रही है...",
+        listenDosage: "खुराक सुनें",
+        shareDosage: "व्हाट्सएप पर भेजें",
+        fertBagsTitle: "🛍️ खरीदे जाने वाले रासायनिक खाद के बोरे:",
+        bagsLabel: "बोरे",
+        pureNutrients: "शुद्ध पोषक तत्व (N-P-K):",
+        microNutrient: "सूक्ष्म / द्वितीयक पोषक तत्व:",
+        fertScheduleTitle: "📅 खाद देने की समय सारणी (विभाजित खुराक):",
+        organicBoostersTitle: "जैविक खाद व मिट्टी स्वास्थ्य सुधारक",
+        fertDisclaimer: "⚠️ यह सिफारिश ICAR और कृषि विश्वविद्यालयों के मानकों पर आधारित है। सटीक खेती के लिए निकटतम कृषि विज्ञान केंद्र (KVK) पर हर 2 वर्ष में मिट्टी की जाँच अवश्य कराएँ।",
+        fertError: "कृपया सही क्षेत्रफल दर्ज करें।",
+        fertSuccess: "खाद की खुराक की गणना सफल रही।",
+        fymTonnesText: "अनुशंसित गोबर की खाद / कंपोस्ट: {tonnes} टन"
     }
 };
 
@@ -232,6 +1006,13 @@ function setLanguage(language) {
         hi: "KrishiAI - AI कृषि सहायक"
     }[selectedLanguage];
 
+    if (typeof stopReadAloud === "function") {
+        stopReadAloud();
+    }
+    if (typeof stopVoiceInput === "function") {
+        stopVoiceInput();
+    }
+
     return selectedLanguage;
 }
 
@@ -248,7 +1029,10 @@ function t(key) {
 
 
 function scrollToAnalyzer() {
-    document.getElementById("analyzer").scrollIntoView({
+    // Logged-out visitors are taken to the login section first.
+    const targetId = authToken ? "analyzer" : "authSection";
+
+    document.getElementById(targetId).scrollIntoView({
         behavior: "smooth",
         block: "start"
     });
@@ -258,8 +1042,632 @@ function scrollToAnalyzer() {
 // Change the complete static UI immediately.
 
 
+function refreshDynamicText() {
+    setAuthStatus("");
+    setWeatherStatus("");
+    updateAuthUI();
+    renderWeather();
+    if (typeof lastFertilizerData !== "undefined" && lastFertilizerData) {
+        renderFertilizerResult(lastFertilizerData);
+    }
+
+    const historyStatus = document.getElementById("historyStatus");
+    const records = window.krishiAIHistoryRecords || [];
+
+    if (!authToken) {
+        historyStatus.textContent = t("historyLogin");
+    } else if (records.length) {
+        renderAnalysisHistory(records);
+    } else {
+        historyStatus.textContent = t("historyNone");
+    }
+}
+
+// ---- Voice Input (Speech-to-Text) & Audio (Text-to-Speech) -------------
+let recognition = null;
+let isVoiceListening = false;
+let voiceBaseText = "";
+
+function stopVoiceInput() {
+    if (recognition && isVoiceListening) {
+        try {
+            recognition.stop();
+        } catch (e) {
+            // Ignore
+        }
+    }
+    resetVoiceUI();
+}
+
+function resetVoiceUI() {
+    isVoiceListening = false;
+    const voiceButton = document.getElementById("voiceButton");
+    const voiceButtonText = document.getElementById("voiceButtonText");
+    const voiceStatus = document.getElementById("voiceStatus");
+
+    if (voiceButton) {
+        voiceButton.classList.remove("listening");
+    }
+    if (voiceButtonText) {
+        voiceButtonText.textContent = t("voiceStart");
+    }
+    if (voiceStatus && voiceStatus.classList.contains("listening")) {
+        voiceStatus.classList.add("hidden");
+        voiceStatus.classList.remove("listening");
+    }
+}
+
+function toggleVoiceInput() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const voiceButton = document.getElementById("voiceButton");
+    const voiceButtonText = document.getElementById("voiceButtonText");
+    const voiceStatus = document.getElementById("voiceStatus");
+    const problemInput = document.getElementById("problem");
+
+    if (!SpeechRecognition) {
+        if (voiceStatus) {
+            voiceStatus.textContent = t("voiceNotSupported");
+            voiceStatus.classList.remove("hidden", "listening");
+        }
+        return;
+    }
+
+    if (isVoiceListening) {
+        stopVoiceInput();
+        return;
+    }
+
+    stopReadAloud();
+
+    try {
+        recognition = new SpeechRecognition();
+    } catch (err) {
+        if (voiceStatus) {
+            voiceStatus.textContent = t("voiceNotSupported");
+            voiceStatus.classList.remove("hidden", "listening");
+        }
+        return;
+    }
+
+    const langMap = {
+        en: "en-IN",
+        mr: "mr-IN",
+        hi: "hi-IN"
+    };
+    recognition.lang = langMap[getLanguage()] || "en-IN";
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+    recognition.continuous = false;
+
+    voiceBaseText = problemInput.value.trim();
+
+    recognition.onstart = () => {
+        isVoiceListening = true;
+        if (voiceButton) voiceButton.classList.add("listening");
+        if (voiceButtonText) voiceButtonText.textContent = t("voiceStop");
+        if (voiceStatus) {
+            voiceStatus.textContent = t("voiceListening");
+            voiceStatus.classList.remove("hidden");
+            voiceStatus.classList.add("listening");
+        }
+    };
+
+    recognition.onresult = (event) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+            transcript += event.results[i][0].transcript;
+        }
+        const separator = voiceBaseText ? " " : "";
+        problemInput.value = voiceBaseText + separator + transcript;
+    };
+
+    recognition.onerror = (event) => {
+        console.warn("Speech recognition error:", event.error);
+        if (voiceStatus) {
+            if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+                voiceStatus.textContent = t("voicePermissionDenied");
+            } else if (event.error === "no-speech") {
+                voiceStatus.textContent = t("voiceNoSpeech");
+            } else {
+                voiceStatus.textContent = t("voiceError");
+            }
+            voiceStatus.classList.remove("hidden", "listening");
+        }
+        resetVoiceUI();
+    };
+
+    recognition.onend = () => {
+        resetVoiceUI();
+    };
+
+    try {
+        recognition.start();
+    } catch (e) {
+        console.warn("Recognition start failed:", e);
+        resetVoiceUI();
+    }
+}
+
+// ---- Audio Read-Aloud (Text-to-Speech) -----------------------------------
+let currentUtterance = null;
+let currentTTSButton = null;
+
+function stripMarkdown(text) {
+    if (!text) return "";
+    return text
+        .replace(/\\([*#_`~[\]()])/g, "$1")
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .replace(/\*([^*]+)\*/g, "$1")
+        .replace(/__([^_]+)__/g, "$1")
+        .replace(/_([^_]+)_/g, "$1")
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/^\s*[-*+]\s+/gm, "")
+        .replace(/^\s*\d+\.\s+/gm, "")
+        .replace(/^\s*---+\s*$/gm, "")
+        .replace(/\n{2,}/g, ". ")
+        .replace(/\n/g, " ")
+        .trim();
+}
+
+function resetTTSUI() {
+    if (currentTTSButton) {
+        currentTTSButton.classList.remove("speaking");
+        const label = currentTTSButton.querySelector("#ttsButtonText") || currentTTSButton;
+        if (label === currentTTSButton) {
+            currentTTSButton.textContent = `🔊 ${t("ttsPlay")}`;
+        } else {
+            label.textContent = t("ttsPlay");
+        }
+        currentTTSButton = null;
+    }
+    const mainTTS = document.getElementById("ttsButton");
+    const mainTTSText = document.getElementById("ttsButtonText");
+    if (mainTTS) mainTTS.classList.remove("speaking");
+    if (mainTTSText) mainTTSText.textContent = t("ttsPlay");
+    currentUtterance = null;
+}
+
+function stopReadAloud() {
+    if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+    }
+    resetTTSUI();
+}
+
+function toggleReadAloud(rawText, langCode, triggerButton = null) {
+    if (!("speechSynthesis" in window)) {
+        alert(t("ttsNotSupported"));
+        return;
+    }
+
+    const button = triggerButton || document.getElementById("ttsButton");
+
+    if (window.speechSynthesis.speaking) {
+        const wasCurrentButton = currentTTSButton === button;
+        stopReadAloud();
+        if (wasCurrentButton) {
+            return;
+        }
+    }
+
+    const textToSpeak = stripMarkdown(rawText);
+    if (!textToSpeak) return;
+
+    stopVoiceInput();
+    window.speechSynthesis.cancel();
+
+    const langMap = {
+        en: "en-IN",
+        mr: "mr-IN",
+        hi: "hi-IN"
+    };
+    const targetLang = langMap[langCode] || langMap[getLanguage()] || "en-IN";
+
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    utterance.lang = targetLang;
+    utterance.rate = 0.92;
+
+    const voices = window.speechSynthesis.getVoices();
+    if (voices && voices.length > 0) {
+        const langPrefix = targetLang.split("-")[0].toLowerCase();
+        const matched = voices.find(v => v.lang.toLowerCase().startsWith(langPrefix))
+                     || voices.find(v => v.lang.toLowerCase().includes(langPrefix));
+        if (matched) {
+            utterance.voice = matched;
+        }
+    }
+
+    currentTTSButton = button;
+
+    utterance.onstart = () => {
+        if (button) {
+            button.classList.add("speaking");
+            const label = button.querySelector("#ttsButtonText") || button;
+            if (label === button) {
+                button.textContent = `⏹️ ${t("ttsStop")}`;
+            } else {
+                label.textContent = t("ttsStop");
+            }
+        }
+    };
+
+    utterance.onend = () => {
+        resetTTSUI();
+    };
+
+    utterance.onerror = (e) => {
+        console.warn("TTS playback error:", e);
+        resetTTSUI();
+    };
+
+    currentUtterance = utterance;
+    window.speechSynthesis.speak(utterance);
+}
+
+function playHistoryAudio(index, event) {
+    const records = window.krishiAIFilteredRecords || window.krishiAIHistoryRecords || [];
+    const record = records[index];
+    if (!record || !record.analysis) return;
+    const btn = event ? event.currentTarget : null;
+    toggleReadAloud(record.analysis, record.language, btn);
+}
+
+function shareOnWhatsApp(customAnalysis, customCrop) {
+    const crop = customCrop || document.getElementById("crop").value.trim() || t("notSpecified");
+    const rawAnalysis = customAnalysis || window.currentAnalysisResult || "";
+    const cleanAnalysis = stripMarkdown(rawAnalysis);
+
+    let snippet = cleanAnalysis;
+    if (snippet.length > 650) {
+        snippet = snippet.substring(0, 647) + "...";
+    }
+
+    const message = `🌱 *KrishiAI Crop Analysis*\n\n` +
+        `🌾 *${t("cropResult")}:* ${crop}\n\n` +
+        `💡 *${t("guidanceTitle")}:*\n${snippet}\n\n` +
+        `📱 _KrishiAI — AI Farming Assistant for Indian Farmers_`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
+function shareHistoryWhatsApp(index) {
+    const records = window.krishiAIFilteredRecords || window.krishiAIHistoryRecords || [];
+    const record = records[index];
+    if (!record || !record.analysis) return;
+    shareOnWhatsApp(record.analysis, record.crop);
+}
+
+// ---- Weather insights ---------------------------------------------------
+let weatherPlaces = [];   // latest place search results
+let selectedPlace = null; // the farmer's chosen village/town
+let lastWeather = null;   // kept so the text can be re-translated instantly
+
+const WEATHER_ICONS = {
+    clear: "☀️",
+    cloudy: "⛅",
+    fog: "🌫️",
+    drizzle: "🌦️",
+    rain: "🌧️",
+    showers: "🌧️",
+    thunder: "⛈️",
+    snow: "❄️"
+};
+
+// Group the WMO weather codes used by Open-Meteo.
+function weatherGroup(code) {
+    if (code <= 1) return "clear";
+    if (code <= 3) return "cloudy";
+    if (code === 45 || code === 48) return "fog";
+    if (code >= 51 && code <= 57) return "drizzle";
+    if (code >= 61 && code <= 67) return "rain";
+    if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "snow";
+    if (code >= 80 && code <= 82) return "showers";
+    if (code >= 95) return "thunder";
+    return "cloudy";
+}
+
+function placeLabel(place) {
+    return [place.name, place.admin1].filter(Boolean).join(", ");
+}
+
+// The chosen place is remembered per user on this device.
+function placeStorageKey() {
+    return currentUser?.id ? `krishiai_place_${currentUser.id}` : null;
+}
+
+function savePlace(place) {
+    const key = placeStorageKey();
+
+    if (!key) return;
+
+    try {
+        localStorage.setItem(key, JSON.stringify(place));
+    } catch (error) {
+        // Remembering the place is optional.
+    }
+}
+
+function loadSavedPlace() {
+    const key = placeStorageKey();
+
+    if (!key) return null;
+
+    try {
+        return JSON.parse(localStorage.getItem(key) || "null");
+    } catch (error) {
+        return null;
+    }
+}
+
+function setWeatherStatus(message) {
+    document.getElementById("weatherStatus").textContent = message || "";
+}
+
+function formatWeatherDate(isoDate, index) {
+    if (index === 0) return t("weatherToday");
+    if (index === 1) return t("weatherTomorrow");
+
+    const locale = { en: "en-IN", mr: "mr-IN", hi: "hi-IN" }[getLanguage()] || "en-IN";
+
+    return new Date(`${isoDate}T00:00:00`).toLocaleDateString(locale, {
+        weekday: "short",
+        day: "numeric",
+        month: "short"
+    });
+}
+
+function renderWeatherPlaces() {
+    const list = document.getElementById("weatherPlaces");
+
+    list.innerHTML = weatherPlaces.map((place, index) => {
+        const details = [place.admin1, place.country].filter(Boolean).join(", ");
+
+        return `
+            <button type="button" class="weather-place" data-index="${index}">
+                <strong>${escapeHtml(place.name)}</strong>
+                ${details ? `<span>${escapeHtml(details)}</span>` : ""}
+            </button>
+        `;
+    }).join("");
+}
+
+function renderWeather() {
+    const box = document.getElementById("weatherResult");
+
+    if (!lastWeather || !selectedPlace) {
+        box.innerHTML = "";
+        box.classList.add("hidden");
+        return;
+    }
+
+    const { current, daily, advice } = lastWeather;
+    const group = weatherGroup(current.code);
+
+    const forecast = daily.map((day, index) => {
+        const dayGroup = weatherGroup(day.code);
+
+        return `
+            <div class="weather-day">
+                <div class="weather-day-name">${escapeHtml(formatWeatherDate(day.date, index))}</div>
+                <div class="weather-day-icon" title="${escapeHtml(t("wx_" + dayGroup))}">${WEATHER_ICONS[dayGroup]}</div>
+                <div><strong>${Math.round(day.temp_max)}°</strong> / ${Math.round(day.temp_min)}°</div>
+                <div>🌧 ${Math.round(day.rain_mm)} mm</div>
+            </div>
+        `;
+    }).join("");
+
+    const tips = advice.length
+        ? advice.map(item => {
+            const dayIndex = daily.findIndex(day => day.date === item.date);
+            const when = dayIndex >= 0
+                ? `<strong>${escapeHtml(formatWeatherDate(item.date, dayIndex))}:</strong> `
+                : "";
+
+            return `<li>${when}${escapeHtml(t("advice_" + item.code))}</li>`;
+        }).join("")
+        : `<li>${escapeHtml(t("weatherNoAdvice"))}</li>`;
+
+    box.innerHTML = `
+        <h3>${escapeHtml(placeLabel(selectedPlace))}</h3>
+
+        <div class="weather-now">
+            <div class="weather-now-icon">${WEATHER_ICONS[group]}</div>
+            <div>
+                <div class="weather-now-temp">${Math.round(current.temperature)}°C</div>
+                <div>${escapeHtml(t("weatherNow"))}: ${escapeHtml(t("wx_" + group))}</div>
+                <div class="weather-now-details">
+                    ${escapeHtml(t("weatherHumidity"))}: ${Math.round(current.humidity)}% ·
+                    ${escapeHtml(t("weatherWind"))}: ${Math.round(current.wind_kmh)} km/h ·
+                    ${escapeHtml(t("weatherRain"))}: ${current.rain_mm} mm
+                </div>
+            </div>
+        </div>
+
+        <h3>${escapeHtml(t("weatherForecastTitle"))}</h3>
+        <div class="weather-forecast">${forecast}</div>
+
+        <h3>${escapeHtml(t("weatherAdviceTitle"))}</h3>
+        <ul class="weather-advice">${tips}</ul>
+
+        <p class="weather-note">${escapeHtml(t("weatherNote"))}</p>
+    `;
+
+    box.classList.remove("hidden");
+}
+
+async function searchPlaces() {
+    const input = document.getElementById("weatherSearch");
+    const query = input.value.trim();
+
+    if (!authToken) {
+        setWeatherStatus(t("weatherLoginRequired"));
+        document.getElementById("authSection").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+        return;
+    }
+
+    if (query.length < 2) {
+        setWeatherStatus(t("weatherShortQuery"));
+        return;
+    }
+
+    setWeatherStatus(t("weatherSearching"));
+
+    try {
+        const response = await fetch(
+            `${API_URL}/weather/places?q=${encodeURIComponent(query)}&language=${getLanguage()}`,
+            { headers: { "Authorization": `Bearer ${authToken}` } }
+        );
+
+        if (response.status === 401) {
+            handleSessionExpired();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        weatherPlaces = data.places || [];
+        renderWeatherPlaces();
+
+        setWeatherStatus(
+            weatherPlaces.length ? t("weatherChoose") : t("weatherNoPlaces")
+        );
+    } catch (error) {
+        console.error("Place search failed:", error);
+        setWeatherStatus(t("weatherError"));
+    }
+}
+
+async function loadWeather() {
+    if (!authToken || !selectedPlace) return;
+
+    setWeatherStatus(t("weatherLoading"));
+
+    try {
+        const response = await fetch(
+            `${API_URL}/weather?lat=${selectedPlace.latitude}&lon=${selectedPlace.longitude}`,
+            { headers: { "Authorization": `Bearer ${authToken}` } }
+        );
+
+        if (response.status === 401) {
+            handleSessionExpired();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
+        lastWeather = await response.json();
+        setWeatherStatus("");
+        renderWeather();
+    } catch (error) {
+        console.error("Weather request failed:", error);
+        lastWeather = null;
+        renderWeather();
+        setWeatherStatus(t("weatherError"));
+    }
+}
+
+function selectPlace(index) {
+    const place = weatherPlaces[index];
+
+    if (!place) return;
+
+    selectedPlace = place;
+    savePlace(place);
+
+    weatherPlaces = [];
+    renderWeatherPlaces();
+
+    document.getElementById("weatherSearch").value = placeLabel(place);
+
+    loadWeather();
+}
+
+// Show the farmer's saved place again after login or a page refresh.
+function restoreWeather() {
+    selectedPlace = loadSavedPlace();
+
+    if (selectedPlace && authToken) {
+        document.getElementById("weatherSearch").value = placeLabel(selectedPlace);
+        loadWeather();
+    }
+}
+
+// Remove all weather data from the page (used when logging out).
+function clearWeather() {
+    selectedPlace = null;
+    lastWeather = null;
+    weatherPlaces = [];
+
+    document.getElementById("weatherSearch").value = "";
+    document.getElementById("weatherPlaces").innerHTML = "";
+    document.getElementById("weatherStatus").textContent = "";
+
+    renderWeather();
+}
+
+document.getElementById("weatherSearchButton").addEventListener("click", searchPlaces);
+
+document.getElementById("weatherSearch").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        searchPlaces();
+    }
+});
+
+document.getElementById("weatherPlaces").addEventListener("click", event => {
+    const button = event.target.closest(".weather-place");
+
+    if (button) {
+        selectPlace(Number(button.dataset.index));
+    }
+});
+// ---- End weather insights -----------------------------------------------
+
+function syncLanguageButtons() {
+    const current = getLanguage();
+
+    document.querySelectorAll(".language-button").forEach(button => {
+        const active = button.dataset.lang === current;
+
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+    });
+}
+
+// The big language buttons drive the (hidden) select element.
+document.querySelectorAll(".language-button").forEach(button => {
+    button.addEventListener("click", () => {
+        const select = document.getElementById("language");
+
+        if (select.value !== button.dataset.lang) {
+            select.value = button.dataset.lang;
+            select.dispatchEvent(new Event("change"));
+        }
+    });
+});
+
 document.getElementById("language").addEventListener("change", event => {
     setLanguage(event.target.value);
+    refreshDynamicText();
+    syncLanguageButtons();
+
+    try {
+        localStorage.setItem("krishiai_language", event.target.value);
+    } catch (error) {
+        // Remembering the language is optional.
+    }
 
     document.getElementById("crop").value = "";
     document.getElementById("problem").value = "";
@@ -277,15 +1685,40 @@ document.getElementById("language").addEventListener("change", event => {
 
 
 // Set the initial UI language.
+try {
+    const savedLanguage = localStorage.getItem("krishiai_language");
+
+    if (savedLanguage && translations[savedLanguage]) {
+        document.getElementById("language").value = savedLanguage;
+    }
+} catch (error) {
+    // Ignore: fall back to the default language.
+}
+
 setLanguage(getLanguage());
+syncLanguageButtons();
+restoreLoginSession();
+restoreWeather();
 
 
 async function analyzeCrop() {
+    stopReadAloud();
+    stopVoiceInput();
+
     const crop = document.getElementById("crop").value.trim();
     const problem = document.getElementById("problem").value.trim();
     const language = getLanguage();
     const imageInput = document.getElementById("image");
     const result = document.getElementById("result");
+
+    if (!authToken) {
+        setAuthStatus(t("loginRequired"));
+        document.getElementById("authSection").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+        return;
+    }
 
 
 if (!crop && !problem && !selectedImage) {
@@ -300,6 +1733,8 @@ if (!crop && !problem && !selectedImage) {
 }
 
 
+    await imageReady; // photo compression must be finished
+
     const formData = new FormData();
     formData.append("crop", crop);
     formData.append("problem", problem);
@@ -310,6 +1745,7 @@ if (!crop && !problem && !selectedImage) {
     }
 
     result.classList.remove("hidden");
+
     result.innerHTML = `
         <h3>${escapeHtml(t("loadingTitle"))}</h3>
         <p>${escapeHtml(t("loadingMessage"))}</p>
@@ -317,15 +1753,31 @@ if (!crop && !problem && !selectedImage) {
 
     try {
         const response = await fetch(`${API_URL}/analyze`, {
-            method: "POST",
-            body: formData
+        method: "POST",
+        headers: {
+        "Authorization": `Bearer ${authToken}`
+        },
+        body: formData
         });
+
+        if (response.status === 401) {
+            handleSessionExpired();
+            return;
+        }
+
+        if (response.status === 413) {
+            result.innerHTML = `
+                <h3>${escapeHtml(t("errorTitle"))}</h3>
+                <p>${escapeHtml(t("errImageTooLarge"))}</p>
+            `;
+            return;
+        }
 
         const data = await response.json();
 
         if (!response.ok) {
             throw new Error(
-                data.detail || data.error || "Analysis request failed"
+                getErrorMessage(data, data.error || "Analysis request failed")
             );
         }
 
@@ -357,8 +1809,23 @@ if (!crop && !problem && !selectedImage) {
             return;
         }
 
+        window.currentAnalysisResult = data.analysis;
+        window.currentAnalysisLang = data.language_code || getLanguage();
+
         result.innerHTML = `
-            <h3>${escapeHtml(t("resultTitle"))}</h3>
+            <div class="result-top-bar">
+                <h3>${escapeHtml(t("resultTitle"))}</h3>
+                <div class="result-actions">
+                    <button type="button" id="ttsButton" class="tts-button" onclick="toggleReadAloud(window.currentAnalysisResult, window.currentAnalysisLang)" title="${escapeHtml(t("ttsPlay"))}">
+                        <span class="tts-icon">🔊</span>
+                        <span id="ttsButtonText">${escapeHtml(t("ttsPlay"))}</span>
+                    </button>
+                    <button type="button" id="whatsappShareButton" class="whatsapp-share-button" onclick="shareOnWhatsApp()" title="${escapeHtml(t("shareWhatsApp"))}">
+                        <span class="share-icon">📲</span>
+                        <span>${escapeHtml(t("shareWhatsApp"))}</span>
+                    </button>
+                </div>
+            </div>
             <p>
                 <strong>${escapeHtml(t("cropResult"))}:</strong>
                 ${escapeHtml(data.crop)}
@@ -451,4 +1918,332 @@ function escapeHtml(text) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+
+
+async function loadAnalysisHistory() {
+    const historyStatus = document.getElementById("historyStatus");
+    const historyList = document.getElementById("historyList");
+    const refreshButton = document.getElementById("refreshHistory");
+
+        if (!authToken) {
+        historyStatus.textContent = t("historyLogin");
+        historyList.innerHTML = "";
+        window.krishiAIHistoryRecords = [];
+        refreshButton.disabled = false;
+        return;
+    }
+
+    historyStatus.textContent = t("historyLoading");
+    refreshButton.disabled = true;
+
+    try {
+        const response = await fetch(`${API_URL}/history?limit=20`, {
+        headers: {
+        "Authorization": `Bearer ${authToken}`
+    }
+});
+
+        if (response.status === 401) {
+            handleSessionExpired();
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`Request failed: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+	const records = Array.isArray(data)
+    	    ? data
+    	    : data.history || data.analyses || data.records || [];
+
+	window.krishiAIHistoryRecords = records;
+
+	if (!records.length) {
+    	    historyStatus.textContent = t("historyNone");
+    	    historyList.innerHTML = "";
+    	    return;
+	}
+
+        renderAnalysisHistory(records);
+
+    } catch (error) {
+        console.error("Could not load analysis history:", error);
+        historyStatus.textContent = t("historyError");
+    } finally {
+        refreshButton.disabled = false;
+    }
+}
+
+document.getElementById("refreshHistory").addEventListener(
+    "click",
+    loadAnalysisHistory
+);
+
+loadAnalysisHistory();
+
+
+
+function renderAnalysisHistory(records) {
+    const historyStatus = document.getElementById("historyStatus");
+    const historyList = document.getElementById("historyList");
+    const selectedLanguage = document.getElementById("historyLanguageFilter").value;
+
+    const filteredRecords = selectedLanguage === "all"
+        ? records
+        : records.filter(record =>
+            (record.language || "en").toLowerCase() === selectedLanguage
+        );
+
+    if (!filteredRecords.length) {
+        historyStatus.textContent = t("historyNoneLanguage");
+        historyList.innerHTML = "";
+        return;
+    }
+
+    historyStatus.textContent = t("historyShowing")
+        .replace("{shown}", filteredRecords.length)
+        .replace("{total}", records.length);
+
+    window.krishiAIFilteredRecords = filteredRecords;
+
+    historyList.innerHTML = filteredRecords.map((record, index) => {
+        const crop = escapeHtml(record.crop || t("notSpecified"));
+        const problem = escapeHtml(record.problem || t("notSpecified"));
+
+        const languageNames = {
+            en: "English",
+            mr: "मराठी (Marathi)",
+            hi: "हिन्दी (Hindi)"
+        };
+
+        const languageCode = (record.language || "en").toLowerCase();
+        const language = escapeHtml(
+            languageNames[languageCode] || languageCode
+        );
+
+        const date = record.created_at
+            ? new Date(record.created_at).toLocaleString()
+            : t("dateUnavailable");
+
+        const analysis = escapeHtml(record.analysis || "");
+
+        return `
+            <article class="history-card">
+                <h3>${crop}</h3>
+                <p><strong>${escapeHtml(t("historyProblem"))}</strong> ${problem}</p>
+                <p><strong>${escapeHtml(t("historyLanguage"))}</strong> ${language}</p>
+                <p><strong>${escapeHtml(t("historyDate"))}</strong> ${escapeHtml(date)}</p>
+                <details>
+                    <summary>${escapeHtml(t("historyView"))}</summary>
+                    <div class="history-actions-bar">
+                        <button type="button" class="history-tts-button" onclick="playHistoryAudio(${index}, event)" title="${escapeHtml(t("ttsPlay"))}">
+                            🔊 ${escapeHtml(t("ttsPlay"))}
+                        </button>
+                        <button type="button" class="history-action-button" onclick="shareHistoryWhatsApp(${index})" title="${escapeHtml(t("shareWhatsApp"))}">
+                            📲 ${escapeHtml(t("shareWhatsApp"))}
+                        </button>
+                    </div>
+                    <div class="history-analysis">${formatAnalysis(analysis)}</div>
+                </details>
+            </article>
+        `;
+    }).join("");
+}
+
+document.getElementById("historyLanguageFilter").addEventListener(
+    "change",
+    () => renderAnalysisHistory(window.krishiAIHistoryRecords || [])
+);
+
+// ---- Fertilizer & Dosage Calculator -------------------------------------
+let lastFertilizerData = null;
+
+async function calculateFertilizer() {
+    const crop = document.getElementById("fertCrop").value;
+    const areaInput = document.getElementById("fertArea").value;
+    const unit = document.getElementById("fertUnit").value;
+    const statusEl = document.getElementById("fertStatus");
+    const button = document.getElementById("fertCalculateButton");
+    const buttonText = document.getElementById("fertButtonText");
+
+    const area = parseFloat(areaInput);
+    if (!area || isNaN(area) || area <= 0) {
+        statusEl.textContent = t("fertError");
+        return;
+    }
+
+    statusEl.textContent = "";
+    button.disabled = true;
+    if (buttonText) buttonText.textContent = t("fertCalculating");
+
+    try {
+        const response = await fetch(`${API_URL}/fertilizer/calculate`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ crop, area, unit })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            statusEl.textContent = data.detail || t("fertError");
+            return;
+        }
+
+        lastFertilizerData = data;
+        renderFertilizerResult(data);
+
+        const resultEl = document.getElementById("fertResult");
+        resultEl.classList.remove("hidden");
+        resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (error) {
+        statusEl.textContent = t("errConnection");
+    } finally {
+        button.disabled = false;
+        if (buttonText) buttonText.textContent = t("fertCalculateBtn");
+    }
+}
+
+function renderFertilizerResult(data) {
+    if (!data) return;
+
+    const lang = getLanguage();
+    const cropName = data.crop_name[lang] || data.crop_name.en || data.crop_key;
+    const unitMap = {
+        acre: t("unitAcre"),
+        guntha: t("unitGuntha"),
+        hectare: t("unitHectare")
+    };
+    const unitName = unitMap[data.input_unit] || data.input_unit;
+
+    // Header Badge
+    document.getElementById("fertResultIcon").textContent = data.icon || "🌾";
+    document.getElementById("fertResultTitle").textContent = `${cropName}`;
+    document.getElementById("fertResultArea").textContent =
+        `${data.input_area} ${unitName} (${data.acres} ${t("unitAcre")})`;
+
+    // Commercial Bags
+    const urea = data.commercial_bags.urea;
+    const dap = data.commercial_bags.dap;
+    const mop = data.commercial_bags.mop;
+
+    document.getElementById("fertUreaBags").textContent = urea.bags;
+    document.getElementById("fertUreaKg").textContent = `${urea.weight_kg} kg total (${urea.grade})`;
+
+    document.getElementById("fertDapBags").textContent = dap.bags;
+    document.getElementById("fertDapKg").textContent = `${dap.weight_kg} kg total (${dap.grade})`;
+
+    document.getElementById("fertMopBags").textContent = mop.bags;
+    document.getElementById("fertMopKg").textContent = `${mop.weight_kg} kg total (${mop.grade})`;
+
+    // Pure Nutrients
+    const npk = data.pure_nutrients_kg;
+    document.getElementById("fertNpkText").textContent =
+        `N: ${npk.nitrogen_n} kg | P₂O₅: ${npk.phosphorus_p} kg | K₂O: ${npk.potassium_k} kg`;
+
+    const special = data.special_nutrient[lang] || data.special_nutrient.en || "";
+    document.getElementById("fertSpecialNutrient").textContent = special || t("notSpecified");
+
+    // Split Schedule
+    const scheduleContainer = document.getElementById("fertScheduleList");
+    scheduleContainer.innerHTML = (data.stages || []).map((stage, i) => {
+        const text = stage[lang] || stage.en || "";
+        return `
+            <div class="fert-stage-item">
+                <span class="fert-stage-num">${i + 1}</span>
+                <p class="fert-stage-desc">${escapeHtml(text)}</p>
+            </div>
+        `;
+    }).join("");
+
+    // Organic & FYM
+    const fymText = t("fymTonnesText").replace("{tonnes}", data.organic_fym_tonnes);
+    document.getElementById("fertFymText").textContent = `🚜 ${fymText}`;
+
+    const organicAdvice = data.organic_tips[lang] || data.organic_tips.en || "";
+    document.getElementById("fertOrganicTips").textContent = organicAdvice;
+}
+
+function readFertilizerAloud() {
+    if (!lastFertilizerData) return;
+    const data = lastFertilizerData;
+    const lang = getLanguage();
+    const cropName = data.crop_name[lang] || data.crop_name.en || data.crop_key;
+    const urea = data.commercial_bags.urea;
+    const dap = data.commercial_bags.dap;
+    const mop = data.commercial_bags.mop;
+    const fym = data.organic_fym_tonnes;
+
+    let speechText = "";
+    if (lang === "mr") {
+        speechText = `${cropName} पिकासाठी ${data.input_area} एकरासाठी खताची मात्रा: ` +
+            `युरिया ${urea.bags} गोण्या, एकूण ${urea.weight_kg} किलो. ` +
+            `डीएपी ${dap.bags} गोण्या, एकूण ${dap.weight_kg} किलो. ` +
+            `पोटॅश ${mop.bags} गोण्या, एकूण ${mop.weight_kg} किलो. ` +
+            `तसेच शेणखत ${fym} टन वापरण्याची शिफारस आहे. ` +
+            (data.organic_tips.mr || "");
+    } else if (lang === "hi") {
+        speechText = `${cropName} फसल के लिए ${data.input_area} एकड़ हेतु खाद की खुराक: ` +
+            `यूरिया ${urea.bags} बोरे, कुल ${urea.weight_kg} किलोग्राम। ` +
+            `डीएपी ${dap.bags} बोरे, कुल ${dap.weight_kg} किलोग्राम। ` +
+            `पोटाश ${mop.bags} बोरे, कुल ${mop.weight_kg} किलोग्राम। ` +
+            `साथ ही गोबर की खाद ${fym} टन डालने की सलाह है। ` +
+            (data.organic_tips.hi || "");
+    } else {
+        speechText = `Fertilizer dosage for ${cropName}, ${data.input_area} ${data.input_unit}: ` +
+            `Urea: ${urea.bags} bags, total ${urea.weight_kg} kilograms. ` +
+            `DAP: ${dap.bags} bags, total ${dap.weight_kg} kilograms. ` +
+            `Potash: ${mop.bags} bags, total ${mop.weight_kg} kilograms. ` +
+            `Recommended Farm Yard Manure: ${fym} tonnes. ` +
+            (data.organic_tips.en || "");
+    }
+
+    const btn = document.getElementById("fertAudioBtn");
+    toggleReadAloud(speechText, lang, btn);
+}
+
+function shareFertilizerWhatsApp() {
+    if (!lastFertilizerData) return;
+    const data = lastFertilizerData;
+    const lang = getLanguage();
+    const cropName = data.crop_name[lang] || data.crop_name.en || data.crop_key;
+    const urea = data.commercial_bags.urea;
+    const dap = data.commercial_bags.dap;
+    const mop = data.commercial_bags.mop;
+    const special = data.special_nutrient[lang] || data.special_nutrient.en || "";
+    const fym = data.organic_fym_tonnes;
+
+    let stagesText = (data.stages || []).map((s, idx) => `${idx + 1}. ${s[lang] || s.en}`).join("\n");
+
+    const message =
+        `🧪 *KrishiAI Fertilizer Calculator Recommendation*\n\n` +
+        `🌾 *${t("cropResult")}:* ${cropName} (${data.input_area} ${data.input_unit} / ${data.acres} Acres)\n` +
+        `-----------------------------------------\n` +
+        `🛍️ *${t("fertBagsTitle")}*\n` +
+        `• *Urea (45kg):* ${urea.bags} Bags (${urea.weight_kg} kg)\n` +
+        `• *DAP (50kg):* ${dap.bags} Bags (${dap.weight_kg} kg)\n` +
+        `• *MOP Potash (50kg):* ${mop.bags} Bags (${mop.weight_kg} kg)\n` +
+        `• *FYM / Compost:* ${fym} Tonnes\n` +
+        (special ? `• *Special Nutrient:* ${special}\n\n` : `\n`) +
+        `📅 *${t("fertScheduleTitle")}*\n${stagesText}\n\n` +
+        `🌱 *Organic Tip:* ${data.organic_tips[lang] || data.organic_tips.en}\n\n` +
+        `📱 _Calculated via KrishiAI — AI Farming Assistant_`;
+
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+}
+
+// Register PWA service worker for offline support
+if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(err => {
+            console.debug("PWA Service Worker registration skipped:", err);
+        });
+    });
 }
