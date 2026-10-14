@@ -71,6 +71,7 @@ I designed KrishiAI with **simplicity and accessibility at the center**:
 │  - Auth (Argon2 + JWT)                        │
 │  - Gemini Prompt Engine & Image Preprocessing │
 │  - Weather Aggregator (Open-Meteo)            │
+│  - ICAR Fertilizer & Dosage Calculator Engine │
 └───────────────┬───────────────────────┬───────┘
                 │                       │
                 ▼                       ▼
@@ -80,6 +81,21 @@ I designed KrishiAI with **simplicity and accessibility at the center**:
       │  AI Analysis     │    │  Crop History    │
       └──────────────────┘    └──────────────────┘
 ```
+
+---
+
+## 📡 API Endpoints
+
+| Method | Endpoint | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `POST` | `/api/auth/register` | Register new farmer account (Argon2 hashed) | No |
+| `POST` | `/api/auth/login` | Log in and receive JWT bearer session token | No |
+| `GET` | `/api/auth/me` | Fetch currently logged-in farmer profile | Yes (JWT) |
+| `POST` | `/api/analyze` | AI crop disease diagnosis via Gemini Vision | Optional (Saves if logged in) |
+| `POST` | `/api/fertilizer/calculate` | ICAR NPK & commercial bag recommendations | No |
+| `GET` | `/api/weather` | Live village weather & farming spray advisories | No |
+| `GET` | `/api/history` | Retrieve user's past crop analysis history | Yes (JWT) |
+| `DELETE` | `/api/history/{id}` | Delete a specific analysis record | Yes (JWT) |
 
 ---
 
@@ -95,7 +111,7 @@ I designed KrishiAI with **simplicity and accessibility at the center**:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-username/KrishiAI.git
+   git clone https://github.com/vaishu159878/KrishiAI.git
    cd KrishiAI
    ```
 
@@ -190,6 +206,7 @@ Building KrishiAI has given me practical experience with real-world DevOps pract
 - [x] Real-time village weather alerts & spray advisories
 - [x] PostgreSQL database & user analysis history
 - [x] 1-Click WhatsApp advice sharing & Kisan Helplines
+- [x] Smart Fertilizer & Dosage Calculator (ICAR standards, Acres/Gunthas/Ha)
 - [x] Docker & Nginx multi-container setup
 - [x] Progressive Web App (PWA) with offline shell
 - [ ] Automated CI/CD pipeline using GitHub Actions
