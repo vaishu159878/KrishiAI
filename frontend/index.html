@@ -6,7 +6,7 @@
     <title>KrishiAI - AI Farming Assistant</title>
     <meta name="theme-color" content="#16823b">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 
 <body>
@@ -158,6 +158,24 @@
                         🚪 Logout
                     </button>
                 </div>
+
+                <div class="privacy-notice-card">
+                    <div class="privacy-notice-header">
+                        <span class="privacy-icon">🔒</span>
+                        <strong data-i18n="privacyTitle">Privacy & Data Control</strong>
+                    </div>
+                    <p class="privacy-notice-text" data-i18n="privacyNotice">
+                        Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.
+                    </p>
+                    <div class="account-danger-actions">
+                        <button type="button" id="clearHistoryBtn" class="danger-outline-button" onclick="confirmClearHistory()" data-i18n="clearHistoryButton">
+                            🗑️ Clear All History
+                        </button>
+                        <button type="button" id="deleteAccountBtn" class="danger-button" onclick="confirmDeleteAccount()" data-i18n="deleteAccountButton">
+                            ⚠️ Delete Account
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -184,6 +202,7 @@
                 <input
                     type="text"
                     id="crop"
+                    maxlength="100"
                     data-i18n-placeholder="cropPlaceholder"
                     placeholder="Example: Tomato">
 
@@ -202,6 +221,7 @@
                 <textarea
                     id="problem"
                     rows="6"
+                    maxlength="2000"
                     data-i18n-placeholder="problemPlaceholder"
                     placeholder="Example: Tomato leaves are turning yellow..."></textarea>
 
@@ -539,6 +559,6 @@
         </p>
     </footer>
 
-    <script src="app.js?v=3"></script>
+    <script src="app.js?v=4"></script>
 </body>
 </html>
