@@ -1,4 +1,4 @@
-const CACHE_NAME = "krishiai-v3";
+const CACHE_NAME = "krishiai-v4";
 const STATIC_ASSETS = [
     "./",
     "./index.html",
