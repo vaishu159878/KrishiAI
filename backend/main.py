@@ -1,19 +1,30 @@
 import os
 import asyncio
+import logging
+from datetime import datetime, timedelta, timezone
 from contextlib import contextmanager, asynccontextmanager
 from pydantic import BaseModel, EmailStr
 
 import psycopg2
+from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Header, Depends
+from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from google import genai
 from pwdlib import PasswordHash
 import jwt
 
+# --------------------------------------------------
+# Logging configuration (CloudWatch-compatible)
+# --------------------------------------------------
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logger = logging.getLogger("krishiai")
 
 # --------------------------------------------------
 # Environment configuration
@@ -24,6 +35,9 @@ load_dotenv()
 AI_API_KEY = os.getenv("AI_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
+is_production = ENVIRONMENT == "production"
 
 if not AI_API_KEY:
     raise RuntimeError("AI_API_KEY is not configured")
@@ -178,12 +192,54 @@ def clear_login_failures(email: str) -> None:
         _login_failures.pop(email, None)
 
 
+# --------------------------------------------------
+# Registration rate limiting (per IP address)
+# --------------------------------------------------
+
+REGISTRATION_MAX_PER_IP = 5
+REGISTRATION_WINDOW_SECONDS = 3600  # 1 hour
+
+_registration_history: dict[str, deque] = {}
+_registration_lock = threading.Lock()
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP, taking X-Forwarded-For (from reverse proxy) into account."""
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def check_registration_rate_limit(client_ip: str) -> None:
+    now = time.monotonic()
+    with _registration_lock:
+        if len(_registration_history) > 10000:
+            _registration_history.clear()
+
+        attempts = _registration_history.get(client_ip)
+        if attempts is None:
+            attempts = deque(maxlen=REGISTRATION_MAX_PER_IP)
+            _registration_history[client_ip] = attempts
+
+        while attempts and now - attempts[0] > REGISTRATION_WINDOW_SECONDS:
+            attempts.popleft()
+
+        if len(attempts) >= REGISTRATION_MAX_PER_IP:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many accounts created from this network. Please try again in an hour.",
+            )
+
+        attempts.append(now)
+
+
 # Used so that unknown emails take as long to reject as wrong passwords,
 # which stops response timing from revealing which emails are registered.
 DUMMY_PASSWORD_HASH = hash_password("not-a-real-password-for-timing-only")
 
 
-from datetime import datetime, timedelta, timezone
+ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 
 def create_access_token(user_id: int, username: str = "", email: str = "") -> str:
@@ -194,7 +250,7 @@ def create_access_token(user_id: int, username: str = "", email: str = "") -> st
         "username": username,
         "email": email,
         "iat": now,
-        "exp": now + timedelta(minutes=30),
+        "exp": now + timedelta(hours=ACCESS_TOKEN_EXPIRE_HOURS),
     }
 
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm="HS256")
@@ -251,17 +307,44 @@ def get_current_user_id(
 
 
 # --------------------------------------------------
-# PostgreSQL connection
+# PostgreSQL connection pool
 # --------------------------------------------------
+
+db_pool: pool.ThreadedConnectionPool | None = None
+
+
+def init_db_pool():
+    global db_pool
+    if db_pool is None:
+        db_pool = pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=20,
+            dsn=DATABASE_URL,
+        )
+        logger.info("PostgreSQL ThreadedConnectionPool initialized (2-20 connections).")
+
+
+def close_db_pool():
+    global db_pool
+    if db_pool is not None:
+        db_pool.closeall()
+        db_pool = None
+        logger.info("PostgreSQL ThreadedConnectionPool closed.")
+
 
 @contextmanager
 def get_db_connection():
-    conn = psycopg2.connect(DATABASE_URL)
+    if db_pool is None:
+        init_db_pool()
+    conn = db_pool.getconn()
     try:
         with conn:
             yield conn
+    except Exception:
+        conn.rollback()
+        raise
     finally:
-        conn.close()
+        db_pool.putconn(conn)
 
 
 # --------------------------------------------------
@@ -271,7 +354,8 @@ def get_db_connection():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create the history and users tables when the application starts.
+    # Initialize connection pool and verify tables & indexes
+    init_db_pool()
     with get_db_connection() as conn:
         with conn.cursor() as cursor:
             cursor.execute("""
@@ -294,16 +378,44 @@ async def lifespan(app: FastAPI):
                     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
                 )
             """)
-            
-            
+
             cursor.execute("""
                 ALTER TABLE crop_analyses
                 ADD COLUMN IF NOT EXISTS user_id INTEGER
-                REFERENCES users(id) ON DELETE SET NULL
+                REFERENCES users(id) ON DELETE CASCADE
             """)
 
+            cursor.execute("""
+                CREATE INDEX IF NOT EXISTS idx_analyses_user_created
+                ON crop_analyses (user_id, created_at DESC)
+            """)
+    logger.info("Database initialized: schema and idx_analyses_user_created index verified.")
 
     yield
+
+    close_db_pool()
+
+
+# --------------------------------------------------
+# Transient error classifier for retries
+# --------------------------------------------------
+
+def is_transient_error(exc: Exception) -> bool:
+    """Return True if exception is a temporary/transient failure suitable for retry."""
+    status_code = getattr(exc, "code", None) or getattr(exc, "status_code", None)
+    if status_code in (429, 500, 502, 503, 504):
+        return True
+    if status_code in (400, 401, 403, 404):
+        return False
+
+    err_str = str(exc).lower()
+    transient_indicators = [
+        "429", "500", "502", "503", "504",
+        "resource_exhausted", "quota", "rate limit",
+        "service unavailable", "deadline exceeded", "timeout",
+        "connection reset", "connection refused", "temporarily unavailable"
+    ]
+    return any(indicator in err_str for indicator in transient_indicators)
 
 
 # --------------------------------------------------
@@ -355,8 +467,11 @@ LANGUAGES = {
 app = FastAPI(
     title="KrishiAI API",
     description="AI-powered agricultural assistance platform",
-    version="1.2.0",
+    version="1.3.0",
     lifespan=lifespan,
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
 )
 
 # --------------------------------------------------
@@ -364,7 +479,10 @@ app = FastAPI(
 # --------------------------------------------------
 
 @app.post("/auth/register", status_code=201)
-def register_user(user: RegisterRequest):
+def register_user(user: RegisterRequest, request: Request):
+    client_ip = get_client_ip(request)
+    check_registration_rate_limit(client_ip)
+
     username = user.username.strip()
     email = str(user.email).strip().lower()
 
@@ -472,7 +590,7 @@ def login_user(user: LoginRequest):
     return {
         "access_token": token,
         "token_type": "bearer",
-        "expires_in": 1800,
+        "expires_in": ACCESS_TOKEN_EXPIRE_HOURS * 3600,
         "user": {
             "id": existing_user[0],
             "username": existing_user[1],
@@ -808,15 +926,21 @@ def database_health():
 # --------------------------------------------------
 
 
+MAX_CROP_LENGTH = 100
+MAX_PROBLEM_LENGTH = 2000
+MAX_WEATHER_LENGTH = 800
+DAILY_ANALYSIS_QUOTA = 20
+
+
 @app.post("/analyze")
 async def analyze_crop(
     crop: str = Form(""),
     problem: str = Form(""),
     language: str = Form("en"),
+    weather_context: str = Form(""),
     image: UploadFile | None = File(None),
     current_user_id: int = Depends(get_current_user_id),
 ):
-
     language_code = language.strip().lower()
 
     if language_code not in LANGUAGES:
@@ -827,11 +951,45 @@ async def analyze_crop(
 
     crop = crop.strip()
     problem = problem.strip()
+    weather_context = weather_context.strip()
+    if len(weather_context) > MAX_WEATHER_LENGTH:
+        weather_context = weather_context[:MAX_WEATHER_LENGTH]
+
+    if len(crop) > MAX_CROP_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Crop name must be {MAX_CROP_LENGTH} characters or less.",
+        )
+
+    if len(problem) > MAX_PROBLEM_LENGTH:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Problem description must be {MAX_PROBLEM_LENGTH} characters or less.",
+        )
 
     if not crop and not problem and not image:
         raise HTTPException(
             status_code=400,
             detail="Please provide a crop name, problem description, or image.",
+        )
+
+    # Check 24-hour analysis quota per user
+    with get_db_connection() as conn:
+        with conn.cursor() as cursor:
+            cursor.execute(
+                """
+                SELECT COUNT(*) FROM crop_analyses
+                WHERE user_id = %s
+                  AND created_at >= NOW() - INTERVAL '24 hours'
+                """,
+                (current_user_id,),
+            )
+            count_24h = cursor.fetchone()[0]
+
+    if count_24h >= DAILY_ANALYSIS_QUOTA:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Daily analysis quota reached ({DAILY_ANALYSIS_QUOTA} per 24 hours). Please try again tomorrow.",
         )
 
     crop_details = crop if crop else "Not specified"
@@ -843,6 +1001,12 @@ async def analyze_crop(
             "No written description provided. "
             "Analyze the uploaded image if available."
         )
+    )
+
+    weather_details = (
+        weather_context
+        if weather_context
+        else "No local weather forecast data available."
     )
 
     # Read the uploaded image.
@@ -899,6 +1063,9 @@ Crop:
 Farmer's description:
 {problem_details}
 
+Local farm weather forecast & conditions:
+{weather_details}
+
 Analyze the uploaded image even when the farmer has not provided
 a written description. If the crop is not specified, identify it
 only when reasonably possible and explain uncertainty.
@@ -911,7 +1078,7 @@ selected language:
 2. Symptoms observed
 3. Recommended actions
 4. Prevention measures
-5. Weather-related considerations, if relevant
+5. Weather-related considerations, if relevant (incorporate the local farm weather data provided above, such as rainfall, humidity, wind or heat risks, into your advice regarding spraying timing, irrigation, or fungal disease prevention)
 
 Important safety requirements:
 - Do not claim certainty about a disease from an image alone.
@@ -941,52 +1108,56 @@ Return the complete response in {selected_language}.
             }
         })
 
-    # Call Gemini with retries.
-    try:
-        response = None
+    # Call Gemini with retries for transient errors only.
+    response = None
 
-        for attempt in range(3):
-            try:
-                print(
-                    f"Gemini attempt {attempt + 1}/3; "
-                    f"language={language_code}"
+    for attempt in range(3):
+        try:
+            logger.info(
+                f"Gemini attempt {attempt + 1}/3; "
+                f"language={language_code}, model={GEMINI_MODEL}"
+            )
+
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=GEMINI_MODEL,
+                contents=contents,
+            )
+
+            if not response or not response.text:
+                raise RuntimeError(
+                    "Gemini returned an empty response"
                 )
 
-                response = await asyncio.to_thread(
-                    client.models.generate_content,
-                    model="gemini-3.8-flash",
-                    contents=contents,
-                )
+            break
 
-                if not response or not response.text:
-                    raise RuntimeError(
-                        "Gemini returned an empty response"
+        except Exception as exc:
+            logger.warning(
+                f"Gemini attempt {attempt + 1} failed: {exc}"
+            )
+
+            if not is_transient_error(exc):
+                err_str = str(exc).lower()
+                if "invalid" in err_str or "unsupported" in err_str or "400" in err_str:
+                    raise HTTPException(
+                        status_code=400,
+                        detail="The image or prompt format could not be processed. Please upload a standard JPEG or PNG image.",
                     )
-
-                break
-
-            except Exception as exc:
-                print(
-                    f"Gemini attempt {attempt + 1} failed: {exc}"
+                logger.error(f"Non-retryable Gemini error: {exc}")
+                raise HTTPException(
+                    status_code=500,
+                    detail="Error communicating with AI service.",
                 )
 
-                if attempt < 2:
-                    await asyncio.sleep(3)
-                else:
-                    raise
-
-    except Exception as exc:
-        print(f"Gemini API Error after retries: {exc}")
-
-        return {
-            "crop": crop,
-            "language": selected_language,
-            "language_code": language_code,
-            "image": image_info,
-            "analysis": selected["error"],
-            "disclaimer": selected["disclaimer"],
-            "error": "AI service temporarily unavailable",
-        }
+            if attempt < 2:
+                # Exponential backoff: 1.5s, 3.0s
+                await asyncio.sleep(1.5 * (attempt + 1))
+            else:
+                logger.error(f"Gemini API unavailable after 3 attempts: {exc}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=selected["error"],
+                )
 
     analysis_text = response.text
 
@@ -1018,8 +1189,7 @@ Return the complete response in {selected_language}.
         analysis_id, created_at = saved_record
 
     except Exception as exc:
-        # Keep the AI result available if saving fails.
-        print(f"Failed to save crop analysis: {exc}")
+        logger.error(f"Failed to save crop analysis: {exc}")
 
     return {
         "id": analysis_id,
@@ -1034,7 +1204,7 @@ Return the complete response in {selected_language}.
 
 
 # --------------------------------------------------
-# Retrieve crop analysis history
+# Retrieve and manage crop analysis history
 # --------------------------------------------------
 
 @app.get("/history")
@@ -1076,12 +1246,84 @@ def get_crop_history(
         }
 
     except Exception as exc:
-        print(f"Failed to retrieve crop history: {exc}")
+        logger.error(f"Failed to retrieve crop history: {exc}")
 
         raise HTTPException(
             status_code=503,
             detail="Unable to retrieve crop history.",
         )
+
+
+@app.delete("/history")
+def clear_user_history(current_user_id: int = Depends(get_current_user_id)):
+    """Delete all past crop analyses for the current authenticated user."""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM crop_analyses WHERE user_id = %s",
+                    (current_user_id,),
+                )
+                deleted_count = cursor.rowcount
+        logger.info(f"Cleared {deleted_count} history records for user {current_user_id}")
+        return {
+            "status": "ok",
+            "message": "All crop analysis history has been deleted.",
+            "deleted_count": deleted_count,
+        }
+    except Exception as exc:
+        logger.error(f"Failed to clear history for user {current_user_id}: {exc}")
+        raise HTTPException(status_code=500, detail="Could not clear history.")
+
+
+@app.delete("/history/{item_id}")
+def delete_single_history_item(
+    item_id: int,
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """Delete a specific crop analysis record belonging to the current user."""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM crop_analyses WHERE id = %s AND user_id = %s",
+                    (item_id, current_user_id),
+                )
+                if cursor.rowcount == 0:
+                    raise HTTPException(
+                        status_code=404,
+                        detail="Analysis record not found.",
+                    )
+        return {"status": "ok", "message": "Record deleted successfully."}
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.error(f"Failed to delete history record {item_id}: {exc}")
+        raise HTTPException(status_code=500, detail="Could not delete record.")
+
+
+@app.delete("/auth/me")
+def delete_user_account(current_user_id: int = Depends(get_current_user_id)):
+    """Permanently delete farmer account and all associated crop analyses."""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "DELETE FROM crop_analyses WHERE user_id = %s",
+                    (current_user_id,),
+                )
+                cursor.execute(
+                    "DELETE FROM users WHERE id = %s",
+                    (current_user_id,),
+                )
+        logger.info(f"Account permanently deleted for user {current_user_id}")
+        return {
+            "status": "ok",
+            "message": "Account and all personal data deleted permanently.",
+        }
+    except Exception as exc:
+        logger.error(f"Failed to delete account for user {current_user_id}: {exc}")
+        raise HTTPException(status_code=500, detail="Could not delete account.")
 
 
 # --------------------------------------------------
@@ -1250,34 +1492,26 @@ CROP_FERTILIZER_RDF = {
 }
 
 
-@app.post("/fertilizer/calculate")
-def calculate_fertilizer(req: FertilizerCalculateRequest):
-    crop_key = req.crop.strip().lower()
+def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre") -> dict:
+    crop_key = crop.strip().lower()
     if crop_key not in CROP_FERTILIZER_RDF:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported crop '{req.crop}'. Supported crops: {', '.join(CROP_FERTILIZER_RDF.keys())}",
+        raise ValueError(
+            f"Unsupported crop '{crop}'. Supported crops: {', '.join(CROP_FERTILIZER_RDF.keys())}"
         )
 
-    if req.area <= 0 or req.area > 10000:
-        raise HTTPException(
-            status_code=400,
-            detail="Area must be a positive number greater than 0 and up to 10,000.",
-        )
+    if area <= 0 or area > 10000:
+        raise ValueError("Area must be a positive number greater than 0 and up to 10,000.")
 
-    unit = req.unit.strip().lower()
-    # Normalize area to acres
-    if unit in ("acre", "acres"):
-        acres = float(req.area)
-    elif unit in ("guntha", "gunthas", "gunthe"):
-        acres = float(req.area) * 0.025  # 1 acre = 40 gunthas
-    elif unit in ("hectare", "hectares", "ha"):
-        acres = float(req.area) * 2.47105  # 1 ha = 2.471 acres
+    unit_norm = unit.strip().lower()
+    # Normalize area to standard acres
+    if unit_norm in ("acre", "acres"):
+        acres = float(area)
+    elif unit_norm in ("guntha", "gunthas", "gunthe"):
+        acres = float(area) * 0.025  # 1 acre = 40 gunthas
+    elif unit_norm in ("hectare", "hectares", "ha"):
+        acres = float(area) * 2.47105  # 1 ha = 2.47105 acres
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid unit. Please choose 'acre', 'guntha', or 'hectare'.",
-        )
+        raise ValueError("Invalid unit. Please choose 'acre', 'guntha', or 'hectare'.")
 
     crop_info = CROP_FERTILIZER_RDF[crop_key]
 
@@ -1306,8 +1540,8 @@ def calculate_fertilizer(req: FertilizerCalculateRequest):
         "crop_key": crop_key,
         "crop_name": crop_info["names"],
         "icon": crop_info["icon"],
-        "input_area": req.area,
-        "input_unit": unit,
+        "input_area": area,
+        "input_unit": unit_norm,
         "acres": round(acres, 2),
         "pure_nutrients_kg": {
             "nitrogen_n": total_n_kg,
@@ -1319,23 +1553,31 @@ def calculate_fertilizer(req: FertilizerCalculateRequest):
                 "bags": urea_bags,
                 "weight_kg": urea_kg,
                 "bag_size": "45 kg",
-                "grade": "46% N (Neem Coated)"
+                "grade": "46% N (Neem Coated)",
             },
             "dap": {
                 "bags": dap_bags,
                 "weight_kg": dap_kg,
                 "bag_size": "50 kg",
-                "grade": "18:46:0"
+                "grade": "18:46:0",
             },
             "mop": {
                 "bags": mop_bags,
                 "weight_kg": mop_kg,
                 "bag_size": "50 kg",
-                "grade": "60% K₂O (Muriate of Potash)"
-            }
+                "grade": "60% K₂O (Muriate of Potash)",
+            },
         },
         "organic_fym_tonnes": fym_tonnes,
         "special_nutrient": crop_info["special_nutrient"],
         "stages": crop_info["stages"],
-        "organic_tips": crop_info["organic_tips"]
-    }
+        "organic_tips": crop_info["organic_tips"],
+    }
+
+
+@app.post("/fertilizer/calculate")
+def calculate_fertilizer(req: FertilizerCalculateRequest):
+    try:
+        return compute_fertilizer_recommendation(req.crop, req.area, req.unit)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
