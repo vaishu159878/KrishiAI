@@ -176,8 +176,11 @@ def test_fertilizer_guntha_conversion():
 
 
 def test_fertilizer_invalid_inputs():
-    with pytest.raises(ValueError, match="Unsupported crop"):
-        compute_fertilizer_recommendation("unknown_crop_xyz", 1.0, "acre")
+    with pytest.raises(ValueError, match="Please provide a crop name"):
+        compute_fertilizer_recommendation("", 1.0, "acre")
+
+    with pytest.raises(ValueError, match="Please provide a crop name"):
+        compute_fertilizer_recommendation("   ", 1.0, "acre")
 
     with pytest.raises(ValueError, match="Area must be"):
         compute_fertilizer_recommendation("wheat", -5.0, "acre")
@@ -356,6 +359,72 @@ def test_offline_crop_guidance_fallback():
     en_guidance = get_offline_crop_guidance("sugarcane", "", "en")
     assert "Shoot Borer" in en_guidance or "Red Rot" in en_guidance
     assert "1800-180-1551" in en_guidance
+
+
+# ==============================================================================
+# 13. Universal Crop Support (Works for EVERY crop, not just specific crops)
+# ==============================================================================
+
+def test_fertilizer_supports_any_crop_universal():
+    # 1. Arbitrary custom crop (Dragon Fruit)
+    res_dragon = compute_fertilizer_recommendation("Dragon Fruit", 2.0, "acre")
+    assert res_dragon["crop_key"] == "dragon fruit"
+    assert res_dragon["acres"] == 2.0
+    assert res_dragon["pure_nutrients_kg"]["nitrogen_n"] > 0
+    assert res_dragon["commercial_bags"]["urea"]["bags"] >= 0
+    assert res_dragon["commercial_bags"]["dap"]["bags"] > 0
+    assert res_dragon["commercial_bags"]["mop"]["bags"] > 0
+    assert res_dragon["organic_fym_tonnes"] > 0
+    assert len(res_dragon["stages"]) > 0
+
+    # 2. Custom crop in Marathi (हळद - Turmeric)
+    res_haldi = compute_fertilizer_recommendation("हळद", 1.5, "acre")
+    assert res_haldi["crop_key"] == "turmeric"
+    assert res_haldi["pure_nutrients_kg"]["nitrogen_n"] > 0
+
+    # 3. Floriculture crop (झेंडू - Marigold)
+    res_zendu = compute_fertilizer_recommendation("झेंडू", 1.0, "acre")
+    assert res_zendu["crop_key"] == "marigold"
+
+    # 4. Completely unknown rare crop (e.g. Vanilla Orchid or Quinoa)
+    res_rare = compute_fertilizer_recommendation("Vanilla Orchid", 1.0, "acre")
+    assert res_rare["crop_key"] == "vanilla orchid"
+    assert res_rare["commercial_bags"]["dap"]["bags"] > 0
+    assert res_rare["commercial_bags"]["urea"]["bags"] >= 0
+
+
+def test_crop_category_classification():
+    from main import classify_crop_category
+
+    # Fruits
+    assert classify_crop_category("Dragon Fruit") == "fruit"
+    assert classify_crop_category("Custard Apple") == "fruit"
+    assert classify_crop_category("सीताफळ") == "fruit"
+    assert classify_crop_category("कलिंगड") == "fruit"
+
+    # Vegetables
+    assert classify_crop_category("वांगी") == "vegetable"
+    assert classify_crop_category("Cauliflower") == "vegetable"
+    assert classify_crop_category("French Beans") == "vegetable"
+
+    # Flowers
+    assert classify_crop_category("झेंडू") == "flower"
+    assert classify_crop_category("Marigold") == "flower"
+    assert classify_crop_category("Rose") == "flower"
+
+    # Spices
+    assert classify_crop_category("हळद") == "spice"
+    assert classify_crop_category("Ginger") == "spice"
+    assert classify_crop_category("Cardamom") == "spice"
+
+    # Oilseeds
+    assert classify_crop_category("Sunflower") == "oilseed"
+    assert classify_crop_category("तीळ") == "oilseed"
+
+    # Millets / Cereals
+    assert classify_crop_category("बाजरी") == "cereal"
+    assert classify_crop_category("Ragi") == "cereal"
+
 
 
 
