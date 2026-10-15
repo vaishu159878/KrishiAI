@@ -92,93 +92,7 @@
             </div>
         </section>
 
-        <!-- User Authentication -->
-        <section id="authSection" class="history-section">
-            <div class="history-header">
-                <div>
-                    <p class="tagline" data-i18n="authTagline">Your Account</p>
-                    <h2 id="authHeading">Login or Create Account</h2>
-                    <p id="authSubheading">Sign in to save and view your personal crop analyses.</p>
-                </div>
-            </div>
-
-            <p id="authStatus" role="status" aria-live="polite"></p>
-
-            <div id="authForms">
-                <form id="loginForm">
-                    <h3 data-i18n="loginTitle">Login</h3>
-
-                    <label for="loginEmail" data-i18n="emailLabel">Email</label>
-                    <input id="loginEmail" name="email" type="email"
-                           autocomplete="email" required>
-
-                    <label for="loginPassword" data-i18n="passwordLabel">Password</label>
-                    <input id="loginPassword" name="password" type="password"
-                           autocomplete="current-password" required>
-
-                    <button type="submit" data-i18n="loginButton">Login</button>
-                </form>
-
-                <hr>
-
-                <form id="registerForm">
-                    <h3 data-i18n="registerTitle">Create Account</h3>
-
-                    <label for="registerUsername" data-i18n="usernameLabel">Username</label>
-                    <input id="registerUsername" name="username" type="text"
-                           minlength="3" maxlength="100"
-                           autocomplete="username" required>
-
-                    <label for="registerEmail" data-i18n="emailLabel">Email</label>
-                    <input id="registerEmail" name="email" type="email"
-                           autocomplete="email" required>
-
-                    <label for="registerPassword" data-i18n="passwordLabel">Password</label>
-                    <input id="registerPassword" name="password" type="password"
-                           minlength="8" maxlength="128"
-                           autocomplete="new-password" required>
-
-                    <small class="field-hint" data-i18n="passwordHint">At least 8 characters.</small>
-
-                    <button type="submit" data-i18n="registerButton">Create Account</button>
-                </form>
-            </div>
-
-            <div id="accountPanel" class="account-panel" hidden>
-                <div class="account-card">
-                    <div class="account-avatar">👨‍🌾</div>
-                    <div class="account-details">
-                        <div class="account-header-row">
-                            <h3 id="accountName" class="account-username"></h3>
-                            <span class="account-status-badge" data-i18n="activeSession">🟢 Active Account</span>
-                        </div>
-                        <p id="accountEmail" class="account-email"></p>
-                    </div>
-                    <button id="logoutButton" type="button" class="logout-button" data-i18n="logoutButton">
-                        🚪 Logout
-                    </button>
-                </div>
-
-                <div class="privacy-notice-card">
-                    <div class="privacy-notice-header">
-                        <span class="privacy-icon">🔒</span>
-                        <strong data-i18n="privacyTitle">Privacy & Data Control</strong>
-                    </div>
-                    <p class="privacy-notice-text" data-i18n="privacyNotice">
-                        Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.
-                    </p>
-                    <div class="account-danger-actions">
-                        <button type="button" id="clearHistoryBtn" class="danger-outline-button" onclick="confirmClearHistory()" data-i18n="clearHistoryButton">
-                            🗑️ Clear All History
-                        </button>
-                        <button type="button" id="deleteAccountBtn" class="danger-button" onclick="confirmDeleteAccount()" data-i18n="deleteAccountButton">
-                            ⚠️ Delete Account
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
-
+        <!-- Crop Analysis (Guest Mode Supported) -->
         <section id="analyzer" class="analyzer">
             <div class="section-title">
                 <p class="tagline" data-i18n="analysisTagline">
@@ -195,6 +109,11 @@
             </div>
 
             <div class="analyzer-card">
+                <div id="guestModeBanner" class="guest-banner">
+                    <span class="guest-icon">🌱</span>
+                    <span data-i18n="guestModeBanner">Guest Mode: Free instant analysis, no account required. Sign in below anytime to save your crop history.</span>
+                </div>
+
                 <label for="crop" data-i18n="cropLabel">
                     Crop Name
                 </label>
@@ -279,13 +198,54 @@
             </div>
         </section>
 
+        <!-- Weather insights -->
+        <section id="weatherSection" class="weather-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="weatherTagline">🌦️ Weather Insights</p>
+                <h2 data-i18n="weatherTitle">Weather for Your Farm</h2>
+                <p data-i18n="weatherDescription">
+                    Search for your village or town to see the forecast and simple farming tips.
+                </p>
+            </div>
+
+            <div class="weather-card">
+                <label for="weatherSearch" data-i18n="weatherSearchLabel">Village or town</label>
+
+                <div class="weather-search-row">
+                    <input
+                        id="weatherSearch"
+                        type="search"
+                        autocomplete="off"
+                        maxlength="80"
+                        data-i18n-placeholder="weatherSearchPlaceholder"
+                        placeholder="Example: Kolhapur">
+
+                    <button
+                        id="weatherSearchButton"
+                        class="primary-button"
+                        type="button"
+                        data-i18n="weatherSearchButton">
+                        Search
+                    </button>
+                </div>
+
+                <p id="weatherStatus" role="status" aria-live="polite"></p>
+
+                <div id="weatherPlaces" class="weather-places"></div>
+
+                <div id="weatherResult" class="weather-result hidden" aria-live="polite"></div>
+
+                <small class="field-hint" data-i18n="weatherCredit">Weather data: Open-Meteo.com</small>
+            </div>
+        </section>
+
         <!-- Fertilizer & Dosage Calculator -->
         <section id="fertilizerSection" class="fertilizer-section">
             <div class="section-title">
                 <p class="tagline" data-i18n="fertTagline">🧪 Smart Nutrition</p>
                 <h2 data-i18n="fertTitle">Fertilizer & Dosage Calculator</h2>
                 <p data-i18n="fertDescription">
-                    Calculate exact bags of Urea, DAP, Potash and organic compost for your crop and land size based on ICAR guidelines.
+                    Calculate recommended bags of Urea, DAP, Potash and organic compost based on ICAR guidelines. Actual dosage depends on soil test results and local conditions.
                 </p>
             </div>
 
@@ -329,8 +289,8 @@
 
                 <p id="fertStatus" role="status" aria-live="polite" class="field-hint"></p>
 
-                <!-- Results container -->
-                <div id="fertResult" class="fert-result hidden" aria-live="polite">
+                <!-- Results container (hidden by default until calculation runs) -->
+                <div id="fertResult" class="fert-result hidden" style="display: none;" aria-live="polite">
                     <div class="fert-result-header">
                         <div class="fert-crop-badge">
                             <span id="fertResultIcon" class="fert-badge-icon">🌾</span>
@@ -353,7 +313,7 @@
                     </div>
 
                     <!-- Commercial Fertilizer Bags Summary -->
-                    <h4 class="fert-section-subtitle" data-i18n="fertBagsTitle">🛍️ Commercial Fertilizer Bags to Purchase:</h4>
+                    <h4 class="fert-section-subtitle" data-i18n="fertBagsTitle">🛍️ Recommended Bags to Purchase (RDF Estimate):</h4>
                     <div class="fert-bags-grid">
                         <div class="fert-bag-card urea-card">
                             <div class="bag-header">
@@ -425,48 +385,90 @@
             </div>
         </section>
 
-
-
-
-
-        <!-- Weather insights -->
-        <section id="weatherSection" class="weather-section">
-            <div class="section-title">
-                <p class="tagline" data-i18n="weatherTagline">🌦️ Weather Insights</p>
-                <h2 data-i18n="weatherTitle">Weather for Your Farm</h2>
-                <p data-i18n="weatherDescription">
-                    Search for your village or town to see the forecast and simple farming tips.
-                </p>
+        <!-- User Authentication -->
+        <section id="authSection" class="history-section">
+            <div class="history-header">
+                <div>
+                    <p class="tagline" data-i18n="authTagline">Your Account</p>
+                    <h2 id="authHeading">Login or Create Account</h2>
+                    <p id="authSubheading">Sign in to save and view your personal crop analyses.</p>
+                </div>
             </div>
 
-            <div class="weather-card">
-                <label for="weatherSearch" data-i18n="weatherSearchLabel">Village or town</label>
+            <p id="authStatus" role="status" aria-live="polite"></p>
 
-                <div class="weather-search-row">
-                    <input
-                        id="weatherSearch"
-                        type="search"
-                        autocomplete="off"
-                        maxlength="80"
-                        data-i18n-placeholder="weatherSearchPlaceholder"
-                        placeholder="Example: Kolhapur">
+            <div id="authForms">
+                <form id="loginForm">
+                    <h3 data-i18n="loginTitle">Login</h3>
 
-                    <button
-                        id="weatherSearchButton"
-                        class="primary-button"
-                        type="button"
-                        data-i18n="weatherSearchButton">
-                        Search
+                    <label for="loginEmail" data-i18n="emailLabel">Email</label>
+                    <input id="loginEmail" name="email" type="email"
+                           autocomplete="email" required>
+
+                    <label for="loginPassword" data-i18n="passwordLabel">Password</label>
+                    <input id="loginPassword" name="password" type="password"
+                           autocomplete="current-password" required>
+
+                    <button type="submit" data-i18n="loginButton">Login</button>
+                </form>
+
+                <hr>
+
+                <form id="registerForm">
+                    <h3 data-i18n="registerTitle">Create Account</h3>
+
+                    <label for="registerUsername" data-i18n="usernameLabel">Username</label>
+                    <input id="registerUsername" name="username" type="text"
+                           minlength="3" maxlength="100"
+                           autocomplete="username" required>
+
+                    <label for="registerEmail" data-i18n="emailLabel">Email</label>
+                    <input id="registerEmail" name="email" type="email"
+                           autocomplete="email" required>
+
+                    <label for="registerPassword" data-i18n="passwordLabel">Password</label>
+                    <input id="registerPassword" name="password" type="password"
+                           minlength="8" maxlength="128"
+                           autocomplete="new-password" required>
+
+                    <small class="field-hint" data-i18n="passwordHint">At least 8 characters.</small>
+
+                    <button type="submit" data-i18n="registerButton">Create Account</button>
+                </form>
+            </div>
+
+            <div id="accountPanel" class="account-panel" hidden>
+                <div class="account-card">
+                    <div class="account-avatar">👨‍🌾</div>
+                    <div class="account-details">
+                        <div class="account-header-row">
+                            <h3 id="accountName" class="account-username"></h3>
+                            <span class="account-status-badge" data-i18n="activeSession">🟢 Active Account</span>
+                        </div>
+                        <p id="accountEmail" class="account-email"></p>
+                    </div>
+                    <button id="logoutButton" type="button" class="logout-button" data-i18n="logoutButton">
+                        🚪 Logout
                     </button>
                 </div>
 
-                <p id="weatherStatus" role="status" aria-live="polite"></p>
-
-                <div id="weatherPlaces" class="weather-places"></div>
-
-                <div id="weatherResult" class="weather-result hidden" aria-live="polite"></div>
-
-                <small class="field-hint" data-i18n="weatherCredit">Weather data: Open-Meteo.com</small>
+                <div class="privacy-notice-card">
+                    <div class="privacy-notice-header">
+                        <span class="privacy-icon">🔒</span>
+                        <strong data-i18n="privacyTitle">Privacy & Data Control</strong>
+                    </div>
+                    <p class="privacy-notice-text" data-i18n="privacyNotice">
+                        Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.
+                    </p>
+                    <div class="account-danger-actions">
+                        <button type="button" id="clearHistoryBtn" class="danger-outline-button" onclick="confirmClearHistory()" data-i18n="clearHistoryButton">
+                            🗑️ Clear All History
+                        </button>
+                        <button type="button" id="deleteAccountBtn" class="danger-button" onclick="confirmDeleteAccount()" data-i18n="deleteAccountButton">
+                            ⚠️ Delete Account
+                        </button>
+                    </div>
+                </div>
             </div>
         </section>
 
