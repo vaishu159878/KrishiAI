@@ -227,6 +227,11 @@ function updateAuthUI() {
     if (authForms) authForms.hidden = isLoggedIn;
     if (accountPanel) accountPanel.hidden = !isLoggedIn;
 
+    const guestBanner = document.getElementById("guestModeBanner");
+    if (guestBanner) {
+        guestBanner.style.display = isLoggedIn ? "none" : "flex";
+    }
+
     if (isLoggedIn) {
         let username = currentUser?.username;
         let email = currentUser?.email;
@@ -528,7 +533,7 @@ const translations = {
         weatherLoginRequired: "Please log in to see weather insights.",
         weatherShortQuery: "Please type at least 2 letters.",
         weatherSearching: "Searching...",
-        weatherNoPlaces: "No place found. Try another spelling or a nearby town.",
+        weatherNoPlaces: "No place found. Try your nearest Taluka or District name (e.g. Kolhapur, Baramati, Nashik).",
         weatherChoose: "Choose your place:",
         weatherLoading: "Loading weather...",
         weatherError: "Unable to load weather. Please try again.",
@@ -601,7 +606,7 @@ const translations = {
         findKvk: "🌐 Find Your KVK",
         fertTagline: "🧪 Smart Nutrition",
         fertTitle: "Fertilizer & Dosage Calculator",
-        fertDescription: "Calculate exact bags of Urea, DAP, Potash and organic compost for your crop and land size based on ICAR guidelines.",
+        fertDescription: "Calculate recommended bags of Urea, DAP, Potash and organic compost based on ICAR guidelines. Actual dosage depends on soil test results and local conditions.",
         fertCropLabel: "Select Crop",
         fertAreaLabel: "Farm Size / Area",
         fertUnitLabel: "Land Unit",
@@ -612,7 +617,7 @@ const translations = {
         fertCalculating: "Calculating...",
         listenDosage: "Listen to Dosage",
         shareDosage: "Share on WhatsApp",
-        fertBagsTitle: "🛍️ Commercial Fertilizer Bags to Purchase:",
+        fertBagsTitle: "🛍️ Recommended Bags to Purchase (RDF Estimate):",
         bagsLabel: "Bags",
         pureNutrients: "Pure Nutrients (N-P-K):",
         microNutrient: "Micro / Secondary Nutrient:",
@@ -622,6 +627,10 @@ const translations = {
         fertError: "Please enter a valid area.",
         fertSuccess: "Dosage calculated successfully.",
         fymTonnesText: "Recommended FYM / Compost: {tonnes} tonnes",
+        guestModeBanner: "🌱 Guest Mode: Free instant analysis, no account required. Sign in below anytime to save your crop history.",
+        guestResultNotice: "🌱 You are in Guest Mode — this diagnosis is not saved to history.",
+        aiCautionTitle: "⚠️ Important Advisory Caution",
+        aiCautionBody: "AI guidance is for informational support only. Visual diagnosis and pesticide suggestions can be inaccurate. Always verify symptoms with your nearest Krishi Vigyan Kendra (KVK) or local agriculture extension officer before spraying chemical pesticides.",
         privacyTitle: "Privacy & Data Control",
         privacyNotice: "Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.",
         clearHistoryButton: "🗑️ Clear All History",
@@ -712,7 +721,7 @@ const translations = {
         weatherLoginRequired: "हवामान माहिती पाहण्यासाठी कृपया लॉगिन करा.",
         weatherShortQuery: "कृपया किमान 2 अक्षरे लिहा.",
         weatherSearching: "शोधत आहे...",
-        weatherNoPlaces: "ठिकाण सापडले नाही. दुसरे स्पेलिंग किंवा जवळचे शहर वापरून पहा.",
+        weatherNoPlaces: "ठिकाण सापडले नाही? जवळच्या तालुक्याचे किंवा जिल्ह्याचे नाव टाकून पहा (उदा. Kolhapur, Baramati, Nashik).",
         weatherChoose: "तुमचे ठिकाण निवडा:",
         weatherLoading: "हवामान लोड होत आहे...",
         weatherError: "हवामान लोड करता आले नाही. कृपया पुन्हा प्रयत्न करा.",
@@ -785,7 +794,7 @@ const translations = {
         findKvk: "🌐 तुमचे KVK शोधा",
         fertTagline: "🧪 स्मार्ट खत व्यवस्थापन",
         fertTitle: "खताचे प्रमाण कॅल्क्युलेटर",
-        fertDescription: "ICAR च्या मार्गदर्शक तत्त्वांनुसार तुमच्या पिकासाठी आणि जमिनीसाठी युरिया, DAP, पोटॅश आणि सेंद्रिय खतांच्या अचूक गोण्या मोजा.",
+        fertDescription: "ICAR च्या मार्गदर्शक तत्त्वांवर आधारित युरिया, DAP, पोटॅश आणि सेंद्रिय खतांच्या शिफारसित गोण्यांचे प्रमाण मोजा. प्रत्यक्ष प्रमाण माती परीक्षणानुसार बदलावे.",
         fertCropLabel: "पीक निवडा",
         fertAreaLabel: "शेताचे क्षेत्रफळ",
         fertUnitLabel: "क्षेत्रफळ एकक",
@@ -796,7 +805,7 @@ const translations = {
         fertCalculating: "हिशोब करत आहे...",
         listenDosage: "डोस ऐका",
         shareDosage: "व्हॉट्सॲपवर पाठवा",
-        fertBagsTitle: "🛍️ खरेदी करावयाच्या रासायनिक खतांच्या गोण्या:",
+        fertBagsTitle: "🛍️ खरेदी करावयाच्या खतांच्या शिफारसित गोण्या (अंदाजे प्रमाण):",
         bagsLabel: "गोण्या",
         pureNutrients: "शुद्ध अन्नद्रव्ये (नत्र-स्फुरद-पालाश):",
         microNutrient: "सूक्ष्म / दुय्यम अन्नद्रव्य:",
@@ -806,6 +815,10 @@ const translations = {
         fertError: "कृपया योग्य क्षेत्रफळ प्रविष्ट करा.",
         fertSuccess: "खताचे प्रमाण यशस्वीरीत्या मोजले.",
         fymTonnesText: "शिफारस केलेले शेणखत / कंपोस्ट: {tonnes} टन",
+        guestModeBanner: "🌱 अतिथी मोड: मोफत तात्काळ विश्लेषण, खात्याची गरज नाही. इतिहास जतन करण्यासाठी खाली लॉगिन करा.",
+        guestResultNotice: "🌱 तुम्ही अतिथी मोडमध्ये आहात — हे निदान इतिहासात जतन केलेले नाही.",
+        aiCautionTitle: "⚠️ महत्त्वाची सावधगिरीची सूचना",
+        aiCautionBody: "हे AI आधारित मार्गदर्शन आहे. फोटोद्वारे रोगनिदान आणि कीटकनाशक शिफारसी पूर्णपणे अचूक नसतील. कोणतीही रासायनिक औषध फवारणी करण्यापूर्वी जवळच्या कृषी विज्ञान केंद्रातील (KVK) शास्त्रज्ञ किंवा कृषी अधिकाऱ्यांचा सल्ला अवश्य घ्या.",
         privacyTitle: "गोपनीयता आणि डेटा नियंत्रण",
         privacyNotice: "तुमच्या पिकाची माहिती आणि विश्लेषण इतिहास तुमच्या खात्यात सुरक्षित साठवला जातो. व्हॉइस इनपुट ब्राऊझरची स्पीच सेवा वापरते (जी ऑडिओ डिव्हाइस/गुगलच्या स्पीच सर्व्हरवर पाठवते). तुम्ही तुमचा इतिहास किंवा खाते कधीही हटवू शकता.",
         clearHistoryButton: "🗑️ संपूर्ण इतिहास हटवा",
@@ -896,7 +909,7 @@ const translations = {
         weatherLoginRequired: "मौसम की जानकारी देखने के लिए कृपया लॉगिन करें।",
         weatherShortQuery: "कृपया कम से कम 2 अक्षर लिखें।",
         weatherSearching: "खोज रहे हैं...",
-        weatherNoPlaces: "जगह नहीं मिली। दूसरी वर्तनी या पास का शहर आज़माएँ।",
+        weatherNoPlaces: "स्थान नहीं मिला। अपने निकटतम तहसील या जिले का नाम लिखकर खोजें (जैसे: Kolhapur, Baramati, Bhopal)।",
         weatherChoose: "अपनी जगह चुनें:",
         weatherLoading: "मौसम लोड हो रहा है...",
         weatherError: "मौसम लोड नहीं हो सका। कृपया फिर से प्रयास करें।",
@@ -969,7 +982,7 @@ const translations = {
         findKvk: "🌐 अपना KVK खोजें",
         fertTagline: "🧪 स्मार्ट पोषण प्रबंधन",
         fertTitle: "खाद और खुराक कैलकुलेटर",
-        fertDescription: "ICAR दिशानिर्देशों के अनुसार अपनी फसल और खेत के आकार के लिए यूरिया, डीएपी, पोटाश और जैविक खाद के सही बोरों की गणना करें।",
+        fertDescription: "ICAR दिशानिर्देशों के अनुसार अपनी फसल के लिए यूरिया, डीएपी, पोटाश और जैविक खाद के अनुशंसित बोरों का अनुमान लगाएँ। सटीक मात्रा मृदा परीक्षण पर निर्भर करती है।",
         fertCropLabel: "फसल चुनें",
         fertAreaLabel: "खेत का आकार / क्षेत्रफल",
         fertUnitLabel: "इकाई",
@@ -980,7 +993,7 @@ const translations = {
         fertCalculating: "गणना की जा रही है...",
         listenDosage: "खुराक सुनें",
         shareDosage: "व्हाट्सएप पर भेजें",
-        fertBagsTitle: "🛍️ खरीदे जाने वाले रासायनिक खाद के बोरे:",
+        fertBagsTitle: "🛍️ खरीदे जाने वाले उर्वरक के अनुशंसित बोरे (अनुमानित मात्रा):",
         bagsLabel: "बोरे",
         pureNutrients: "शुद्ध पोषक तत्व (N-P-K):",
         microNutrient: "सूक्ष्म / द्वितीयक पोषक तत्व:",
@@ -990,6 +1003,10 @@ const translations = {
         fertError: "कृपया सही क्षेत्रफल दर्ज करें।",
         fertSuccess: "खाद की खुराक की गणना सफल रही।",
         fymTonnesText: "अनुशंसित गोबर की खाद / कंपोस्ट: {tonnes} टन",
+        guestModeBanner: "🌱 गेस्ट मोड: निःशुल्क त्वरित विश्लेषण, खाते की आवश्यकता नहीं। इतिहास सुरक्षित रखने के लिए नीचे लॉगिन करें।",
+        guestResultNotice: "🌱 आप गेस्ट मोड में हैं — यह निदान इतिहास में सहेजा नहीं गया है।",
+        aiCautionTitle: "⚠️ महत्वपूर्ण सावधानी सलाह",
+        aiCautionBody: "यह AI-जनरेटेड सलाह है। फोटो से रोग पहचान और कीटनाशक सुझाव शत-प्रतिशत सही नहीं हो सकते। किसी भी रासायनिक कीटनाशक के छिड़काव से पहले अपने स्थानीय कृषि विज्ञान केंद्र (KVK) या कृषि विशेषज्ञ से पुष्टि अवश्य करें।",
         privacyTitle: "गोपनीयता और डेटा नियंत्रण",
         privacyNotice: "आपकी फसल का विवरण और निदान इतिहास आपके निजी खाते में सुरक्षित संग्रहीत रहता है। वॉयस इनपुट ब्राउज़र की वाक् पहचान सेवा का उपयोग करता है (जो ऑडियो को डिवाइस/गूगल के स्पीच सर्वर पर भेजता है)। आप कभी भी अपना इतिहास या खाता हटा सकते हैं।",
         clearHistoryButton: "🗑️ सारा इतिहास हटाएं",
@@ -1530,15 +1547,6 @@ async function searchPlaces() {
     const input = document.getElementById("weatherSearch");
     const query = input.value.trim();
 
-    if (!authToken) {
-        setWeatherStatus(t("weatherLoginRequired"));
-        document.getElementById("authSection").scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-        return;
-    }
-
     if (query.length < 2) {
         setWeatherStatus(t("weatherShortQuery"));
         return;
@@ -1547,9 +1555,14 @@ async function searchPlaces() {
     setWeatherStatus(t("weatherSearching"));
 
     try {
+        const headers = {};
+        if (authToken) {
+            headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
         const response = await fetch(
             `${API_URL}/weather/places?q=${encodeURIComponent(query)}&language=${getLanguage()}`,
-            { headers: { "Authorization": `Bearer ${authToken}` } }
+            { headers }
         );
 
         if (response.status === 401) {
@@ -1576,14 +1589,19 @@ async function searchPlaces() {
 }
 
 async function loadWeather() {
-    if (!authToken || !selectedPlace) return;
+    if (!selectedPlace) return;
 
     setWeatherStatus(t("weatherLoading"));
 
     try {
+        const headers = {};
+        if (authToken) {
+            headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
         const response = await fetch(
             `${API_URL}/weather?lat=${selectedPlace.latitude}&lon=${selectedPlace.longitude}`,
-            { headers: { "Authorization": `Bearer ${authToken}` } }
+            { headers }
         );
 
         if (response.status === 401) {
@@ -1626,7 +1644,7 @@ function selectPlace(index) {
 function restoreWeather() {
     selectedPlace = loadSavedPlace();
 
-    if (selectedPlace && authToken) {
+    if (selectedPlace) {
         document.getElementById("weatherSearch").value = placeLabel(selectedPlace);
         loadWeather();
     }
@@ -1739,27 +1757,16 @@ async function analyzeCrop() {
     const imageInput = document.getElementById("image");
     const result = document.getElementById("result");
 
-    if (!authToken) {
-        setAuthStatus(t("loginRequired"));
-        document.getElementById("authSection").scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
+    if (!crop && !problem && !selectedImage) {
+        result.classList.remove("hidden");
+
+        result.innerHTML = `
+            <h3>${escapeHtml(t("missingTitle"))}</h3>
+            <p>${escapeHtml(t("missingMessage"))}</p>
+        `;
+
         return;
     }
-
-
-if (!crop && !problem && !selectedImage) {
-    result.classList.remove("hidden");
-
-    result.innerHTML = `
-        <h3>${escapeHtml(t("missingTitle"))}</h3>
-        <p>${escapeHtml(t("missingMessage"))}</p>
-    `;
-
-    return;
-}
-
 
     await imageReady; // photo compression must be finished
 
@@ -1789,11 +1796,14 @@ if (!crop && !problem && !selectedImage) {
     `;
 
     try {
+        const headers = {};
+        if (authToken) {
+            headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
         const response = await fetch(`${API_URL}/analyze`, {
             method: "POST",
-            headers: {
-                "Authorization": `Bearer ${authToken}`
-            },
+            headers,
             body: formData
         });
 
@@ -1851,8 +1861,19 @@ if (!crop && !problem && !selectedImage) {
             `;
         }
 
+        const cautionBannerHtml = `
+            <div class="ai-caution-banner">
+                <span class="caution-icon">⚠️</span>
+                <div class="caution-content">
+                    <strong>${escapeHtml(t("aiCautionTitle"))}</strong>
+                    <p>${escapeHtml(t("aiCautionBody"))}</p>
+                </div>
+            </div>
+        `;
+
         if (data.error) {
             result.innerHTML = `
+                ${cautionBannerHtml}
                 <h3>${escapeHtml(t("warningTitle"))}</h3>
                 <p>
                     <strong>${escapeHtml(t("cropResult"))}:</strong>
@@ -1871,7 +1892,20 @@ if (!crop && !problem && !selectedImage) {
         window.currentAnalysisResult = data.analysis;
         window.currentAnalysisLang = data.language_code || getLanguage();
 
+        let guestNoticeHtml = "";
+        if (!authToken || data.is_guest) {
+            guestNoticeHtml = `
+                <div class="guest-notice-box">
+                    ${escapeHtml(t("guestResultNotice"))}
+                    <a href="#authSection" onclick="document.getElementById('authSection').scrollIntoView({behavior:'smooth'}); return false;">
+                        ${escapeHtml(t("loginTitle"))} / ${escapeHtml(t("registerTitle"))}
+                    </a>
+                </div>
+            `;
+        }
+
         result.innerHTML = `
+            ${cautionBannerHtml}
             <div class="result-top-bar">
                 <h3>${escapeHtml(t("resultTitle"))}</h3>
                 <div class="result-actions">
@@ -1894,9 +1928,14 @@ if (!crop && !problem && !selectedImage) {
             <div class="analysis">
                 ${formatAnalysis(data.analysis)}
             </div>
+            ${guestNoticeHtml}
             <hr>
             <small>⚠️ ${escapeHtml(data.disclaimer || t("disclaimer"))}</small>
         `;
+
+        if (authToken && data.saved_to_history) {
+            loadAnalysisHistory().catch(() => {});
+        }
 
     } catch (error) {
         console.error("KrishiAI Analysis Error:", error);
@@ -2206,6 +2245,7 @@ async function calculateFertilizer() {
 
         const resultEl = document.getElementById("fertResult");
         resultEl.classList.remove("hidden");
+        resultEl.style.display = "block";
         resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (error) {
         statusEl.textContent = t("errConnection");
