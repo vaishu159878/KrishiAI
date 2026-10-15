@@ -19,3 +19,8 @@ backend/.env.*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
