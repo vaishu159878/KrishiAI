@@ -122,21 +122,23 @@ import time
 
 import httpx
 
-MAX_IMAGE_BYTES = 5 * 1024 * 1024  # 5 MB
+MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
 from collections import deque
 
 # --------------------------------------------------
-# Login rate limiting (in memory, per email address)
+# Login rate limiting (per email and per client IP)
 # --------------------------------------------------
-# Keyed by email rather than IP: behind nginx every request would otherwise
-# look like it comes from the same internal address. State is per process and
-# resets when the backend restarts; run a single uvicorn worker or move this
-# to Redis/the database before scaling out.
+# Protects against single-account brute-force and IP password spraying
+# behind CloudFront/Nginx reverse proxies.
 
 LOGIN_MAX_FAILURES = 5
 LOGIN_WINDOW_SECONDS = 600  # 10 minutes
 
+LOGIN_MAX_FAILURES_PER_IP = 15
+LOGIN_IP_WINDOW_SECONDS = 900  # 15 minutes
+
 _login_failures: dict[str, deque] = {}
+_login_ip_failures: dict[str, deque] = {}
 _login_lock = threading.Lock()
 
 
@@ -170,11 +172,34 @@ def login_retry_after(email: str) -> int:
     return 0
 
 
-def record_login_failure(email: str) -> None:
+def login_ip_retry_after(client_ip: str) -> int:
+    """Seconds an IP address must wait after repeated failed attempts across accounts."""
+    if not client_ip or client_ip == "unknown":
+        return 0
+
+    now = time.monotonic()
+    with _login_lock:
+        failures = _login_ip_failures.get(client_ip)
+        if not failures:
+            return 0
+
+        while failures and now - failures[0] > LOGIN_IP_WINDOW_SECONDS:
+            failures.popleft()
+
+        if not failures:
+            _login_ip_failures.pop(client_ip, None)
+            return 0
+
+        if len(failures) >= LOGIN_MAX_FAILURES_PER_IP:
+            return max(1, int(LOGIN_IP_WINDOW_SECONDS - (now - failures[0])) + 1)
+
+    return 0
+
+
+def record_login_failure(email: str, client_ip: str = "") -> None:
     now = time.monotonic()
 
     with _login_lock:
-        # Crude memory guard against many different made-up emails.
         if len(_login_failures) > 10000:
             for key in list(_login_failures):
                 _recent_failures(key, now)
@@ -186,10 +211,20 @@ def record_login_failure(email: str) -> None:
             email, deque(maxlen=LOGIN_MAX_FAILURES)
         ).append(now)
 
+        if client_ip and client_ip != "unknown":
+            if len(_login_ip_failures) > 10000:
+                _login_ip_failures.clear()
 
-def clear_login_failures(email: str) -> None:
+            _login_ip_failures.setdefault(
+                client_ip, deque(maxlen=LOGIN_MAX_FAILURES_PER_IP)
+            ).append(now)
+
+
+def clear_login_failures(email: str, client_ip: str = "") -> None:
     with _login_lock:
         _login_failures.pop(email, None)
+        if client_ip and client_ip != "unknown":
+            _login_ip_failures.pop(client_ip, None)
 
 
 # --------------------------------------------------
@@ -229,6 +264,40 @@ def check_registration_rate_limit(client_ip: str) -> None:
             raise HTTPException(
                 status_code=429,
                 detail="Too many accounts created from this network. Please try again in an hour.",
+            )
+
+        attempts.append(now)
+
+
+# --------------------------------------------------
+# Guest analysis rate limiting (per IP address)
+# --------------------------------------------------
+
+GUEST_ANALYSIS_MAX_PER_IP = 10
+GUEST_ANALYSIS_WINDOW_SECONDS = 86400  # 24 hours
+
+_guest_analysis_history: dict[str, deque] = {}
+_guest_analysis_lock = threading.Lock()
+
+
+def check_guest_analysis_rate_limit(client_ip: str) -> None:
+    now = time.monotonic()
+    with _guest_analysis_lock:
+        if len(_guest_analysis_history) > 10000:
+            _guest_analysis_history.clear()
+
+        attempts = _guest_analysis_history.get(client_ip)
+        if attempts is None:
+            attempts = deque(maxlen=GUEST_ANALYSIS_MAX_PER_IP)
+            _guest_analysis_history[client_ip] = attempts
+
+        while attempts and now - attempts[0] > GUEST_ANALYSIS_WINDOW_SECONDS:
+            attempts.popleft()
+
+        if len(attempts) >= GUEST_ANALYSIS_MAX_PER_IP:
+            raise HTTPException(
+                status_code=429,
+                detail="Daily guest analysis quota reached (10 per 24 hours). Please create a free account to continue saving analyses.",
             )
 
         attempts.append(now)
@@ -303,6 +372,23 @@ def get_current_user_id(
         )
 
     return get_user_id_from_token(token)
+
+
+def get_optional_user_id(
+    authorization: str | None = Header(default=None),
+) -> int | None:
+    """Return user_id if valid bearer token is provided; otherwise None (guest mode)."""
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+
+    token = authorization[7:].strip()
+    if not token:
+        return None
+
+    try:
+        return get_user_id_from_token(token)
+    except Exception:
+        return None
 
 
 
@@ -538,11 +624,21 @@ def register_user(user: RegisterRequest, request: Request):
 # --------------------------------------------------
 
 @app.post("/auth/login")
-def login_user(user: LoginRequest):
+def login_user(user: LoginRequest, request: Request):
+    client_ip = get_client_ip(request)
     email = str(user.email).strip().lower()
 
-    retry_after = login_retry_after(email)
+    # Check network/IP-level brute force protection
+    ip_retry_after = login_ip_retry_after(client_ip)
+    if ip_retry_after:
+        raise HTTPException(
+            status_code=429,
+            detail=f"Too many failed login attempts from this network. Please try again in {ip_retry_after} seconds.",
+            headers={"Retry-After": str(ip_retry_after)},
+        )
 
+    # Check email-level brute force protection
+    retry_after = login_retry_after(email)
     if retry_after:
         raise HTTPException(
             status_code=429,
@@ -575,7 +671,7 @@ def login_user(user: LoginRequest):
         password_ok = False
 
     if not password_ok:
-        record_login_failure(email)
+        record_login_failure(email, client_ip)
 
         raise HTTPException(
             status_code=401,
@@ -583,7 +679,7 @@ def login_user(user: LoginRequest):
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    clear_login_failures(email)
+    clear_login_failures(email, client_ip)
 
     token = create_access_token(existing_user[0], existing_user[1], existing_user[2])
 
@@ -742,11 +838,53 @@ def build_weather_advice(current: dict, days: list[dict]) -> list[dict]:
     return advice
 
 
+# --------------------------------------------------
+# Devanagari (Marathi/Hindi) to Latin Location Mapping
+# --------------------------------------------------
+INDIAN_DISTRICT_TRANSLITERATION = {
+    # Maharashtra Districts & Agricultural Centers
+    "कोल्हापूर": "Kolhapur", "पुणे": "Pune", "नाशिक": "Nashik", "सातारा": "Satara",
+    "सांगली": "Sangli", "सोलापूर": "Solapur", "नागपूर": "Nagpur", "अमरावती": "Amravati",
+    "औरंगाबाद": "Aurangabad", "छत्रपती संभाजीनगर": "Aurangabad", "संभाजीनगर": "Aurangabad",
+    "जळगाव": "Jalgaon", "धुळे": "Dhule", "नंदुरबार": "Nandurbar", "अहमदनगर": "Ahmednagar",
+    "अहिल्यानगर": "Ahmednagar", "नांदेड": "Nanded", "लातूर": "Latur", "बीड": "Beed",
+    "उस्मानाबाद": "Osmanabad", "धाराशिव": "Osmanabad", "परभणी": "Parbhani", "हिंगोली": "Hingoli",
+    "जालना": "Jalna", "बुलढाणा": "Buldhana", "अकोला": "Akola", "वाशीम": "Washim",
+    "वर्धा": "Wardha", "चंद्रपूर": "Chandrapur", "गडचिरोली": "Gadchiroli", "भंडारा": "Bhandara",
+    "गोंदिया": "Gondia", "ठाणे": "Thane", "पालघर": "Palghar", "रायगड": "Raigad",
+    "रत्नागिरी": "Ratnagiri", "सिंधुदुर्ग": "Sindhudurg", "मुंबई": "Mumbai",
+    "बारामती": "Baramati", "कराड": "Karad", "मालेगाव": "Malegaon", "पंढरपूर": "Pandharpur",
+    "शिर्डी": "Shirdi", "इचलकरंजी": "Ichalkaranji", "अकलूज": "Akluj", "फलटण": "Phaltan",
+    "श्रीरामपूर": "Shrirampur", "संगमनेर": "Sangamner", "निफाड": "Niphad", "येवला": "Yeola",
+    "राहुरी": "Rahuri", "शिरूर": "Shirur", "इंदापूर": "Indapur", "दौंड": "Daund",
+    "वाई": "Wai", "कऱ्हाड": "Karad", "इस्लामपूर": "Islampur", "विटा": "Vita",
+    "तासगाव": "Tasgaon", "मिरज": "Miraj", "बार्शी": "Barshi", "करमाळा": "Karmala",
+    # Hindi Heartland Agricultural Hubs
+    "भोपाल": "Bhopal", "इंदौर": "Indore", "ग्वालियर": "Gwalior", "जबलपुर": "Jabalpur",
+    "उज्जैन": "Ujjain", "जयपुर": "Jaipur", "जोधपुर": "Jodhpur", "कोटा": "Kota",
+    "उदयपुर": "Udaipur", "लखनऊ": "Lucknow", "कानपुर": "Kanpur", "वाराणसी": "Varanasi",
+    "प्रयागराज": "Prayagraj", "इलाहाबाद": "Prayagraj", "आगरा": "Agra", "मेरठ": "Meerut",
+    "पटना": "Patna", "गया": "Gaya", "मुजफ्फरपुर": "Muzaffarpur", "रायपुर": "Raipur",
+    "रांची": "Ranchi", "चंडीगढ़": "Chandigarh", "लुधियाना": "Ludhiana", "अमृतसर": "Amritsar",
+}
+
+
+def resolve_place_query(query: str) -> str:
+    """Resolve Marathi / Hindi Devanagari queries to English for Open-Meteo geocoding."""
+    cleaned = query.strip()
+    if cleaned in INDIAN_DISTRICT_TRANSLITERATION:
+        return INDIAN_DISTRICT_TRANSLITERATION[cleaned]
+    for dev, eng in INDIAN_DISTRICT_TRANSLITERATION.items():
+        if dev in cleaned or cleaned in dev:
+            return eng
+    return cleaned
+
+
 @app.get("/weather/places")
 def search_weather_places(
     q: str,
     language: str = "en",
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int | None = Depends(get_optional_user_id),
 ):
     query = q.strip()
 
@@ -756,16 +894,15 @@ def search_weather_places(
             detail="Place name must be between 2 and 80 characters.",
         )
 
-    if language not in {"en", "mr", "hi"}:
-        language = "en"
+    resolved_query = resolve_place_query(query)
 
     try:
         response = httpx.get(
             OPEN_METEO_GEOCODING_URL,
             params={
-                "name": query,
+                "name": resolved_query,
                 "count": 10,
-                "language": language,
+                "language": "en" if resolved_query != query else language,
                 "format": "json",
             },
             timeout=8.0,
@@ -800,7 +937,7 @@ def search_weather_places(
 def get_weather(
     lat: float,
     lon: float,
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int | None = Depends(get_optional_user_id),
 ):
     if not (-90 <= lat <= 90 and -180 <= lon <= 180):
         raise HTTPException(status_code=400, detail="Invalid location.")
@@ -934,12 +1071,13 @@ DAILY_ANALYSIS_QUOTA = 20
 
 @app.post("/analyze")
 async def analyze_crop(
+    request: Request,
     crop: str = Form(""),
     problem: str = Form(""),
     language: str = Form("en"),
     weather_context: str = Form(""),
     image: UploadFile | None = File(None),
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int | None = Depends(get_optional_user_id),
 ):
     language_code = language.strip().lower()
 
@@ -973,24 +1111,29 @@ async def analyze_crop(
             detail="Please provide a crop name, problem description, or image.",
         )
 
-    # Check 24-hour analysis quota per user
-    with get_db_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                """
-                SELECT COUNT(*) FROM crop_analyses
-                WHERE user_id = %s
-                  AND created_at >= NOW() - INTERVAL '24 hours'
-                """,
-                (current_user_id,),
-            )
-            count_24h = cursor.fetchone()[0]
+    # Check 24-hour analysis quota
+    client_ip = get_client_ip(request)
+    if current_user_id is not None:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT COUNT(*) FROM crop_analyses
+                    WHERE user_id = %s
+                      AND created_at >= NOW() - INTERVAL '24 hours'
+                    """,
+                    (current_user_id,),
+                )
+                count_24h = cursor.fetchone()[0]
 
-    if count_24h >= DAILY_ANALYSIS_QUOTA:
-        raise HTTPException(
-            status_code=429,
-            detail=f"Daily analysis quota reached ({DAILY_ANALYSIS_QUOTA} per 24 hours). Please try again tomorrow.",
-        )
+        if count_24h >= DAILY_ANALYSIS_QUOTA:
+            raise HTTPException(
+                status_code=429,
+                detail=f"Daily analysis quota reached ({DAILY_ANALYSIS_QUOTA} per 24 hours). Please try again tomorrow.",
+            )
+    else:
+        # Protect Gemini quota for guests via IP rate limiting
+        check_guest_analysis_rate_limit(client_ip)
 
     crop_details = crop if crop else "Not specified"
 
@@ -1161,35 +1304,36 @@ Return the complete response in {selected_language}.
 
     analysis_text = response.text
 
-    # Save the successful analysis to PostgreSQL.
+    # Save the successful analysis to PostgreSQL for authenticated users.
     analysis_id = None
     created_at = None
 
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO crop_analyses
-                        (user_id, crop, problem, language, analysis)
-                    VALUES (%s, %s, %s, %s, %s)
-                    RETURNING id, created_at
-                    """,
-                    (
-                        current_user_id,
-                        crop or None,
-                        problem or None,
-                        language_code,
-                        analysis_text,
-                    ),
-                )
+    if current_user_id is not None:
+        try:
+            with get_db_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        INSERT INTO crop_analyses
+                            (user_id, crop, problem, language, analysis)
+                        VALUES (%s, %s, %s, %s, %s)
+                        RETURNING id, created_at
+                        """,
+                        (
+                            current_user_id,
+                            crop or None,
+                            problem or None,
+                            language_code,
+                            analysis_text,
+                        ),
+                    )
 
-                saved_record = cursor.fetchone()
+                    saved_record = cursor.fetchone()
 
-        analysis_id, created_at = saved_record
+            analysis_id, created_at = saved_record
 
-    except Exception as exc:
-        logger.error(f"Failed to save crop analysis: {exc}")
+        except Exception as exc:
+            logger.error(f"Failed to save crop analysis: {exc}")
 
     return {
         "id": analysis_id,
@@ -1200,6 +1344,8 @@ Return the complete response in {selected_language}.
         "analysis": analysis_text,
         "disclaimer": selected["disclaimer"],
         "created_at": created_at.isoformat() if created_at else None,
+        "saved_to_history": bool(current_user_id and analysis_id),
+        "is_guest": current_user_id is None,
     }
 
 
@@ -1572,6 +1718,7 @@ def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre"
         "special_nutrient": crop_info["special_nutrient"],
         "stages": crop_info["stages"],
         "organic_tips": crop_info["organic_tips"],
+        "disclaimer": "Recommended dosage based on ICAR recommended dose of fertilizers (RDF). Actual requirement varies with soil test results, crop variety, and agro-climatic conditions. Consult your local KVK for custom soil test based recommendations.",
     }
 
 
