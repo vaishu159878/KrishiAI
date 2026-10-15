@@ -20,6 +20,7 @@ from main import (
     build_weather_advice,
     compute_fertilizer_recommendation,
     is_transient_error,
+    resolve_place_query,
 )
 
 
@@ -232,4 +233,73 @@ def test_registration_limiter():
 
     with _registration_lock:
         _registration_history.pop(test_ip, None)
+
+
+# ==============================================================================
+# 7. Indian Agricultural Hubs / Marathi & Hindi Transliteration
+# ==============================================================================
+
+def test_resolve_place_query_marathi():
+    assert resolve_place_query("कोल्हापूर") == "Kolhapur"
+    assert resolve_place_query("पुणे") == "Pune"
+    assert resolve_place_query("नाशिक") == "Nashik"
+    assert resolve_place_query("बारामती") == "Baramati"
+    assert resolve_place_query("सांगली") == "Sangli"
+
+
+def test_resolve_place_query_hindi():
+    assert resolve_place_query("भोपाल") == "Bhopal"
+    assert resolve_place_query("इंदौर") == "Indore"
+    assert resolve_place_query("लखनऊ") == "Lucknow"
+
+
+def test_resolve_place_query_english_passthrough():
+    assert resolve_place_query("Kolhapur") == "Kolhapur"
+    assert resolve_place_query("Baramati") == "Baramati"
+
+
+# ==============================================================================
+# 8. DAP Nitrogen Deduction & Fertilizer RDF Disclaimer
+# ==============================================================================
+
+def test_fertilizer_dap_nitrogen_deduction():
+    # 1 bag DAP (50kg) contains 18% N = 9.0 kg Nitrogen.
+    # When DAP is applied for Phosphorus, remaining Nitrogen required from Urea
+    # must be reduced so Urea is not over-recommended.
+    res = compute_fertilizer_recommendation("sugarcane", 1.0, "acre")
+    dap_bags = res["commercial_bags"]["dap"]["bags"]
+    n_from_dap = dap_bags * 9.0
+    total_n_required = res["pure_nutrients_kg"]["nitrogen_n"]
+
+    expected_remaining_n = max(0.0, total_n_required - n_from_dap)
+    expected_urea_bags = round(expected_remaining_n / 20.7, 1)
+
+    assert res["commercial_bags"]["urea"]["bags"] == expected_urea_bags
+    assert "disclaimer" in res
+    assert "ICAR" in res["disclaimer"]
+
+
+# ==============================================================================
+# 9. Guest Analysis Rate Limiter
+# ==============================================================================
+
+def test_guest_analysis_limiter():
+    from fastapi import HTTPException
+    from main import check_guest_analysis_rate_limit, _guest_analysis_history, _guest_analysis_lock
+
+    guest_ip = "192.168.1.200"
+    with _guest_analysis_lock:
+        _guest_analysis_history.pop(guest_ip, None)
+
+    for _ in range(10):
+        check_guest_analysis_rate_limit(guest_ip)
+
+    with pytest.raises(HTTPException) as exc:
+        check_guest_analysis_rate_limit(guest_ip)
+    assert exc.value.status_code == 429
+    assert "Daily guest analysis quota reached" in exc.value.detail
+
+    with _guest_analysis_lock:
+        _guest_analysis_history.pop(guest_ip, None)
+
 
