@@ -472,7 +472,8 @@ const translations = {
         analysisTitle: "Describe Your Crop Problem",
         analysisDescription: "Tell KrishiAI what is happening to your crop.",
         cropLabel: "Crop Name",
-        cropPlaceholder: "Example: Tomato",
+        cropPlaceholder: "Example: Groundnut, Sugarcane, Cotton...",
+        cropFieldHint: "💡 Type or choose any crop in Marathi, Hindi, or English (e.g. Groundnut, भुईमूग, कापूस).",
         problemLabel: "Describe the Problem",
         problemPlaceholder: "Example: Tomato leaves are turning yellow...",
         imageLabel: "Upload Crop Image",
@@ -489,8 +490,12 @@ const translations = {
         warningTitle: "🌱 KrishiAI",
         disclaimer: "This AI-generated guidance is for informational purposes and should not replace advice from a qualified agricultural expert.",
         errorTitle: "❌ Analysis Failed",
-        connectionError: "Unable to connect to the KrishiAI analysis service.",
-        serverError: "Please make sure the backend server is running.",
+        connectionError: "KrishiAI advisory is temporarily busy. Please try again shortly or contact the farmer helpline below.",
+        serverError: "",
+        busyTitle: "Agricultural Advisory Assistant Busy",
+        busyMessage: "KrishiAI is currently experiencing high demand. Please try again in 1 minute, or contact the Kisan Helpline directly for immediate support.",
+        busyHelplineNotice: "For immediate free advice from government agriculture experts:",
+        busyCallKcc: "Call Kisan Call Center (1800-180-1551)",
         noAnalysis: "No analysis was returned by the AI service.",
 
         authTagline: "Your Account",
@@ -660,7 +665,8 @@ const translations = {
         analysisTitle: "तुमच्या पिकाची समस्या सांगा",
         analysisDescription: "तुमच्या पिकाला काय समस्या आहे ते KrishiAI ला सांगा.",
         cropLabel: "पिकाचे नाव",
-        cropPlaceholder: "उदाहरण: टोमॅटो",
+        cropPlaceholder: "उदाहरण: भुईमूग, ऊस, कापूस, टोमॅटो...",
+        cropFieldHint: "💡 तुम्ही कोणत्याही पिकाचे नाव मराठी, इंग्रजी किंवा हिंदीत लिहू शकता (उदा. भुईमूग, कापूस, ऊस, हरभरा, टोमॅटो).",
         problemLabel: "समस्येचे वर्णन करा",
         problemPlaceholder: "उदाहरण: टोमॅटोची पाने पिवळी पडत आहेत...",
         imageLabel: "पिकाचा फोटो अपलोड करा",
@@ -677,8 +683,12 @@ const translations = {
         warningTitle: "🌱 KrishiAI",
         disclaimer: "हे AI द्वारे तयार केलेले मार्गदर्शन केवळ माहितीसाठी आहे. पात्र कृषी तज्ज्ञांच्या सल्ल्याची जागा ते घेऊ शकत नाही.",
         errorTitle: "❌ विश्लेषण अयशस्वी",
-        connectionError: "KrishiAI विश्लेषण सेवेशी संपर्क साधता आला नाही.",
-        serverError: "कृपया बॅकएंड सर्व्हर सुरू आहे का ते तपासा.",
+        connectionError: "सध्या माहिती मिळवण्यात अडचण येत आहे. कृपया १ मिनिटाने पुन्हा प्रयत्न करा किंवा खालील हेल्पलाइनवर संपर्क साधा.",
+        serverError: "",
+        busyTitle: "कृषी सल्ला सहाय्यक तात्पुरता व्यस्त आहे",
+        busyMessage: "KrishiAI सेवेवर सध्या जास्त ताण असल्यामुळे माहिती मिळण्यात अडचण येत आहे. कृपया १ मिनिटाने पुन्हा प्रयत्न करा किंवा थेट किसान कॉल सेंटरवर संपर्क साधा.",
+        busyHelplineNotice: "तातडीच्या मोफत सल्ल्यासाठी शासकीय कृषी शास्त्रज्ञांशी थेट संपर्क साधा:",
+        busyCallKcc: "किसान कॉल सेंटरला कॉल करा (टोल-फ्री १८००-१८०-१५५१)",
         noAnalysis: "AI सेवेकडून कोणतेही विश्लेषण मिळाले नाही.",
 
         authTagline: "तुमचे खाते",
@@ -848,7 +858,8 @@ const translations = {
         analysisTitle: "अपनी फसल की समस्या बताएँ",
         analysisDescription: "अपनी फसल में क्या समस्या है, KrishiAI को बताएँ।",
         cropLabel: "फसल का नाम",
-        cropPlaceholder: "उदाहरण: टमाटर",
+        cropPlaceholder: "उदाहरण: मूंगफली, गन्ना, कपास, टमाटर...",
+        cropFieldHint: "💡 आप किसी भी फसल का नाम हिंदी, मराठी या अंग्रेजी में लिख सकते हैं (उदा. मूंगफली, कपास, गन्ना, चना, टमाटर)।",
         problemLabel: "समस्या का वर्णन करें",
         problemPlaceholder: "उदाहरण: टमाटर के पत्ते पीले हो रहे हैं...",
         imageLabel: "फसल की तस्वीर अपलोड करें",
@@ -865,8 +876,12 @@ const translations = {
         warningTitle: "🌱 KrishiAI",
         disclaimer: "यह AI द्वारा तैयार की गई जानकारी केवल मार्गदर्शन के लिए है। इसे योग्य कृषि विशेषज्ञ की सलाह का विकल्प न मानें।",
         errorTitle: "❌ विश्लेषण विफल",
-        connectionError: "KrishiAI विश्लेषण सेवा से संपर्क नहीं हो पाया।",
-        serverError: "कृपया जाँचें कि बैकएंड सर्वर चालू है या नहीं।",
+        connectionError: "वर्तमान में जानकारी प्राप्त करने में रुकावट आ रही है। कृपया 1 मिनट बाद पुनः प्रयास करें अथवा किसान हेल्पलाइन से संपर्क करें।",
+        serverError: "",
+        busyTitle: "कृषि सलाहकार सहायक अस्थायी रूप से व्यस्त है",
+        busyMessage: "वर्तमान में AI सेवा पर अधिक लोड होने के कारण संपर्क नहीं हो पा रहा है। कृपया 1 मिनट बाद पुनः प्रयास करें या किसान हेल्पलाइन पर संपर्क करें।",
+        busyHelplineNotice: "फसल समस्या के तुरंत समाधान हेतु सरकारी कृषि वैज्ञानिकों से निशुल्क बात करें:",
+        busyCallKcc: "किसान कॉल सेंटर पर कॉल करें (टोल-फ्री 1800-180-1551)",
         noAnalysis: "AI सेवा से कोई विश्लेषण प्राप्त नहीं हुआ।",
 
         authTagline: "आपका खाता",
@@ -1770,8 +1785,15 @@ async function analyzeCrop() {
 
     await imageReady; // photo compression must be finished
 
+    let cleanCrop = crop;
+    if (cleanCrop.includes(" / ")) {
+        cleanCrop = cleanCrop.split(" / ")[0].trim();
+    } else if (cleanCrop.includes("/")) {
+        cleanCrop = cleanCrop.split("/")[0].trim();
+    }
+
     const formData = new FormData();
-    formData.append("crop", crop);
+    formData.append("crop", cleanCrop);
     formData.append("problem", problem);
     formData.append("language", language);
 
@@ -1832,12 +1854,23 @@ async function analyzeCrop() {
         if (response.status === 503) {
             const errData = await response.json().catch(() => ({}));
             result.innerHTML = `
-                <h3>${escapeHtml(t("warningTitle"))}</h3>
-                <div class="warning">
-                    ⚠️ ${escapeHtml(getErrorMessage(errData, t("connectionError")))}
+                <div class="service-busy-card">
+                    <div class="busy-header">
+                        <span class="busy-icon">🌾</span>
+                        <div>
+                            <h3>${escapeHtml(t("busyTitle"))}</h3>
+                            <p>${escapeHtml(getErrorMessage(errData, t("busyMessage")))}</p>
+                        </div>
+                    </div>
+                    <div class="busy-helpline-box">
+                        <p><strong>${escapeHtml(t("busyHelplineNotice"))}</strong></p>
+                        <a href="tel:18001801551" class="primary-button helpline-call-btn">
+                            📞 ${escapeHtml(t("busyCallKcc"))}
+                        </a>
+                    </div>
+                    <hr>
+                    <small>⚠️ ${escapeHtml(t("disclaimer"))}</small>
                 </div>
-                <hr>
-                <small>${escapeHtml(t("disclaimer"))}</small>
             `;
             return;
         }
@@ -1941,9 +1974,23 @@ async function analyzeCrop() {
         console.error("KrishiAI Analysis Error:", error);
 
         result.innerHTML = `
-            <h3>${escapeHtml(t("errorTitle"))}</h3>
-            <p>${escapeHtml(t("connectionError"))}</p>
-            <small>${escapeHtml(t("serverError"))}</small>
+            <div class="service-busy-card">
+                <div class="busy-header">
+                    <span class="busy-icon">🌾</span>
+                    <div>
+                        <h3>${escapeHtml(t("busyTitle"))}</h3>
+                        <p>${escapeHtml(t("busyMessage"))}</p>
+                    </div>
+                </div>
+                <div class="busy-helpline-box">
+                    <p><strong>${escapeHtml(t("busyHelplineNotice"))}</strong></p>
+                    <a href="tel:18001801551" class="primary-button helpline-call-btn">
+                        📞 ${escapeHtml(t("busyCallKcc"))}
+                    </a>
+                </div>
+                <hr>
+                <small>⚠️ ${escapeHtml(t("disclaimer"))}</small>
+            </div>
         `;
     }
 }
