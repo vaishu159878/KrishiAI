@@ -41,13 +41,11 @@ is_production = ENVIRONMENT == "production"
 
 # Candidate models in priority order for automatic resilience against deprecations and rate limits
 CANDIDATE_MODELS = list(dict.fromkeys([
-    GEMINI_MODEL,
     "gemini-3.1-flash-lite",
     "gemini-3.5-flash-lite",
+    GEMINI_MODEL,
     "gemini-flash-lite-latest",
     "gemini-flash-latest",
-    "gemini-3.8-flash",
-    "gemini-3.5-flash",
 ]))
 
 if not AI_API_KEY:
