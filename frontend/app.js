@@ -723,12 +723,19 @@ const translations = {
         kvkTitle: "Krishi Vigyan Kendra (KVK)",
         kvkDesc: "District agricultural research centers for seed testing, pest outbreaks, and soil health consultation.",
         callNow: "📞 Call Now",
+        callKcc: "📞 Call 1800-180-1551",
+        callPmfby: "📞 Call 14447",
         findKvk: "🌐 Find Your KVK",
         fertTagline: "🧪 Smart Nutrition",
         fertTitle: "Fertilizer & Dosage Calculator",
         fertCropLabel: "Crop Name (Any Crop / कोणतेही पीक)",
         fertCropPlaceholder: "Select or type ANY crop (e.g. Turmeric, Dragon Fruit, Tomato)...",
         fertCropHint: "💡 Works for ALL crops: vegetables, fruits, flowers, cash crops, spices, grains & pulses.",
+        fertUnitHint: "💡 Tip: 1 Acre = 40 Gunthas = 0.405 Hectares",
+        quickFilterLabel: "⚡ Quick Select:",
+        filterAll: "🌾 All (सर्व)",
+        offlineNotice: "Offline Mode Active — Fertilizer Calculator, Helplines & Guidelines are available without internet.",
+        tryAgain: "Try Again",
         fertAreaLabel: "Farm Size / Area",
         fertUnitLabel: "Land Unit",
         unitAcre: "Acres (एकर)",
@@ -937,6 +944,8 @@ const translations = {
         kvkTitle: "कृषी विज्ञान केंद्र (KVK)",
         kvkDesc: "जिल्हास्तरीय कृषी संशोधन केंद्र - बियाणे, कीड प्रादुर्भाव आणि माती परीक्षण सल्ल्यासाठी.",
         callNow: "📞 आता कॉल करा",
+        callKcc: "📞 १८००-१८०-१५५१ वर कॉल करा",
+        callPmfby: "📞 १४४४७ वर कॉल करा",
         findKvk: "🌐 तुमचे KVK शोधा",
         fertTagline: "🧪 स्मार्ट खत व्यवस्थापन",
         fertTitle: "खताचे प्रमाण कॅल्क्युलेटर",
@@ -944,6 +953,11 @@ const translations = {
         fertCropLabel: "पिकाचे नाव (कोणतेही पीक)",
         fertCropPlaceholder: "निवडा किंवा कोणत्याही पिकाचे नाव लिहा (उदा. हळद, ड्रॅगन फ्रूट, कांदा)...",
         fertCropHint: "💡 सर्व पिकांसाठी लागू: भाजीपाला, फळबागा, फुले, नगदी पिके, मसाले, तृणधान्ये व कडधान्ये.",
+        fertUnitHint: "💡 माहिती: १ एकर = ४० गुंठे = ०.४०५ हेक्टर",
+        quickFilterLabel: "⚡ झटपट निवड:",
+        filterAll: "🌾 सर्व पिके",
+        offlineNotice: "ऑफलाइन मोड सक्रिय — खत गणकयंत्र, शेतकरी हेल्पलाईन आणि मार्गदर्शक तत्त्वे इंटरनेटशिवाय उपलब्ध आहेत.",
+        tryAgain: "पुन्हा प्रयत्न करा",
         fertAreaLabel: "शेताचे क्षेत्रफळ",
         fertUnitLabel: "क्षेत्रफळ एकक",
         unitAcre: "एकर (Acres)",
@@ -1152,6 +1166,8 @@ const translations = {
         kvkTitle: "कृषि विज्ञान केंद्र (KVK)",
         kvkDesc: "जिला कृषि अनुसंधान केंद्र - बीज परीक्षण, कीट प्रकोप और मृदा स्वास्थ्य सलाह के लिए।",
         callNow: "📞 अभी कॉल करें",
+        callKcc: "📞 1800-180-1551 पर कॉल करें",
+        callPmfby: "📞 14447 पर कॉल करें",
         findKvk: "🌐 अपना KVK खोजें",
         fertTagline: "🧪 स्मार्ट पोषण प्रबंधन",
         fertTitle: "खाद और खुराक कैलकुलेटर",
@@ -1159,6 +1175,11 @@ const translations = {
         fertCropLabel: "फसल का नाम (कोई भी फसल)",
         fertCropPlaceholder: "चुनें या किसी भी फसल का नाम लिखें (जैसे हल्दी, ड्रैगन फ्रूट, टमाटर)...",
         fertCropHint: "💡 सभी फसलों के लिए उपयोगी: सब्जियां, फल, फूल, नकदी फसलें, मसाले, अनाज व दलहन।",
+        fertUnitHint: "💡 जानकारी: 1 एकड़ = 40 गुंठा = 0.405 हेक्टेयर",
+        quickFilterLabel: "⚡ त्वरित चयन:",
+        filterAll: "🌾 सभी फसलें",
+        offlineNotice: "ऑफ़लाइन मोड सक्रिय — खाद कैलकुलेटर, किसान हेल्पलाइन व दिशानिर्देश बिना इंटरनेट उपलब्ध हैं।",
+        tryAgain: "पुनः प्रयास करें",
         fertAreaLabel: "खेत का आकार / क्षेत्रफल",
         fertUnitLabel: "इकाई",
         unitAcre: "एकड़ (Acres)",
@@ -1976,8 +1997,11 @@ async function analyzeCrop() {
     result.classList.remove("hidden");
 
     result.innerHTML = `
-        <h3>${escapeHtml(t("loadingTitle"))}</h3>
-        <p>${escapeHtml(t("loadingMessage"))}</p>
+        <div class="analysis-loading-box">
+            <div class="analysis-spinner"></div>
+            <h3>${escapeHtml(t("loadingTitle"))}</h3>
+            <p>${escapeHtml(t("loadingMessage"))}</p>
+        </div>
     `;
 
     try {
@@ -2159,9 +2183,14 @@ async function analyzeCrop() {
                 </div>
                 <div class="busy-helpline-box">
                     <p><strong>${escapeHtml(t("busyHelplineNotice"))}</strong></p>
-                    <a href="tel:18001801551" class="primary-button helpline-call-btn">
-                        📞 ${escapeHtml(t("busyCallKcc"))}
-                    </a>
+                    <div class="busy-actions-row">
+                        <button type="button" class="primary-button retry-btn" onclick="analyzeCrop()">
+                            🔄 ${escapeHtml(t("tryAgain"))}
+                        </button>
+                        <a href="tel:18001801551" class="secondary-button helpline-call-btn">
+                            📞 ${escapeHtml(t("busyCallKcc"))}
+                        </a>
+                    </div>
                 </div>
                 <hr>
                 <small>⚠️ ${escapeHtml(t("disclaimer"))}</small>
@@ -2929,6 +2958,41 @@ function filterMandiRates() {
         (r.variety && r.variety.toLowerCase().includes(query))
     );
     renderMandiRates(filtered);
+}
+
+function setMandiFilter(commodity, el) {
+    const searchInput = document.getElementById("mandiSearch");
+    if (searchInput) {
+        searchInput.value = commodity;
+    }
+    document.querySelectorAll(".mandi-pill").forEach(p => p.classList.remove("active"));
+    if (el) {
+        el.classList.add("active");
+    }
+    filterMandiRates();
+}
+
+// Global Offline / Online Detection Banner
+window.addEventListener("offline", () => {
+    const banner = document.getElementById("offlineBanner");
+    if (banner) banner.classList.remove("hidden");
+});
+
+window.addEventListener("online", () => {
+    const banner = document.getElementById("offlineBanner");
+    if (banner) {
+        banner.innerHTML = "<span>🟢</span> <span>Back Online! Real-time AI advisory active.</span>";
+        setTimeout(() => {
+            banner.classList.add("hidden");
+            // restore standard translated text
+            updateLanguage();
+        }, 3000);
+    }
+});
+
+if (typeof navigator !== "undefined" && !navigator.onLine) {
+    const banner = document.getElementById("offlineBanner");
+    if (banner) banner.classList.remove("hidden");
 }
 
 // Initial Mandi Rates Load

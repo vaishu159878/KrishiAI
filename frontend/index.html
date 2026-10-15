@@ -6,10 +6,15 @@
     <title>KrishiAI - AI Farming Assistant</title>
     <meta name="theme-color" content="#16823b">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 
 <body>
+    <div id="offlineBanner" class="offline-banner hidden" role="status">
+        <span>📡</span>
+        <span data-i18n="offlineNotice">Offline Mode Active — Fertilizer Calculator, Helplines & Guidelines are available without internet.</span>
+    </div>
+
     <header class="navbar">
         <div class="logo">🌱 KrishiAI</div>
 
@@ -386,6 +391,7 @@
                                 <option value="guntha" data-i18n="unitGuntha">Gunthas (गुंठा - 1/40 Acre)</option>
                                 <option value="hectare" data-i18n="unitHectare">Hectares (हेक्टर)</option>
                             </select>
+                            <small class="field-hint fert-unit-hint" data-i18n="fertUnitHint">💡 Tip: 1 Acre = 40 Gunthas = 0.405 Hectares</small>
                         </div>
 
                         <div class="fert-field">
@@ -566,6 +572,20 @@
                     </button>
                 </div>
 
+                <div class="mandi-quick-filters">
+                    <span class="quick-filter-label" data-i18n="quickFilterLabel">⚡ Quick Select:</span>
+                    <button type="button" class="mandi-pill active" onclick="setMandiFilter('', this)" data-i18n="filterAll">🌾 All (सर्व)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Soybean', this)">🌱 Soybean (सोयाबीन)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Cotton', this)">☁️ Cotton (कापूस)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Onion', this)">🧅 Onion (कांदा)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Groundnut', this)">🥜 Groundnut (भुईमूग)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Gram', this)">🍲 Chana (हरभरा)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Wheat', this)">🌾 Wheat (गहू)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Turmeric', this)">🟡 Turmeric (हळद)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Tomato', this)">🍅 Tomato (टोमॅटो)</button>
+                    <button type="button" class="mandi-pill" onclick="setMandiFilter('Maize', this)">🌽 Maize (मका)</button>
+                </div>
+
                 <div id="mandiRatesContainer" class="mandi-rates-grid">
                     <div class="mandi-loading">Loading latest mandi rates...</div>
                 </div>
@@ -710,8 +730,8 @@
                         <p class="helpline-desc" data-i18n="kccDesc">Government of India toll-free helpline. Free consultation in 22 languages from 6 AM to 10 PM daily.</p>
                         <span class="helpline-number">1800-180-1551</span>
                     </div>
-                    <a href="tel:18001801551" class="helpline-call-button" data-i18n="callNow">
-                        📞 Call Now
+                    <a href="tel:18001801551" class="helpline-call-button" data-i18n="callKcc">
+                        📞 Call 1800-180-1551
                     </a>
                 </div>
 
@@ -722,8 +742,8 @@
                         <p class="helpline-desc" data-i18n="pmfbyDesc">Assistance for crop damage claims, drought/flood insurance claims, and policy status.</p>
                         <span class="helpline-number">14447</span>
                     </div>
-                    <a href="tel:14447" class="helpline-call-button" data-i18n="callNow">
-                        📞 Call Now
+                    <a href="tel:14447" class="helpline-call-button" data-i18n="callPmfby">
+                        📞 Call 14447
                     </a>
                 </div>
 
