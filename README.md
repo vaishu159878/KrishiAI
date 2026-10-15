@@ -40,23 +40,25 @@ I designed KrishiAI with **simplicity, voice-first usability, and accessibility 
 ## ✨ Features
 
 ### 🌿 Core Agricultural & AI Capabilities
-* **📷 Photo & Text Crop Analysis:** Upload a photo from the gallery or live camera, or describe symptoms to get instant AI-powered diagnoses via **Google Gemini Vision API**.
+* **📷 Dual-Photo & Text Crop Analysis:** Upload both a close-up lesion shot and a wide canopy photo (with camera photo guide) for high-accuracy diagnostic triage via **Google Gemini Vision API**.
+* **🎯 Diagnostic Confidence & Safety Triage:** Displays confidence badges (`[High Confidence]`, `[Moderate Confidence]`, `[Low Confidence]`) with visible KVK advisories, integrated biological/organic remedies, and chemical treatments with Pre-Harvest Interval (PHI) withholding days.
 * **🎙️ Voice Input (Speech-to-Text):** Farmers don't need to type — they can tap the microphone button and speak in **Marathi, Hindi, or English**.
-* **🔊 Audio Read-Aloud (Text-to-Speech):** A "Listen to Advice" button speaks the complete diagnosis and remedies in clear, natural regional language.
+* **🔊 Audio Read-Aloud (Text-to-Speech):** 1-tap "Listen to Advice" button speaks the diagnosis and fertilizer dosage in clear regional Marathi, Hindi, and English.
 * **🌐 Trilingual Support:** The entire UI and AI guidance seamlessly switch between **English**, **मराठी (Marathi)**, and **हिन्दी (Hindi)**.
-* **🌦️ Live Farm Weather & Advisories:** Search any Indian village or town to get live temperature, humidity, rainfall forecasts, and automated farming tips (spraying windows, fungal disease alerts) powered by Open-Meteo.
-* **🧪 Smart Fertilizer & Dosage Calculator:** Computes exact commercial fertilizer bags to purchase (Neem-coated Urea 45kg, DAP 50kg, MOP 50kg) and Farm Yard Manure (FYM) based on ICAR standards. Supports Indian land units (**Acres**, **Gunthas**, **Hectares**) with split application schedules, audio playback, and 1-click WhatsApp sharing for local fertilizer shops.
-* **📲 1-Click WhatsApp Share:** Instantly share formatted advice with neighbors or village farmer WhatsApp groups.
-* **📞 Emergency Kisan Helpline Directory:** 1-tap call access to the Government of India's toll-free **Kisan Call Center (1800-180-1551)** and Crop Insurance Helpline (**14447**).
+* **📈 Live APMC Mandi Rates:** Real-time Maharashtra agricultural commodity prices (Agmarknet & MSAMB) with 1-tap quick-filter chips for Soybean, Cotton, Onion, Groundnut, Gram, Wheat, and Turmeric.
+* **🌦️ Live Farm Weather & Advisories:** Search any Indian village or town (with Devanagari transliteration) to get live temperature, humidity, rainfall forecasts, and automated farming tips powered by Open-Meteo.
+* **🧪 Soil-Aware Fertilizer Calculator:** Computes estimated commercial fertilizer bags (Urea 45kg, DAP 50kg, MOP 50kg) based on ICAR standards, soil presets (Black cotton, Red laterite, Sandy loam), modern liquid foliar alternatives (**IFFCO Nano Urea 500ml**), and dealer SSP options. Supports **Acres**, **Gunthas**, and **Hectares**.
+* **📲 1-Click WhatsApp Share & PDF Export:** Instantly share formatted advice or export clean PDF reports to show local fertilizer retailers (Krishi Seva Kendra).
+* **📞 Emergency Kisan Helpline Directory:** 1-tap smartphone dialer access to the Government of India's toll-free **Kisan Call Center (`1800-180-1551`)** and Crop Insurance Helpline (**`14447`**).
 
 ### ⚙️ User, Security & Data Features
-* **👤 User Authentication:** Secure signup and login powered by **Argon2** password hashing and 24-hour **JWT** session tokens stored in `localStorage`.
-* **📚 Saved History:** Automatically saves personal crop analyses to **AWS RDS PostgreSQL** so farmers can revisit past treatments anytime.
-* **📱 Progressive Web App (PWA):** Equipped with a Web App Manifest and Service Worker — installable on Android home screens with offline caching for field use.
-* **🛡️ Security & Quota Defense:**
-  * Rate-limited registration (maximum 5 signups per hour per IP) to prevent spam.
-  * Per-user analysis quota (20 AI analyses per 24-hour sliding window) to prevent token abuse.
-  * Weather context capped to 800 characters to prevent prompt bloat.
+* **👤 User Authentication & Guest Mode:** 1-click guest analysis mode or secure account registration powered by **Argon2** password hashing and 24-hour **JWT** session tokens.
+* **📚 Saved History:** Automatically saves personal crop analyses to **AWS RDS PostgreSQL** with language filters and audio playback.
+* **📱 Progressive Web App (PWA):** Web App Manifest and Service Worker (`v5`) with sticky offline status banner and offline client-side ICAR fertilizer calculation engine for remote fields.
+* **🛡️ Security, Quota & Health Defense:**
+  * Active `/health` check verifying live PostgreSQL database connectivity.
+  * Rate-limited registration (maximum 5 signups per hour per IP) and guest analysis quota (10 per 24 hours).
+  * Authenticated user burst rate limiting (max 6 requests/minute) and 24-hour sliding quota (20 analyses/day).
   * Strict Nginx Content Security Policy (CSP), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, and `Referrer-Policy`.
 
 ---
