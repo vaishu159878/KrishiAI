@@ -303,3 +303,59 @@ def test_guest_analysis_limiter():
         _guest_analysis_history.pop(guest_ip, None)
 
 
+# ==============================================================================
+# 10. Groundnut & Extended Crops in Fertilizer RDF
+# ==============================================================================
+
+def test_groundnut_fertilizer_calculation():
+    # Test Groundnut (भुईमूग) calculation for 1 acre
+    res = compute_fertilizer_recommendation("groundnut", 1.0, "acre")
+    assert res["crop_key"] == "groundnut"
+    assert res["pure_nutrients_kg"]["nitrogen_n"] == 10.0
+    assert res["pure_nutrients_kg"]["phosphorus_p"] == 20.0
+    assert res["pure_nutrients_kg"]["potassium_k"] == 10.0
+    assert res["commercial_bags"]["dap"]["bags"] > 0
+    assert "Gypsum" in res["special_nutrient"]["en"]
+    assert "जिप्सम" in res["special_nutrient"]["mr"]
+
+
+# ==============================================================================
+# 11. Multilingual Crop Aliases & Datalist Format Resolution
+# ==============================================================================
+
+def test_crop_alias_resolution():
+    # Marathi names
+    res_mr = compute_fertilizer_recommendation("भुईमूग", 2.0, "acre")
+    assert res_mr["crop_key"] == "groundnut"
+
+    res_cane = compute_fertilizer_recommendation("ऊस", 1.0, "acre")
+    assert res_cane["crop_key"] == "sugarcane"
+
+    res_harbhara = compute_fertilizer_recommendation("हरभरा", 1.0, "acre")
+    assert res_harbhara["crop_key"] == "chickpea"
+
+    # Datalist formatted selection
+    res_datalist = compute_fertilizer_recommendation("Groundnut / भुईमूग (मूंगफली)", 1.0, "acre")
+    assert res_datalist["crop_key"] == "groundnut"
+
+
+# ==============================================================================
+# 12. Offline Expert Agricultural Fallback Guidance
+# ==============================================================================
+
+def test_offline_crop_guidance_fallback():
+    from main import get_offline_crop_guidance
+
+    # Marathi guidance for groundnut
+    mr_guidance = get_offline_crop_guidance("groundnut", "", "mr")
+    assert "टिक्का" in mr_guidance or "तांबेरा" in mr_guidance
+    assert "जिप्सम" in mr_guidance
+    assert "१८००-१८०-१५५१" in mr_guidance  # KCC Helpline
+
+    # English guidance for sugarcane
+    en_guidance = get_offline_crop_guidance("sugarcane", "", "en")
+    assert "Shoot Borer" in en_guidance or "Red Rot" in en_guidance
+    assert "1800-180-1551" in en_guidance
+
+
+
