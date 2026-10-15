@@ -451,6 +451,101 @@ document.getElementById("removeImage").addEventListener("click", () => {
     showImagePreview(null);
 });
 
+// ---- Secondary Photo (Wide View) handling ----
+let selectedSecondaryImage = null;
+let secondaryPreviewUrl = null;
+let secondaryImageJob = 0;
+let secondaryImageReady = Promise.resolve();
+
+function prepareSecondaryImage(file) {
+    const job = ++secondaryImageJob;
+    selectedSecondaryImage = file;
+    secondaryImageReady = compressImage(file).then(compressed => {
+        if (job === secondaryImageJob) {
+            selectedSecondaryImage = compressed;
+        }
+    });
+}
+
+function showSecondaryImagePreview(file) {
+    secondaryImageJob++;
+    const preview = document.getElementById("secondaryImagePreview");
+    const removeButton = document.getElementById("removeSecondaryImage");
+
+    if (secondaryPreviewUrl) {
+        URL.revokeObjectURL(secondaryPreviewUrl);
+        secondaryPreviewUrl = null;
+    }
+
+    if (!file) {
+        selectedSecondaryImage = null;
+        if (preview) {
+            preview.removeAttribute("src");
+            preview.classList.add("hidden");
+        }
+        if (removeButton) removeButton.classList.add("hidden");
+        return;
+    }
+
+    if (!file.type || !file.type.startsWith("image/")) {
+        selectedSecondaryImage = null;
+        const sImg = document.getElementById("secondaryImage");
+        const sCam = document.getElementById("secondaryCameraInput");
+        if (sImg) sImg.value = "";
+        if (sCam) sCam.value = "";
+        if (preview) {
+            preview.removeAttribute("src");
+            preview.classList.add("hidden");
+        }
+        if (removeButton) removeButton.classList.add("hidden");
+        alert("Please select a valid image.");
+        return;
+    }
+
+    prepareSecondaryImage(file);
+    secondaryPreviewUrl = URL.createObjectURL(file);
+    if (preview) {
+        preview.src = secondaryPreviewUrl;
+        preview.classList.remove("hidden");
+    }
+    if (removeButton) removeButton.classList.remove("hidden");
+}
+
+const secImgInput = document.getElementById("secondaryImage");
+if (secImgInput) {
+    secImgInput.addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (file) {
+            const sCam = document.getElementById("secondaryCameraInput");
+            if (sCam) sCam.value = "";
+            showSecondaryImagePreview(file);
+        }
+    });
+}
+
+const secCamInput = document.getElementById("secondaryCameraInput");
+if (secCamInput) {
+    secCamInput.addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (file) {
+            const sImg = document.getElementById("secondaryImage");
+            if (sImg) sImg.value = "";
+            showSecondaryImagePreview(file);
+        }
+    });
+}
+
+const secRemoveBtn = document.getElementById("removeSecondaryImage");
+if (secRemoveBtn) {
+    secRemoveBtn.addEventListener("click", () => {
+        const sImg = document.getElementById("secondaryImage");
+        const sCam = document.getElementById("secondaryCameraInput");
+        if (sImg) sImg.value = "";
+        if (sCam) sCam.value = "";
+        showSecondaryImagePreview(null);
+    });
+}
+
 
 const translations = {
     en: {
@@ -526,9 +621,29 @@ const translations = {
         errExists: "That username or email is already registered.",
         errCheckDetails: "Please check your details. Username: at least 3 characters. Password: at least 8 characters, and not a common password.",
         errAuthFailed: "Authentication failed.",
-        errConnection: "Unable to connect to the server.",
+        errConnection: "Something went wrong. Please try again in a moment.",
         errTooManyAttempts: "Too many failed attempts. Please wait a few minutes and try again.",
         errImageTooLarge: "The photo is too large. Please choose a smaller photo (up to 5 MB).",
+        photoGuideTitle: "Photo Guide for Accurate AI Diagnosis:",
+        photoTip1: "🔍 Hold camera 6-12 inches from infected leaf/fruit.",
+        photoTip2: "☀️ Use good natural daylight; avoid deep shadows or flash glare.",
+        photoTip3: "🌿 Keep leaf sharp and focused for higher diagnostic accuracy.",
+        primaryPhotoLabel: "1️⃣ Primary Photo: Close-up of Problem / Leaf",
+        secondaryImageLabel: "2️⃣ Optional: Wide View of Whole Plant / Field (Improves Accuracy)",
+        fertSoilTypeLabel: "Soil Type (मातीचा प्रकार)",
+        soilMediumBlack: "Medium Black Soil (मध्यम काळी जमीन - Default)",
+        soilBlackCotton: "Deep Black Cotton Soil (काळी / भारी जमीन)",
+        soilRedLaterite: "Red / Laterite Soil (तांबडी / जांभी जमीन)",
+        soilSandy: "Sandy Loam / Light Soil (हलकी / वाळूमिश्रित जमीन)",
+        soilAlluvial: "Alluvial Loam Soil (गाळाची सुपीक जमीन)",
+        fertQuickDisclaimer: "Estimated dosage based on ICAR guidelines. Exact dosage varies with soil test, crop variety & irrigation. Confirm with your local KVK.",
+        modernAlternativesTitle: "🧪 Modern Liquid Alternatives & Dealer Options:",
+        soilAdvisoryTitle: "Soil-Specific Advisory:",
+        mandiTagline: "📈 Live APMC Market Rates",
+        mandiTitle: "Maharashtra Mandi Prices (बाजार भाव)",
+        mandiDescription: "Daily commodity prices from key APMC markets across Maharashtra (Agmarknet & MSAMB).",
+        refreshRates: "Refresh Rates",
+        printPdf: "Print / Save PDF",
         weatherTagline: "🌦️ Weather Insights",
         weatherTitle: "Weather for Your Farm",
         weatherDescription: "Search for your village or town to see the forecast and simple farming tips.",
@@ -720,9 +835,29 @@ const translations = {
         errExists: "हे वापरकर्ता नाव किंवा ईमेल आधीच नोंदणीकृत आहे.",
         errCheckDetails: "कृपया तुमची माहिती तपासा. वापरकर्ता नाव किमान 3 अक्षरांचे आणि पासवर्ड किमान 8 अक्षरांचा असावा; सहज ओळखता येणारा पासवर्ड वापरू नका.",
         errAuthFailed: "ओळख पडताळणी अयशस्वी झाली.",
-        errConnection: "सर्व्हरशी संपर्क साधता आला नाही.",
+        errConnection: "काहीतरी तांत्रिक अडचण आली आहे. कृपया थोड्या वेळाने पुन्हा प्रयत्न करा.",
         errTooManyAttempts: "खूप वेळा चुकीचा प्रयत्न झाला. कृपया काही मिनिटे थांबून पुन्हा प्रयत्न करा.",
         errImageTooLarge: "फोटो खूप मोठा आहे. कृपया लहान फोटो निवडा (जास्तीत जास्त 5 MB).",
+        photoGuideTitle: "अचूक AI रोगनिदानासाठी फोटो मार्गदर्शक:",
+        photoTip1: "🔍 कॅमेरा बाधित पान/फळापासून ६ ते १२ इंच अंतरावर धरा.",
+        photoTip2: "☀️ चांगल्या सूर्यप्रकाशात फोटो काढा; जास्त सावली किंवा फ्लॅश टाळा.",
+        photoTip3: "🌿 रोग स्पष्ट दिसण्यासाठी फोटो शार्प व स्पष्ट फोकसमध्ये असावा.",
+        primaryPhotoLabel: "१️⃣ मुख्य फोटो: बाधित पानाचा किंवा रोगाचा जवळचा फोटो",
+        secondaryImageLabel: "२️⃣ पर्यायी: संपूर्ण झाडाचा किंवा शेताचा विस्तृत फोटो (अचूकतेसाठी)",
+        fertSoilTypeLabel: "मातीचा प्रकार",
+        soilMediumBlack: "मध्यम काळी जमीन (डिफॉल्ट)",
+        soilBlackCotton: "भारी / काळी कापसाची जमीन (रेगुर)",
+        soilRedLaterite: "तांबडी / जांभी जमीन",
+        soilSandy: "हलकी / वाळूमिश्रित जमीन",
+        soilAlluvial: "गाळाची सुपीक जमीन",
+        fertQuickDisclaimer: "ICAR मार्गदर्शक तत्त्वांवर आधारित अंदाजे प्रमाण. प्रत्यक्ष प्रमाण माती परीक्षण व पिकाच्या जातीनुसार ठरवावे.",
+        modernAlternativesTitle: "🧪 आधुनिक नॅनो युरिया व खतांचे पर्याय:",
+        soilAdvisoryTitle: "माती परीक्षण व जमिनीनुसार सल्ला:",
+        mandiTagline: "📈 थेट कृषी उत्पन्न बाजार समिती भाव",
+        mandiTitle: "महाराष्ट्रातील बाजार भाव (APMC Mandi Rates)",
+        mandiDescription: "महाराष्ट्रातील प्रमुख बाजार समित्यांमधील दैनंदिन शेतमाल भाव (Agmarknet आणि MSAMB).",
+        refreshRates: "भाव रिफ्रेश करा",
+        printPdf: "प्रिंट / PDF सेव्ह करा",
         weatherTagline: "🌦️ हवामान माहिती",
         weatherTitle: "तुमच्या शेतासाठी हवामान",
         weatherDescription: "तुमचे गाव किंवा शहर शोधा आणि हवामानाचा अंदाज व सोपे शेती सल्ले पहा.",
@@ -915,9 +1050,29 @@ const translations = {
         errExists: "यह उपयोगकर्ता नाम या ईमेल पहले से पंजीकृत है।",
         errCheckDetails: "कृपया अपनी जानकारी जाँचें। उपयोगकर्ता नाम कम से कम 3 अक्षर का और पासवर्ड कम से कम 8 अक्षर का होना चाहिए; आसानी से अनुमान लगाया जा सकने वाला पासवर्ड न रखें।",
         errAuthFailed: "पहचान की पुष्टि नहीं हो सकी।",
-        errConnection: "सर्वर से संपर्क नहीं हो पाया।",
+        errConnection: "कुछ तकनीकी समस्या आई है। कृपया थोड़ी देर बाद पुनः प्रयास करें।",
         errTooManyAttempts: "बहुत बार गलत प्रयास हो चुका है। कृपया कुछ मिनट रुककर फिर से प्रयास करें।",
         errImageTooLarge: "फ़ोटो बहुत बड़ी है। कृपया छोटी फ़ोटो चुनें (अधिकतम 5 MB)।",
+        photoGuideTitle: "सटीक AI रोग निदान हेतु फोटो गाइड:",
+        photoTip1: "🔍 कैमरा प्रभावित पत्ती/फल से 6-12 इंच की दूरी पर रखें।",
+        photoTip2: "☀️ प्राकृतिक daylight में फोटो लें; छाया या फ्लैश से बचें।",
+        photoTip3: "🌿 पत्ती स्पष्ट और फोकस में रखें ताकि सटीक निदान हो सके।",
+        primaryPhotoLabel: "1️⃣ मुख्य फोटो: रोगग्रस्त पत्ती या अंग का क्लोज-अप फोटो",
+        secondaryImageLabel: "2️⃣ वैकल्पिक: पूरे पौधे या खेत का विस्तृत फोटो (सटीकता हेतु)",
+        fertSoilTypeLabel: "मिट्टी का प्रकार",
+        soilMediumBlack: "मध्यम काली मिट्टी (डिफ़ॉल्ट)",
+        soilBlackCotton: "गहरी काली कपासी मिट्टी (रेगुर)",
+        soilRedLaterite: "लाल / लेटराइट मिट्टी",
+        soilSandy: "बलुई / हल्की दोमट मिट्टी",
+        soilAlluvial: "उपजाऊ दोमट मिट्टी",
+        fertQuickDisclaimer: "ICAR दिशानिर्देशों पर आधारित अनुमानित खुराक। सटीक मात्रा मृदा परीक्षण व किस्म पर निर्भर करती है।",
+        modernAlternativesTitle: "🧪 आधुनिक नैनो यूरिया व डीलर विकल्प:",
+        soilAdvisoryTitle: "मिट्टी अनुसार विशेष सलाह:",
+        mandiTagline: "📈 लाइव मंडी भाव (APMC)",
+        mandiTitle: "महाराष्ट्र प्रमुख मंडी भाव",
+        mandiDescription: "महाराष्ट्र की प्रमुख कृषि उपज मंडियों के दैनिक जिंस भाव (Agmarknet व MSAMB)।",
+        refreshRates: "भाव रिफ्रेश करें",
+        printPdf: "प्रिंट / PDF सेव करें",
         weatherTagline: "🌦️ मौसम की जानकारी",
         weatherTitle: "आपके खेत का मौसम",
         weatherDescription: "अपना गाँव या शहर खोजें और मौसम का पूर्वानुमान व आसान खेती सलाह देखें।",
@@ -1777,7 +1932,7 @@ async function analyzeCrop() {
     const imageInput = document.getElementById("image");
     const result = document.getElementById("result");
 
-    if (!crop && !problem && !selectedImage) {
+    if (!crop && !problem && !selectedImage && !selectedSecondaryImage) {
         result.classList.remove("hidden");
 
         result.innerHTML = `
@@ -1788,7 +1943,7 @@ async function analyzeCrop() {
         return;
     }
 
-    await imageReady; // photo compression must be finished
+    await Promise.all([imageReady, secondaryImageReady]); // photo compression must be finished
 
     let cleanCrop = crop;
     if (cleanCrop.includes(" / ")) {
@@ -1813,6 +1968,9 @@ async function analyzeCrop() {
 
     if (selectedImage) {
         formData.append("image", selectedImage);
+    }
+    if (selectedSecondaryImage) {
+        formData.append("secondary_image", selectedSecondaryImage);
     }
 
     result.classList.remove("hidden");
@@ -1891,10 +2049,18 @@ async function analyzeCrop() {
         let imageMessage = "";
 
         if (data.image) {
-            imageMessage = `
+            imageMessage += `
                 <p>
                     📷 <strong>${escapeHtml(t("imageResult"))}:</strong>
                     ${escapeHtml(data.image.filename)}
+                </p>
+            `;
+        }
+        if (data.secondary_image) {
+            imageMessage += `
+                <p>
+                    📸 <strong>Wide Field View:</strong>
+                    ${escapeHtml(data.secondary_image.filename)}
                 </p>
             `;
         }
@@ -1954,6 +2120,10 @@ async function analyzeCrop() {
                     <button type="button" id="whatsappShareButton" class="whatsapp-share-button" onclick="shareOnWhatsApp()" title="${escapeHtml(t("shareWhatsApp"))}">
                         <span class="share-icon">📲</span>
                         <span>${escapeHtml(t("shareWhatsApp"))}</span>
+                    </button>
+                    <button type="button" id="printReportButton" class="action-btn pdf-print-btn" onclick="printDiagnosisReport()" title="${escapeHtml(t("printPdf"))}">
+                        <span class="share-icon">🖨️</span>
+                        <span>${escapeHtml(t("printPdf"))}</span>
                     </button>
                 </div>
             </div>
@@ -2050,7 +2220,16 @@ function formatAnalysis(text) {
     html = html.replace(/<br>\s*(<h[234]>|<ul>|<hr>)/g, "$1");
     html = html.replace(/(<\/h[234]>|<\/ul>|<hr>)\s*<br>/g, "$1");
 
+    // Diagnostic confidence badges
+    html = html.replace(/\[(?:CONFIDENCE:\s*)?HIGH(?:\s*\([^\]]+\))?\]/gi, '<span class="conf-badge conf-high">🟢 High Confidence</span>');
+    html = html.replace(/\[(?:CONFIDENCE:\s*)?MODERATE(?:\s*\([^\]]+\))?\]/gi, '<span class="conf-badge conf-mod">🟡 Moderate Confidence</span>');
+    html = html.replace(/\[(?:CONFIDENCE:\s*)?LOW(?:\s*\([^\]]+\))?\]/gi, '<span class="conf-badge conf-low">🟠 Low Confidence (Check KVK)</span>');
+
     return html;
+}
+
+function printDiagnosisReport() {
+    window.print();
 }
 
 
@@ -2258,10 +2437,194 @@ async function confirmDeleteAccount() {
 // ---- Fertilizer & Dosage Calculator -------------------------------------
 let lastFertilizerData = null;
 
+const OFFLINE_ICAR_RDF = {
+    soybean: {
+        names: { en: "Soybean", mr: "सोयाबीन", hi: "सोयाबीन" },
+        icon: "🌱", n: 12.0, p: 24.0, k: 12.0, fym_tonnes: 3.0,
+        special_nutrient: { en: "Sulphur (8 kg/acre)", mr: "सल्फर (८ किलो/एकर)", hi: "सल्फर (8 किग्रा/एकड़)" },
+        stages: [
+            { en: "Basal at Sowing: 100% DAP + 100% MOP + Sulphur", mr: "पेरणीवेळी: १००% DAP + १००% MOP + गंधक", hi: "बुआई के समय: 100% DAP + 100% MOP + सल्फर" },
+            { en: "Flowering stage (30-35 days): 100% Urea or 1 spray Nano Urea", mr: "फुलोऱ्याच्या वेळी: १००% युरिया किंवा नॅनो युरिया फवारणी", hi: "फूल आते समय: 100% यूरिया या नैनो यूरिया छिड़काव" }
+        ],
+        organic_tips: { en: "Rhizobium japonicum & PSB seed treatment fixes natural nitrogen.", mr: "रायझोबियम आणि पीएसबी जिवाणूंची बीजप्रक्रिया करा.", hi: "राइजोबियम और पीएसबी से बीज उपचार करें।" }
+    },
+    cotton: {
+        names: { en: "Cotton (Kapas)", mr: "कापूस", hi: "कपास" },
+        icon: "☁️", n: 40.0, p: 20.0, k: 20.0, fym_tonnes: 4.0,
+        special_nutrient: { en: "Magnesium Sulphate (10 kg) + Boron (1 kg/acre)", mr: "मॅग्नेशियम सल्फेट (१० किलो) + बोरॉन (१ किलो/एकर)", hi: "मैग्नीशियम सल्फेट (10 किग्रा) + बोरॉन (1 किग्रा/एकड़)" },
+        stages: [
+            { en: "Basal at Sowing: 20% Urea + 100% DAP + 50% MOP", mr: "पेरणीवेळी: २०% युरिया + १००% DAP + ५०% MOP", hi: "बुआई के समय: 20% यूरिया + 100% DAP + 50% MOP" },
+            { en: "Square formation (30-35 DAS): 40% Urea", mr: "पात्या लागताना (३०-३५ दिवस): ४०% युरिया", hi: "फूल की कलियां बनते समय: 40% यूरिया" },
+            { en: "Peak Flowering / Boll Development (60 DAS): 40% Urea + 50% MOP", mr: "फुलोरा व बोंडे भरताना (६० दिवस): ४०% युरिया + ५०% MOP", hi: "फूल व गूलर विकास (60 दिन): 40% यूरिया + 50% MOP" }
+        ],
+        organic_tips: { en: "Spray 2% DAP or 1% 13:00:45 during boll development.", mr: "बोंडे वाढताना २% डीएपी किंवा १% १३:००:४५ ची फवारणी करा.", hi: "गूलर वृद्धि के समय 2% डीएपी की फवारणी करें।" }
+    },
+    groundnut: {
+        names: { en: "Groundnut (Peanut)", mr: "भुईमूग", hi: "मूंगफली" },
+        icon: "🥜", n: 10.0, p: 20.0, k: 0.0, fym_tonnes: 3.0,
+        special_nutrient: { en: "Gypsum (200 kg/acre at 30 days - essential for pod filling)", mr: "जिप्सम (२०० किलो/एकर - ३० दिवसांनी आऱ्या सुटताना)", hi: "जिप्सम (200 किग्रा/एकड़ 30 दिन पर सूइयां बनते समय)" },
+        stages: [
+            { en: "At Sowing (Basal): 100% DAP + 100% MOP", mr: "पेरणीवेळी: १००% DAP + १००% MOP", hi: "बुआई के समय: 100% DAP + 100% MOP" },
+            { en: "Pegging Stage (30-35 DAS): Broadcast Gypsum near roots", mr: "आऱ्या जमिनीत शिरताना: मुळांजवळ जिप्सम टाकून माती लावा", hi: "सूइयां बनते समय: जड़ों के पास जिप्सम डालें" }
+        ],
+        organic_tips: { en: "Treat seeds with Rhizobium. Gypsum provides essential Calcium and Sulphur.", mr: "बियाण्याला रायझोबियम चोळा. जिप्सममुळे शेंगा पोकळ न राहता दाणे टपोरे भरतात.", hi: "बीज को राइजोबियम से उपचारित करें। जिप्सम से दाने भरे हुए बनते हैं।" }
+    },
+    sugarcane: {
+        names: { en: "Sugarcane", mr: "ऊस", hi: "गन्ना" },
+        icon: "🎋", n: 100.0, p: 40.0, k: 40.0, fym_tonnes: 10.0,
+        special_nutrient: { en: "Ferrous Sulphate (10 kg) + Zinc Sulphate (8 kg/acre)", mr: "फेरस सल्फेट (१० किलो) + झिंक सल्फेट (८ किलो/एकर)", hi: "आयरन सल्फेट (10 किग्रा) + जिंक सल्फेट (8 किग्रा/एकड़)" },
+        stages: [
+            { en: "Planting (Basal): 10% Urea + 50% DAP + 50% MOP", mr: "लागवडीवेळी: १०% युरिया + ५०% DAP + ५०% MOP", hi: "रोपाई के समय: 10% यूरिया + 50% DAP + 50% MOP" },
+            { en: "Tillering (6-8 weeks): 40% Urea", mr: "फुटवे फुटताना (६ ते ८ आठवडे): ४०% युरिया", hi: "कल्ले बनते समय (6-8 सप्ताह): 40% यूरिया" },
+            { en: "Big earthing-up (12-16 weeks): Remaining 50% Urea + 50% DAP + 50% MOP", mr: "मोठी बांधणी (१२ ते १६ आठवडे): उर्वरित ५०% युरिया + ५०% DAP + ५०% MOP", hi: "मिट्टी चढ़ाते समय: शेष 50% यूरिया + 50% DAP + 50% MOP" }
+        ],
+        organic_tips: { en: "Apply press mud or 10 tonnes FYM. Inoculate setts with Acetobacter.", mr: "१० टन शेणखत किंवा प्रेसमड वापरा. ॲसिटोबॅक्टर जिवाणू संवर्धक वापरा.", hi: "10 टन गोबर खाद या प्रेसमड का उपयोग करें।" }
+    },
+    onion: {
+        names: { en: "Onion", mr: "कांदा", hi: "प्याज" },
+        icon: "🧅", n: 40.0, p: 20.0, k: 20.0, fym_tonnes: 8.0,
+        special_nutrient: { en: "Elemental Sulphur (15 kg/acre - gives pungency and shelf life)", mr: "सल्फर / गंधक (१५ किलो/एकर - कांद्याला रंग, तिखटपणा व साठवणक्षमता)", hi: "सल्फर (15 किग्रा/एकड़ - प्याज का रंग, तीखापन व भंडारण क्षमता)" },
+        stages: [
+            { en: "Transplanting (Basal): 30% Urea + 100% DAP + 100% MOP + Sulphur", mr: "लागवडीवेळी: ३०% युरिया + १००% DAP + १००% MOP + गंधक", hi: "रोपाई के समय: 30% यूरिया + 100% DAP + 100% MOP + सल्फर" },
+            { en: "Vegetative (30 days): 35% Urea", mr: "वाढीच्या वेळी (३० दिवस): ३५% युरिया", hi: "वृद्धि के समय (30 दिन): 35% यूरिया" },
+            { en: "Bulb development (45-50 days): Remaining 35% Urea", mr: "कांदा फुगवणीच्या वेळी (४५-५० दिवस): उर्वरित ३५% युरिया", hi: "कंद भराव (45-50 दिन): शेष 35% यूरिया" }
+        ],
+        organic_tips: { en: "Stop irrigation 10-15 days before harvest for proper curing.", mr: "काढणीपूर्वी १०-१५ दिवस पाणी बंद करा जेणेकरून कांदा टिकेल.", hi: "खुदाई से 10-15 दिन पहले सिंचाई बंद करें।" }
+    },
+    wheat: {
+        names: { en: "Wheat", mr: "गहू", hi: "गेहूं" },
+        icon: "🌾", n: 48.0, p: 24.0, k: 16.0, fym_tonnes: 4.0,
+        special_nutrient: { en: "Zinc Sulphate (10 kg/acre)", mr: "झिंक सल्फेट (१० किलो/एकर)", hi: "जिंक सल्फेट (10 किग्रा/एकड़)" },
+        stages: [
+            { en: "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP", mr: "पेरणीवेळी: ५०% युरिया + १००% DAP + १००% MOP", hi: "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP" },
+            { en: "Crown Root Initiation (21 days): Remaining 50% Urea", mr: "मुकुट मुळे फुटताना (२१ दिवस): उर्वरित ५०% युरिया", hi: "सीआरआई अवस्था (21 दिन): शेष 50% यूरिया" }
+        ],
+        organic_tips: { en: "First irrigation at CRI stage (21 days) is critical.", mr: "२१ व्या दिवशी पहिले पाणी (मुकुट मुळे अवस्था) वेळेवर देणे अत्यंत गरजेचे आहे.", hi: "21वें दिन पहली सिंचाई (CRI स्टेज) बेहद आवश्यक है।" }
+    }
+};
+
+function tryLocalOfflineFertilizerCalculation(crop, area, unit, soilType) {
+    let cleanCrop = (crop || "").split("/")[0].trim().toLowerCase();
+    let cropKey = "general";
+    for (const key of Object.keys(OFFLINE_ICAR_RDF)) {
+        if (cleanCrop.includes(key)) {
+            cropKey = key;
+            break;
+        }
+    }
+
+    const cropInfo = OFFLINE_ICAR_RDF[cropKey] || {
+        names: { en: crop, mr: crop, hi: crop },
+        icon: "🌱", n: 35.0, p: 20.0, k: 20.0, fym_tonnes: 5.0,
+        special_nutrient: { en: "Balanced Micronutrient mixture (5 kg/acre)", mr: "संतुलित सूक्ष्म अन्नद्रव्ये (५ किलो/एकर)", hi: "संतुलित सूक्ष्म पोषक तत्व (5 किग्रा/एकड़)" },
+        stages: [
+            { en: "Basal: 40% Urea + 100% DAP + 50% MOP", mr: "पायाभूत: ४०% युरिया + १००% DAP + ५०% MOP", hi: "बुआई: 40% यूरिया + 100% DAP + 50% MOP" },
+            { en: "Vegetative / Growth: Remaining Urea + 50% MOP", mr: "वाढ: उर्वरित युरिया + ५०% MOP", hi: "वृद्धि: शेष यूरिया + 50% MOP" }
+        ],
+        organic_tips: { en: "Apply well-rotted FYM and biofertilizer.", mr: "चांगले कुजलेले शेणखत आणि जिवाणू खते वापरा.", hi: "सड़ी गोबर खाद व जैव उर्वरक प्रयोग करें।" }
+    };
+
+    let acres = area;
+    if (unit === "guntha") acres = area * 0.025;
+    else if (unit === "hectare") acres = area * 2.47105;
+
+    let soilP = 1.0, soilK = 1.0, soilFym = 1.0;
+    let soilNote = {
+        en: "Standard recommendation for medium black soil.",
+        mr: "मध्यम काळी जमिनीसाठी प्रमाणित ICAR शिफारस.",
+        hi: "मध्यम काली मिट्टी के लिए मानक ICAR सिफारिश।"
+    };
+
+    if (soilType === "black_cotton") {
+        soilK = 0.85;
+        soilNote = {
+            en: "Black cotton soil holds potassium well (-15% Potash adjusted).",
+            mr: "काळी जमिनीत पोटॅश मुबलक असते (पोटॅश १५% कमी केले).",
+            hi: "काली मिट्टी में पोटाश प्रचुर मात्रा में होता है (पोटाश 15% कम)।"
+        };
+    } else if (soilType === "red_laterite") {
+        soilP = 1.20;
+        soilFym = 1.25;
+        soilNote = {
+            en: "Red / Laterite soil fixes phosphorus (+20% P₂O₅ adjusted).",
+            mr: "तांबडी जमीन आम्लधर्मी असल्याने स्फुरद २०% वाढवले.",
+            hi: "लाल मिट्टी में फास्फोरस स्थिरीकरण होता है (P₂O₅ 20% अधिक)।"
+        };
+    } else if (soilType === "sandy") {
+        soilFym = 1.30;
+        soilNote = {
+            en: "Sandy soil has low retention. Split Urea into 4 light doses and add 30% extra FYM.",
+            mr: "हलकी जमिनीत खते वाहून जातात. युरियाचे ४ हप्ते करा व ३०% जास्त शेणखत वापरा.",
+            hi: "बलुई मिट्टी में यूरिया 4 किस्तों में दें और 30% अतिरिक्त गोबर खाद मिलाएँ।"
+        };
+    }
+
+    const totalN = Math.round(cropInfo.n * acres * 10) / 10;
+    const totalP = Math.round(cropInfo.p * acres * soilP * 10) / 10;
+    const totalK = Math.round(cropInfo.k * acres * soilK * 10) / 10;
+
+    const dapBags = Math.round((totalP / 23.0) * 10) / 10;
+    const dapKg = Math.round(dapBags * 50 * 10) / 10;
+    const nFromDap = dapBags * 9.0;
+    const remN = Math.max(0, totalN - nFromDap);
+    const ureaBags = Math.round((remN / 20.7) * 10) / 10;
+    const ureaKg = Math.round(ureaBags * 45 * 10) / 10;
+    const mopBags = Math.round((totalK / 30.0) * 10) / 10;
+    const mopKg = Math.round(mopBags * 50 * 10) / 10;
+    const fymTonnes = Math.round(cropInfo.fym_tonnes * acres * soilFym * 10) / 10;
+
+    const nanoBottles = Math.max(1, Math.round(ureaBags));
+    const sspBags = Math.round((totalP / 8.0) * 10) / 10;
+
+    return {
+        crop_key: cropKey,
+        crop_name: cropInfo.names,
+        icon: cropInfo.icon,
+        input_area: area,
+        input_unit: unit,
+        acres: Math.round(acres * 100) / 100,
+        pure_nutrients_kg: {
+            nitrogen_n: totalN,
+            phosphorus_p: totalP,
+            potassium_k: totalK
+        },
+        commercial_bags: {
+            urea: { bags: ureaBags, weight_kg: ureaKg, grade: "46% N (Neem Coated)" },
+            dap: { bags: dapBags, weight_kg: dapKg, grade: "18:46:0" },
+            mop: { bags: mopBags, weight_kg: mopKg, grade: "60% K₂O (Muriate of Potash)" }
+        },
+        liquid_and_modern_alternatives: {
+            nano_urea: {
+                bottles_500ml: nanoBottles,
+                spray_timing: {
+                    en: "Foliar spray @ 2-4 ml/liter water at vegetative and flowering stage. Replaces top-dressed Urea bags.",
+                    mr: "शाकीय वाढ व फुलोऱ्याच्या वेळी २-४ मिली/लिटर पाण्यात मिसळून फवारणी करा. युरियाच्या गोण्यांची बचत होते.",
+                    hi: "वानस्पतिक वृद्धि व फूल आते समय 2-4 मिली/लीटर पानी में मिलाकर छिड़काव करें।"
+                }
+            },
+            ssp_dap_substitute: {
+                ssp_bags_50kg: sspBags,
+                note: {
+                    en: "If DAP is unavailable, apply Single Super Phosphate (SSP) which also supplies 11% essential Sulphur.",
+                    mr: "बाजारात DAP उपलब्ध नसल्यास सिंगल सुपर फॉस्फेट (SSP) वापरा, ज्यातून ११% आवश्यक गंधकही मिळते.",
+                    hi: "बाजार में DAP न मिलने पर सिंगल सुपर फास्फेट (SSP) का उपयोग करें, इससे 11% सल्फर भी मिलता है।"
+                }
+            }
+        },
+        soil_type: soilType,
+        soil_advisory: soilNote,
+        organic_fym_tonnes: fymTonnes,
+        special_nutrient: cropInfo.special_nutrient,
+        stages: cropInfo.stages,
+        organic_tips: cropInfo.organic_tips
+    };
+}
+
 async function calculateFertilizer() {
     const crop = document.getElementById("fertCrop").value.trim();
     const areaInput = document.getElementById("fertArea").value;
     const unit = document.getElementById("fertUnit").value;
+    const soilType = document.getElementById("fertSoilType")?.value || "medium_black";
     const statusEl = document.getElementById("fertStatus");
     const button = document.getElementById("fertCalculateButton");
     const buttonText = document.getElementById("fertButtonText");
@@ -2287,7 +2650,7 @@ async function calculateFertilizer() {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ crop, area, unit })
+            body: JSON.stringify({ crop, area, unit, soil_type: soilType })
         });
 
         const data = await response.json();
@@ -2305,6 +2668,18 @@ async function calculateFertilizer() {
         resultEl.style.display = "block";
         resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
     } catch (error) {
+        console.warn("Fertilizer network error, trying offline fallback:", error);
+        const offlineData = tryLocalOfflineFertilizerCalculation(crop, area, unit, soilType);
+        if (offlineData) {
+            lastFertilizerData = offlineData;
+            renderFertilizerResult(offlineData);
+            const resultEl = document.getElementById("fertResult");
+            resultEl.classList.remove("hidden");
+            resultEl.style.display = "block";
+            resultEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            statusEl.textContent = "📡 Offline calculation (ICAR standard preset used).";
+            return;
+        }
         statusEl.textContent = t("errConnection");
     } finally {
         button.disabled = false;
@@ -2343,6 +2718,39 @@ function renderFertilizerResult(data) {
 
     document.getElementById("fertMopBags").textContent = mop.bags;
     document.getElementById("fertMopKg").textContent = `${mop.weight_kg} kg total (${mop.grade})`;
+
+    // Modern Liquid Alternatives & SSP
+    if (data.liquid_and_modern_alternatives) {
+        const alt = data.liquid_and_modern_alternatives;
+        if (alt.nano_urea) {
+            const nanoCountEl = document.getElementById("fertNanoBottles");
+            const nanoNoteEl = document.getElementById("fertNanoNote");
+            if (nanoCountEl) nanoCountEl.textContent = alt.nano_urea.bottles_500ml;
+            if (nanoNoteEl && alt.nano_urea.spray_timing) {
+                nanoNoteEl.textContent = alt.nano_urea.spray_timing[lang] || alt.nano_urea.spray_timing.en || "";
+            }
+        }
+        if (alt.ssp_dap_substitute) {
+            const sspCountEl = document.getElementById("fertSspBags");
+            const sspNoteEl = document.getElementById("fertSspNote");
+            if (sspCountEl) sspCountEl.textContent = alt.ssp_dap_substitute.ssp_bags_50kg;
+            if (sspNoteEl && alt.ssp_dap_substitute.note) {
+                sspNoteEl.textContent = alt.ssp_dap_substitute.note[lang] || alt.ssp_dap_substitute.note.en || "";
+            }
+        }
+    }
+
+    // Soil-Specific Advisory
+    const soilCard = document.getElementById("fertSoilAdvisoryCard");
+    const soilText = document.getElementById("fertSoilAdvisoryText");
+    if (soilCard && soilText) {
+        if (data.soil_advisory && (data.soil_advisory[lang] || data.soil_advisory.en)) {
+            soilText.textContent = data.soil_advisory[lang] || data.soil_advisory.en;
+            soilCard.style.display = "block";
+        } else {
+            soilCard.style.display = "none";
+        }
+    }
 
     // Pure Nutrients
     const npk = data.pure_nutrients_kg;
@@ -2423,6 +2831,11 @@ function shareFertilizerWhatsApp() {
 
     let stagesText = (data.stages || []).map((s, idx) => `${idx + 1}. ${s[lang] || s.en}`).join("\n");
 
+    let modernText = "";
+    if (data.liquid_and_modern_alternatives?.nano_urea?.bottles_500ml) {
+        modernText = `• *Nano Urea Alternative:* ${data.liquid_and_modern_alternatives.nano_urea.bottles_500ml} Bottles (500 ml)\n`;
+    }
+
     const message =
         `🧪 *KrishiAI Fertilizer Calculator Recommendation*\n\n` +
         `🌾 *${t("cropResult")}:* ${cropName} (${data.input_area} ${data.input_unit} / ${data.acres} Acres)\n` +
@@ -2431,6 +2844,7 @@ function shareFertilizerWhatsApp() {
         `• *Urea (45kg):* ${urea.bags} Bags (${urea.weight_kg} kg)\n` +
         `• *DAP (50kg):* ${dap.bags} Bags (${dap.weight_kg} kg)\n` +
         `• *MOP Potash (50kg):* ${mop.bags} Bags (${mop.weight_kg} kg)\n` +
+        modernText +
         `• *FYM / Compost:* ${fym} Tonnes\n` +
         (special ? `• *Special Nutrient:* ${special}\n\n` : `\n`) +
         `📅 *${t("fertScheduleTitle")}*\n${stagesText}\n\n` +
@@ -2440,6 +2854,85 @@ function shareFertilizerWhatsApp() {
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(message)}`;
     window.open(url, "_blank", "noopener,noreferrer");
 }
+
+// ---- Live APMC Mandi Rates ----------------------------------------------
+let allMandiRates = [];
+
+async function loadMandiRates() {
+    const container = document.getElementById("mandiRatesContainer");
+    if (!container) return;
+
+    container.innerHTML = `<div class="mandi-loading">Loading latest mandi rates...</div>`;
+
+    try {
+        const response = await fetch(`${API_URL}/mandi/rates`);
+        if (!response.ok) throw new Error("Failed to fetch mandi rates");
+        const data = await response.json();
+        allMandiRates = data.rates || [];
+        renderMandiRates(allMandiRates);
+    } catch (err) {
+        console.error("Mandi rates error:", err);
+        container.innerHTML = `
+            <div class="mandi-error">
+                <p>⚠️ Unable to load latest mandi rates right now.</p>
+                <button type="button" class="action-btn" onclick="loadMandiRates()">🔄 Retry</button>
+            </div>
+        `;
+    }
+}
+
+function renderMandiRates(rates) {
+    const container = document.getElementById("mandiRatesContainer");
+    if (!container) return;
+
+    if (!rates || rates.length === 0) {
+        container.innerHTML = `<div class="mandi-empty">No commodity rates found.</div>`;
+        return;
+    }
+
+    container.innerHTML = rates.map(rate => {
+        const trendClass = rate.trend === "up" ? "trend-up" : (rate.trend === "down" ? "trend-down" : "trend-stable");
+        const trendIcon = rate.trend === "up" ? "▲" : (rate.trend === "down" ? "▼" : "●");
+
+        return `
+            <div class="mandi-item-card">
+                <div class="mandi-item-header">
+                    <div class="mandi-commodity-title">
+                        <strong>${escapeHtml(rate.commodity)}</strong>
+                        <span class="mandi-variety-badge">${escapeHtml(rate.variety || "")}</span>
+                    </div>
+                    <span class="mandi-trend-pill ${trendClass}">${trendIcon} ${escapeHtml(rate.trend_pct || "")}</span>
+                </div>
+                <div class="mandi-price-row">
+                    <span class="mandi-modal-price">₹${Number(rate.modal_price).toLocaleString("en-IN")}</span>
+                    <span class="mandi-unit">/ Quintal</span>
+                </div>
+                <div class="mandi-meta-row">
+                    <span class="mandi-market">📍 ${escapeHtml(rate.market)} (${escapeHtml(rate.district)})</span>
+                    <span class="mandi-range">Range: ₹${Number(rate.min_price).toLocaleString("en-IN")} - ₹${Number(rate.max_price).toLocaleString("en-IN")}</span>
+                </div>
+            </div>
+        `;
+    }).join("");
+}
+
+function filterMandiRates() {
+    const query = (document.getElementById("mandiSearch")?.value || "").toLowerCase().trim();
+    if (!query) {
+        renderMandiRates(allMandiRates);
+        return;
+    }
+    const filtered = allMandiRates.filter(r =>
+        (r.commodity && r.commodity.toLowerCase().includes(query)) ||
+        (r.market && r.market.toLowerCase().includes(query)) ||
+        (r.district && r.district.toLowerCase().includes(query)) ||
+        (r.variety && r.variety.toLowerCase().includes(query))
+    );
+    renderMandiRates(filtered);
+}
+
+// Initial Mandi Rates Load
+loadMandiRates();
 
 // Register PWA service worker for offline support
 if ("serviceWorker" in navigator) {
