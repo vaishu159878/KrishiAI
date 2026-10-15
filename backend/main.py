@@ -35,9 +35,17 @@ load_dotenv()
 AI_API_KEY = os.getenv("AI_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 is_production = ENVIRONMENT == "production"
+
+# Candidate models in priority order for automatic resilience against deprecations
+CANDIDATE_MODELS = list(dict.fromkeys([
+    GEMINI_MODEL,
+    "gemini-flash-latest",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash",
+]))
 
 if not AI_API_KEY:
     raise RuntimeError("AI_API_KEY is not configured")
@@ -1251,56 +1259,58 @@ Return the complete response in {selected_language}.
             }
         })
 
-    # Call Gemini with retries for transient errors only.
+    # Call Gemini with candidate models and retries for resilience
     response = None
+    last_exception = None
 
-    for attempt in range(3):
-        try:
-            logger.info(
-                f"Gemini attempt {attempt + 1}/3; "
-                f"language={language_code}, model={GEMINI_MODEL}"
-            )
-
-            response = await asyncio.to_thread(
-                client.models.generate_content,
-                model=GEMINI_MODEL,
-                contents=contents,
-            )
-
-            if not response or not response.text:
-                raise RuntimeError(
-                    "Gemini returned an empty response"
+    for model_name in CANDIDATE_MODELS:
+        for attempt in range(2):
+            try:
+                logger.info(
+                    f"Gemini attempt {attempt + 1}/2; "
+                    f"language={language_code}, model={model_name}"
                 )
 
+                response = await asyncio.to_thread(
+                    client.models.generate_content,
+                    model=model_name,
+                    contents=contents,
+                )
+
+                if response and response.text:
+                    break
+            except Exception as exc:
+                last_exception = exc
+                logger.warning(
+                    f"Gemini model {model_name} attempt {attempt + 1} failed: {exc}"
+                )
+
+                err_str = str(exc).lower()
+                # If model is deprecated or not found (404), break immediately to try next candidate
+                if "404" in err_str or "not_found" in err_str or "no longer available" in err_str or "not found" in err_str:
+                    logger.info(f"Model {model_name} deprecated/unavailable, falling back to next model...")
+                    break
+
+                if not is_transient_error(exc):
+                    if "invalid" in err_str or "unsupported" in err_str or "400" in err_str:
+                        raise HTTPException(
+                            status_code=400,
+                            detail="The image or prompt format could not be processed. Please upload a standard JPEG or PNG image.",
+                        )
+                    break
+
+                if attempt < 1:
+                    await asyncio.sleep(1.0)
+
+        if response and response.text:
             break
 
-        except Exception as exc:
-            logger.warning(
-                f"Gemini attempt {attempt + 1} failed: {exc}"
-            )
-
-            if not is_transient_error(exc):
-                err_str = str(exc).lower()
-                if "invalid" in err_str or "unsupported" in err_str or "400" in err_str:
-                    raise HTTPException(
-                        status_code=400,
-                        detail="The image or prompt format could not be processed. Please upload a standard JPEG or PNG image.",
-                    )
-                logger.error(f"Non-retryable Gemini error: {exc}")
-                raise HTTPException(
-                    status_code=500,
-                    detail="Error communicating with AI service.",
-                )
-
-            if attempt < 2:
-                # Exponential backoff: 1.5s, 3.0s
-                await asyncio.sleep(1.5 * (attempt + 1))
-            else:
-                logger.error(f"Gemini API unavailable after 3 attempts: {exc}")
-                raise HTTPException(
-                    status_code=503,
-                    detail=selected["error"],
-                )
+    if not response or not response.text:
+        logger.error(f"All candidate Gemini models failed. Last exception: {last_exception}")
+        raise HTTPException(
+            status_code=503,
+            detail=selected["error"],
+        )
 
     analysis_text = response.text
 
