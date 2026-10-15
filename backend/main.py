@@ -1104,6 +1104,38 @@ CROP_ALIASES = {
     "banana": "banana", "केळी": "banana", "केला": "banana", "keli": "banana", "kela": "banana",
     # Pomegranate
     "pomegranate": "pomegranate", "डाळिंब": "pomegranate", "अनार": "pomegranate", "dalimb": "pomegranate", "anar": "pomegranate",
+    # Turmeric / Haldi
+    "turmeric": "turmeric", "हळद": "turmeric", "हल्दी": "turmeric", "haldi": "turmeric", "halad": "turmeric",
+    # Ginger / Adrak
+    "ginger": "ginger", "आले": "ginger", "अदरक": "ginger", "adrak": "ginger", "ale": "ginger",
+    # Garlic / Lasun
+    "garlic": "garlic", "लसूण": "garlic", "लहसुन": "garlic", "lasun": "garlic", "lahsun": "garlic",
+    # Grapes / Draksha
+    "grapes": "grapes", "grape": "grapes", "द्राक्षे": "grapes", "द्राक्ष": "grapes", "अंगूर": "grapes", "draksha": "grapes", "angoor": "grapes",
+    # Mango / Aamba
+    "mango": "mango", "आंबा": "mango", "आम": "mango", "amba": "mango", "aam": "mango",
+    # Papaya / Papita
+    "papaya": "papaya", "पपई": "papaya", "पपीता": "papaya", "papai": "papaya", "papita": "papaya",
+    # Custard Apple / Sitaphal
+    "custard apple": "custard_apple", "सीताफळ": "custard_apple", "शरीफा": "custard_apple", "sitaphal": "custard_apple", "sharifa": "custard_apple",
+    # Watermelon / Kalingad
+    "watermelon": "watermelon", "कलिंगड": "watermelon", "तरबूज": "watermelon", "kalingad": "watermelon", "tarbuj": "watermelon",
+    # Brinjal / Vangi / Baingan
+    "brinjal": "brinjal", "eggplant": "brinjal", "वांगी": "brinjal", "बैंगन": "brinjal", "vangi": "brinjal", "baingan": "brinjal",
+    # Okra / Bhendi
+    "okra": "okra", "bhendi": "okra", "bhindi": "okra", "भेंडी": "okra", "भिंडी": "okra", "ladyfinger": "okra",
+    # Cabbage / Kobi
+    "cabbage": "cabbage", "कोबी": "cabbage", "पत्तागोभी": "cabbage", "kobi": "cabbage", "pattagobhi": "cabbage",
+    # Cauliflower / Flower
+    "cauliflower": "cauliflower", "फ्लॉवर": "cauliflower", "फूलगोभी": "cauliflower", "flower": "cauliflower", "phoolgobhi": "cauliflower",
+    # Marigold / Zendu
+    "marigold": "marigold", "झेंडू": "marigold", "गेंदा": "marigold", "zendu": "marigold", "genda": "marigold",
+    # Mustard / Mohari
+    "mustard": "mustard", "मोहरी": "mustard", "सरसों": "mustard", "mohari": "mustard", "sarson": "mustard", "rai": "mustard",
+    # Bajra / Pearl Millet
+    "bajra": "bajra", "बाजरी": "bajra", "बाजरा": "bajra", "bajri": "bajra", "pearl millet": "bajra",
+    # Jowar / Sorghum
+    "jowar": "jowar", "ज्वारी": "jowar", "ज्वार": "jowar", "sorghum": "jowar", "jwari": "jowar",
 }
 
 # --------------------------------------------------
@@ -2109,32 +2141,686 @@ CROP_FERTILIZER_RDF = {
             "mr": "तेल्या रोग (Bacterial Blight) आणि मर रोगापासून संरक्षणासाठी बागेत पाण्याचा निचरा उत्तम ठेवा. ड्रीपमधून ट्रायकोडर्मा व स्युडोमोनास जीवाणू सोडा.",
             "hi": "जीवाणु झुलसा (तेलिया) से बचाव के लिए खेत में जल निकासी सही रखें और ड्रिप से ट्राइकोडर्मा चलाएं।"
         }
+    },
+    "turmeric": {
+        "names": {"en": "Turmeric", "mr": "हळद", "hi": "हल्दी"},
+        "icon": "🌱",
+        "n": 48.0, "p": 24.0, "k": 36.0, "fym_tonnes": 10.0,
+        "special_nutrient": {
+            "en": "Ferrous Sulphate (10 kg) + Zinc Sulphate (10 kg/acre)",
+            "mr": "फेरस सल्फेट (१० किलो) + झिंक सल्फेट (१० किलो/एकर)",
+            "hi": "फेरस सल्फेट (10 किग्रा) + जिंक सल्फेट (10 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Planting (Basal): 1/3rd Urea + 100% DAP + 50% MOP + FYM", "mr": "लागवडीवेळी (पायाभूत): १/३ युरिया + १००% DAP + ५०% MOP + शेणखत", "hi": "बुआई के समय: 1/3 यूरिया + 100% DAP + 50% MOP + गोबर खाद"},
+            {"en": "45 Days (Vegetative): 1/3rd Urea", "mr": "४५ दिवसांनी (शाकीय वाढ): १/३ युरिया", "hi": "45 दिन बाद (वानस्पतिक): 1/3 यूरिया"},
+            {"en": "90-105 Days (Rhizome Bulking): Remaining 1/3rd Urea + 50% MOP", "mr": "९०-१०५ दिवस (गड्डे पोसताना): उर्वरित १/३ युरिया + ५०% MOP", "hi": "90-105 दिन (कंद भराव): शेष 1/3 यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Mix Trichoderma viride with 10 tonnes FYM during planting to prevent rhizome rot (कंदकूज). Apply 250 kg Neem cake per acre.",
+            "mr": "कंदकूज रोखण्यासाठी लागवडीवेळी १० टन शेणखतात ट्रायकोडर्मा व्हिरिडी व २५० किलो निंबोळी पेंड मिसळून द्या.",
+            "hi": "कंद सड़न रोकने हेतु बुआई के समय 10 टन गोबर खाद में ट्राइकोडर्मा और 250 किग्रा नीम खली मिलाकर डालें।"
+        }
+    },
+    "ginger": {
+        "names": {"en": "Ginger", "mr": "आले", "hi": "अदरक"},
+        "icon": "🫚",
+        "n": 40.0, "p": 20.0, "k": 40.0, "fym_tonnes": 10.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (10 kg) + Boron (2 kg/acre)",
+            "mr": "झिंक सल्फेट (१० किलो) + बोरॉन (२ किलो/एकर)",
+            "hi": "जिंक सल्फेट (10 किग्रा) + बोरॉन (2 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Planting (Basal): 1/3rd Urea + 100% DAP + 50% MOP + FYM", "mr": "लागवडीवेळी (पायाभूत): १/३ युरिया + १००% DAP + ५०% MOP + शेणखत", "hi": "बुआई के समय: 1/3 यूरिया + 100% DAP + 50% MOP + गोबर खाद"},
+            {"en": "45 Days (Tillering): 1/3rd Urea", "mr": "४५ दिवसांनी (फुटवे फुटताना): १/३ युरिया", "hi": "45 दिन बाद (कल्ले): 1/3 यूरिया"},
+            {"en": "90-100 Days (Rhizome growth): Remaining 1/3rd Urea + 50% MOP", "mr": "९०-१०० दिवस (आले पोसताना): उर्वरित १/३ युरिया + ५०% MOP", "hi": "90-100 दिन (अदरक भराव): शेष 1/3 यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Ginger requires loose soil and organic mulching. Mulch with green leaves or sugarcane trash (3 tonnes/acre) to keep soil moist.",
+            "mr": "आल्याला भुसभुशीत जमीन आणि हिरव्या पाल्याचे किंवा पाचटाचे आच्छादन (मल्चिंग) अत्यंत फायदेशीर ठरते.",
+            "hi": "अदरक की फसल में हरी पत्तियों या पुआल की मल्चिंग करें जिससे नमी बनी रहे और कंद अच्छे से फूले।"
+        }
+    },
+    "garlic": {
+        "names": {"en": "Garlic", "mr": "लसूण", "hi": "लहसुन"},
+        "icon": "🧄",
+        "n": 40.0, "p": 20.0, "k": 24.0, "fym_tonnes": 8.0,
+        "special_nutrient": {
+            "en": "Elemental Sulphur (15 kg/acre - boosts allicin pungency and bulb size)",
+            "mr": "सल्फर / गंधक (१५ किलो/एकर - कंद पोसण्यासाठी व तिखटपणासाठी)",
+            "hi": "सल्फर / गंधक (15 किग्रा/एकड़ - तीखापन व गांठ भराव हेतु)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP + Sulphur", "mr": "लागवडीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP + गंधक", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP + सल्फर"},
+            {"en": "Bulb Initiation (30-45 days): Remaining 50% Urea", "mr": "कांडी पोसताना (३०-४५ दिवस): उर्वरित ५०% युरिया", "hi": "गांठ बनते समय (30-45 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Do not apply excessive nitrogen after 60 days. Apply Vermicompost (2 tonnes/acre) and wood ash for natural potassium.",
+            "mr": "६० दिवसांनंतर युरिया देऊ नका. २ टन गांडूळ खत आणि लाकडाची राख मिसळल्यास लसणाचा गड्डा टपोरा बनतो.",
+            "hi": "60 दिनों के बाद यूरिया का प्रयोग न करें। 2 टन केंचुआ खाद और लकड़ी की राख डालने से लहसुन ठोस बनता है।"
+        }
+    },
+    "grapes": {
+        "names": {"en": "Grapes", "mr": "द्राक्षे", "hi": "अंगूर"},
+        "icon": "🍇",
+        "n": 60.0, "p": 30.0, "k": 80.0, "fym_tonnes": 12.0,
+        "special_nutrient": {
+            "en": "Magnesium Sulphate (15 kg) + Boron (2 kg/acre - prevents berry drop)",
+            "mr": "मॅग्नेशियम सल्फेट (१५ किलो) + बोरॉन (२ किलो/एकर - मणीगळ रोखण्यासाठी)",
+            "hi": "मैग्नीशियम सल्फेट (15 किग्रा) + बोरॉन (2 किग्रा/एकड़ - दाना झड़ने से बचाव)"
+        },
+        "stages": [
+            {"en": "Foundation / October Pruning: 30% Urea + 100% DAP + 30% MOP + FYM", "mr": "ऑक्टोबर छाटणीवेळी: ३०% युरिया + १००% DAP + ३०% MOP + शेणखत", "hi": "अक्टूबर छंटाई के समय: 30% यूरिया + 100% DAP + 30% MOP + गोबर खाद"},
+            {"en": "Berry Setting (40-50 days): 40% Urea + 30% MOP + Micronutrients", "mr": "मणी सेटिंगच्या वेळी (४०-५० दिवस): ४०% युरिया + ३०% MOP + सूक्ष्म अन्नद्रव्ये", "hi": "दाना बनते समय (40-50 दिन): 40% यूरिया + 30% MOP + सूक्ष्म पोषक तत्व"},
+            {"en": "Veraison / Sugar Bulking (70-80 days): Remaining 30% Urea + 40% MOP", "mr": "मण्यात पाणी व साखर भरताना (७०-८० दिवस): उर्वरित ३०% युरिया + ४०% MOP", "hi": "शर्करा बनते समय (70-80 दिन): शेष 30% यूरिया + 40% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Apply 12 tonnes FYM enriched with Pseudomonas and Trichoderma. Regular petiole analysis guides precision fertigation.",
+            "mr": "१२ टन शेणखतात स्युडोमोनास व ट्रायकोडर्मा जीवाणू मिसळून द्या. मणीगळ रोखण्यासाठी संतुलित सूक्ष्म अन्नद्रव्ये वापरा.",
+            "hi": "12 टन सड़ी गोबर खाद में ट्राइकोडर्मा मिलाकर डालें और ड्रिप से संतुलित पोषक तत्व दें।"
+        }
+    },
+    "mango": {
+        "names": {"en": "Mango", "mr": "आंबा", "hi": "आम"},
+        "icon": "🥭",
+        "n": 50.0, "p": 25.0, "k": 50.0, "fym_tonnes": 10.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (10 kg) + Borax (2 kg/acre - prevents spongy tissue)",
+            "mr": "झिंक सल्फेट (१० किलो) + बोरॅक्स (२ किलो/एकर - साका पडणे रोखण्यासाठी)",
+            "hi": "जिंक सल्फेट (10 किग्रा) + सुहागा (2 किग्रा/एकड़ - फल खराबी से बचाव हेतु)"
+        },
+        "stages": [
+            {"en": "Post-Harvest / Monsoon (Basal): 50% Urea + 100% DAP + 50% MOP + FYM", "mr": "तोडणीनंतर / पावसाळ्यात (पायाभूत): ५०% युरिया + १००% DAP + ५०% MOP + शेणखत", "hi": "तुड़ाई के बाद (मानसून): 50% यूरिया + 100% DAP + 50% MOP + गोबर खाद"},
+            {"en": "Fruit Set Stage (Pea-sized): Remaining 50% Urea + 50% MOP + Micronutrient spray", "mr": "वाटाण्याएवढी फळे असताना: उर्वरित ५०% युरिया + ५०% MOP + सूक्ष्म अन्नद्रव्य फवारणी", "hi": "मटर के दाने बराबर फल होने पर: शेष 50% यूरिया + 50% MOP + पर्णीय छिड़काव"}
+        ],
+        "organic_tips": {
+            "en": "Dig a 1-foot ring canal around the drip line of trees to apply FYM and fertilizers. Mulch with dry grass during summer.",
+            "mr": "झाडाच्या विस्ताराखाली १ फूट खोल चर खोदून शेणखत व रासायनिक खते द्यावीत. उन्हाळ्यात झाडाच्या बुंध्याभोवती पालापाचोळ्याचे आच्छादन करा.",
+            "hi": "पेड़ के फैलाव के अनुसार थाला बनाकर खाद डालें। गर्मियों में सूखे पत्तों से मल्चिंग करें।"
+        }
+    },
+    "papaya": {
+        "names": {"en": "Papaya", "mr": "पपई", "hi": "पपीता"},
+        "icon": "🍈",
+        "n": 80.0, "p": 80.0, "k": 100.0, "fym_tonnes": 8.0,
+        "special_nutrient": {
+            "en": "Boron (2 kg/acre - prevents fruit bumpy deformity)",
+            "mr": "बोरॉन (२ किलो/एकर - फळे खडबडीत होणे रोखण्यासाठी)",
+            "hi": "बोरॉन (2 किग्रा/एकड़ - फल का आकार सही रखने हेतु)"
+        },
+        "stages": [
+            {"en": "Planting to Month 2: 30% Urea + 50% DAP + 20% MOP", "mr": "लागवड ते २ महिने: ३०% युरिया + ५०% DAP + २०% MOP", "hi": "रोपाई से 2 महीने: 30% यूरिया + 50% DAP + 20% MOP"},
+            {"en": "Flowering (Month 3 to 4): 40% Urea + 50% DAP + 40% MOP", "mr": "फुलोरा (३ ते ४ महिने): ४०% युरिया + ५०% DAP + ४०% MOP", "hi": "फूल आते समय (3-4 माह): 40% यूरिया + 50% DAP + 40% MOP"},
+            {"en": "Fruit Development (Month 5 onwards): Remaining 30% Urea + 40% MOP", "mr": "फळे वाढीच्या वेळी (५ महिने पुढे): उर्वरित ३०% युरिया + ४०% MOP", "hi": "फल विकास (5 माह बाद): शेष 30% यूरिया + 40% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Papaya is very sensitive to waterlogging and collar rot. Plant on raised beds and apply Neem cake (250 kg/acre).",
+            "mr": "पपईच्या खोडाजवळ पाणी साचू देऊ नका, अन्यथा कॉलर रॉट (खोडकूज) होते. गादीवाफ्यावर लागवड करून निंबोळी पेंड वापरा.",
+            "hi": "पपीते में जलभराव न होने दें। मेड़ों पर पौधे लगाएं और नीम खली 250 किग्रा प्रति एकड़ डालें।"
+        }
+    },
+    "custard_apple": {
+        "names": {"en": "Custard Apple (Sitaphal)", "mr": "सीताफळ", "hi": "शरीफा / सीताफल"},
+        "icon": "🍏",
+        "n": 30.0, "p": 15.0, "k": 30.0, "fym_tonnes": 6.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (8 kg) + Calcium Nitrate (5 kg/acre)",
+            "mr": "झिंक सल्फेट (८ किलो) + कॅल्शियम नायट्रेट (५ किलो/एकर)",
+            "hi": "जिंक सल्फेट (8 किग्रा) + कैल्शियम नाइट्रेट (5 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "Onset of Monsoon / Pruning: 50% Urea + 100% DAP + 50% MOP + FYM", "mr": "पावसाळ्याच्या सुरुवातीला: ५०% युरिया + १००% DAP + ५०% MOP + शेणखत", "hi": "मानसून की शुरुआत पर: 50% यूरिया + 100% DAP + 50% MOP + गोबर खाद"},
+            {"en": "Fruit Development (Aug-Sept): Remaining 50% Urea + 50% MOP", "mr": "फळे पोसताना (ऑगस्ट-सप्टेंबर): उर्वरित ५०% युरिया + ५०% MOP", "hi": "फल बढ़ते समय: शेष 50% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Hardy dryland fruit crop. Incorporate 6 tonnes FYM and spray 1% potassium nitrate at fruit enlargement.",
+            "mr": "सीताफळ हे कोरडवाहू पीक असून ६ टन शेणखत द्यावे. फळांचा आकार वाढण्यासाठी पोटॅशियम नायट्रेटची फवारणी फायदेशीर ठरते.",
+            "hi": "कम पानी की फसल है। 6 टन गोबर खाद दें व फल बड़ा करने हेतु 13:00:45 का छिड़काव करें।"
+        }
+    },
+    "watermelon": {
+        "names": {"en": "Watermelon", "mr": "कलिंगड", "hi": "तरबूज"},
+        "icon": "🍉",
+        "n": 40.0, "p": 24.0, "k": 24.0, "fym_tonnes": 6.0,
+        "special_nutrient": {
+            "en": "Calcium Nitrate (8 kg) + Boron (1.5 kg/acre - prevents fruit bursting and ensures sweetness)",
+            "mr": "कॅल्शियम नायट्रेट (८ किलो) + बोरॉन (१.५ किलो/एकर - फळे तडकणे रोखण्यासाठी व गोडी वाढवण्यासाठी)",
+            "hi": "कैल्शियम नाइट्रेट (8 किग्रा) + बोरॉन (1.5 किग्रा/एकड़ - फल फटने से बचाव हेतु)"
+        },
+        "stages": [
+            {"en": "Basal at Sowing / Bed preparation: 40% Urea + 100% DAP + 50% MOP", "mr": "पेरणीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "बुआई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Vine Growth / Flowering (20-30 days): 30% Urea", "mr": "वेलींची वाढ व फुलोरा (२०-३० दिवस): ३०% युरिया", "hi": "बेल वृद्धि व फूल (20-30 दिन): 30% यूरिया"},
+            {"en": "Fruit Bulking (45-55 days): Remaining 30% Urea + 50% MOP + Boron", "mr": "फळे पोसताना (४५-५५ दिवस): उर्वरित ३०% युरिया + ५०% MOP + बोरॉन", "hi": "फल भराव (45-55 दिन): शेष 30% यूरिया + 50% MOP + बोरॉन"}
+        ],
+        "organic_tips": {
+            "en": "Silver-black plastic mulching saves 50% water and accelerates fruit maturity by 10 days. Spray fermented sour buttermilk.",
+            "mr": "सिल्व्हर-ब्लॅक प्लास्टिक मल्चिंगचा वापर केल्यास पाण्याची बचत होते व फळे १० दिवस लवकर तयार होतात. आंबट ताकाची फवारणी करा.",
+            "hi": "प्लास्टिक मल्चिंग का उपयोग करें जिससे खरपतवार रुके और पानी की बचत हो। खट्टी छाछ का छिड़काव करें।"
+        }
+    },
+    "brinjal": {
+        "names": {"en": "Brinjal (Eggplant)", "mr": "वांगी", "hi": "बैंगन"},
+        "icon": "🍆",
+        "n": 40.0, "p": 24.0, "k": 20.0, "fym_tonnes": 6.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (10 kg) + Magnesium Sulphate (10 kg/acre)",
+            "mr": "झिंक सल्फेट (१० किलो) + मॅग्नेशियम सल्फेट (१० किलो/एकर)",
+            "hi": "जिंक सल्फेट (10 किग्रा) + मैग्नीशियम सल्फेट (10 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "Transplanting (Basal): 40% Urea + 100% DAP + 50% MOP", "mr": "लागवडीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "रोपाई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Vegetative Growth (25-30 days): 30% Urea", "mr": "शाकीय वाढीच्या वेळी (२५-३० दिवस): ३०% युरिया", "hi": "वानस्पतिक वृद्धि (25-30 दिन): 30% यूरिया"},
+            {"en": "Flowering & Fruiting (45-50 days): Remaining 30% Urea + 50% MOP", "mr": "फुलोरा व फळे लागताना (४५-५० दिवस): उर्वरित ३०% युरिया + ५०% MOP", "hi": "फूल व फल विकास: शेष 30% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Install shoot and fruit borer pheromone traps (8 per acre). Incorporate 250 kg Neem cake during land preparation.",
+            "mr": "शेंडा व फळ पोखरणारी अळी रोखण्यासाठी एकरी ८ कामगंध सापळे लावा आणि २५० किलो निंबोळी पेंड जमिनीत मिसळा.",
+            "hi": "तना व फल छेदक कीट हेतु फेरोमोन ट्रैप लगाएं और 250 किग्रा नीम खली खेत में मिलाएँ।"
+        }
+    },
+    "okra": {
+        "names": {"en": "Okra (Bhendi)", "mr": "भेंडी", "hi": "भिंडी"},
+        "icon": "🌱",
+        "n": 30.0, "p": 20.0, "k": 20.0, "fym_tonnes": 5.0,
+        "special_nutrient": {
+            "en": "Neem Cake (200 kg) + Micronutrient mixture (prevents yellow vein mosaic)",
+            "mr": "निंबोळी पेंड (२०० किलो) + सूक्ष्म अन्नद्रव्ये (पिवळा शिरा रोग रोखण्यासाठी)",
+            "hi": "नीम खली (200 किग्रा) + सूक्ष्म पोषक तत्व (पीला मोज़ेक रोग रोकथाम हेतु)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Flowering & Pod Formation (30-35 days): Remaining 50% Urea", "mr": "फुलोरा व भेंड्या लागताना (३०-३५ दिवस): उर्वरित ५०% युरिया", "hi": "फूल व फल बनते समय (30-35 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Control whitefly vectors of Yellow Vein Mosaic Virus using yellow sticky traps (20 per acre) and neem oil spray (3 ml/L).",
+            "mr": "पिवळा शिरा (Yellow Vein Mosaic) रोग पसरवणाऱ्या पांढऱ्या माशीसाठी पिवळे चिकट सापळे आणि ५% निंबोळी अर्काची फवारणी करा.",
+            "hi": "पीला मोज़ेक रोग फैलाने वाली सफेद मक्खी के नियंत्रण के लिए पीले कार्ड लगाएं और नीम तेल का छिड़काव करें।"
+        }
+    },
+    "cabbage": {
+        "names": {"en": "Cabbage", "mr": "कोबी", "hi": "पत्तागोभी"},
+        "icon": "🥬",
+        "n": 48.0, "p": 32.0, "k": 24.0, "fym_tonnes": 8.0,
+        "special_nutrient": {
+            "en": "Boron (2 kg) + Calcium Nitrate (10 kg/acre - for solid tight heads)",
+            "mr": "बोरॉन (२ किलो) + कॅल्शियम नायट्रेट (१० किलो/एकर - गड्डा घट्ट भरण्यासाठी)",
+            "hi": "बोरॉन (2 किग्रा) + कैल्शियम नाइट्रेट (10 किग्रा/एकड़ - ठोस गट्टे हेतु)"
+        },
+        "stages": [
+            {"en": "Transplanting (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "लागवडीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "रोपाई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Head Formation (30-40 days): Remaining 50% Urea", "mr": "गड्डा भरताना (३०-४० दिवस): उर्वरित ५०% युरिया", "hi": "गट्टा बनते समय (30-40 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Heavy feeder vegetable. Apply 8 tonnes FYM and spray Bacillus thuringiensis (Bt) or NSKE 5% for diamondback moth control.",
+            "mr": "८ टन कुजलेले शेणखत द्या. पानांवरील अळीसाठी बॅसिलस थुरिनजिएन्सिस (Bt) किंवा ५% निंबोळी अर्काचा वापर करा.",
+            "hi": "8 टन गोबर खाद दें। डीबीएम कीट से बचाव हेतु बीटी (Bt) या नीम अर्क का छिड़काव करें।"
+        }
+    },
+    "cauliflower": {
+        "names": {"en": "Cauliflower", "mr": "फ्लॉवर", "hi": "फूलगोभी"},
+        "icon": "🥦",
+        "n": 48.0, "p": 32.0, "k": 24.0, "fym_tonnes": 8.0,
+        "special_nutrient": {
+            "en": "Ammonium Molybdate (400g) + Borax (4 kg/acre - prevents whiptail & curd browning)",
+            "mr": "अमोनियम मॉलिब्डेनम (४०० ग्रॅम) + बोरॅक्स (४ किलो/एकर - चट्टे पडणे व व्हिपटेल रोखण्यासाठी)",
+            "hi": "अमोनियम मोलिब्डेट (400 ग्राम) + सुहागा (4 किग्रा/एकड़ - फूल को सफेद रखने हेतु)"
+        },
+        "stages": [
+            {"en": "Transplanting (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "लागवडीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "रोपाई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Curd Initiation (30-40 days): Remaining 50% Urea", "mr": "फूल भरताना (३०-४० दिवस): उर्वरित ५०% युरिया", "hi": "फूल बनते समय (30-40 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Cover maturing curds with inner leaves (blanching) to maintain pearly white color. Apply Vermicompost (2 tonnes/acre).",
+            "mr": "फुलाचा पांढरा शुभ्र रंग टिकवण्यासाठी पानांनी फूल झाकून घ्या (Blanching). २ टन गांडूळ खत जमिनीत मिसळा.",
+            "hi": "फूल को धूप से बचाने के लिए पत्तों से ढकें (ब्लांचिंग) जिससे फूल चमकदार सफेद रहे।"
+        }
+    },
+    "marigold": {
+        "names": {"en": "Marigold", "mr": "झेंडू", "hi": "गेंदा"},
+        "icon": "🌼",
+        "n": 35.0, "p": 25.0, "k": 25.0, "fym_tonnes": 5.0,
+        "special_nutrient": {
+            "en": "Micronutrient mixture (Zinc, Boron - 5 kg/acre for heavy flowering)",
+            "mr": "सूक्ष्म अन्नद्रव्ये (झिंक, बोरॉन - ५ किलो/एकर भरघोस फुलकळीसाठी)",
+            "hi": "सूक्ष्म पोषक तत्व (5 किग्रा/एकड़ भरपूर फूलों हेतु)"
+        },
+        "stages": [
+            {"en": "Transplanting (Basal): 40% Urea + 100% DAP + 50% MOP", "mr": "लागवडीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "रोपाई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Branching & Bud Formation (30 days): 30% Urea", "mr": "फांद्या व कळ्या लागताना (३० दिवस): ३०% युरिया", "hi": "शाखाएं व कलियां बनते समय (30 दिन): 30% यूरिया"},
+            {"en": "Peak Flowering & Plucking: Remaining 30% Urea + 50% MOP", "mr": "फुलोरा व तोडणीच्या वेळी: उर्वरित ३०% युरिया + ५०% MOP", "hi": "फूल खिलते समय: शेष 30% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Pinch terminal shoots at 30 days after transplanting to induce bushy branches and double the flower count. Marigold roots also naturally deter soil nematodes.",
+            "mr": "लागवडीनंतर ३० दिवसांनी शेंडे खुडल्यास भरपूर फांद्या फुटून दुप्पट फुले येतात. झेंडूमुळे जमिनीतील सूत्रकृमींचा (Nematodes) नैसर्गिक नायनाट होतो.",
+            "hi": "30 दिन पर ऊपरी भाग तोड़ें (पिंचिंग) जिससे अधिक शाखाएं व फूल खिलें। गेंदा मिट्टी के सूत्रकृमि भी नष्ट करता है।"
+        }
+    },
+    "mustard": {
+        "names": {"en": "Mustard", "mr": "मोहरी", "hi": "सरसों"},
+        "icon": "🌾",
+        "n": 25.0, "p": 16.0, "k": 16.0, "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Elemental Sulphur (12 kg/acre - essential for pungent oil percentage)",
+            "mr": "सल्फर / गंधक (१२ किलो/एकर - तेलाचे प्रमाण वाढवण्यासाठी आवश्यक)",
+            "hi": "सल्फर / गंधक (12 किग्रा/एकड़ - तेल की मात्रा बढ़ाने हेतु)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP + Sulphur", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP + गंधक", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP + सल्फर"},
+            {"en": "First Irrigation / Flowering (30-35 days): Remaining 50% Urea", "mr": "पहिले पाणी / फुलोरा (३०-३५ दिवस): उर्वरित ५०% युरिया", "hi": "पहली सिंचाई / फूल आते समय (30-35 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Seed treatment with Azotobacter and PSB enhances germination. Keep fields weed-free during first 30 days.",
+            "mr": "पेरणीपूर्वी ॲझोटोबॅक्टर व पीएसबी जिवाणूंची बीजप्रक्रिया करा. सुरुवातीच्या ३० दिवसांत शेत तणमुक्त ठेवा.",
+            "hi": "बुआई से पहले एजोटोबैक्टर व पीएसबी से बीज उपचार करें। शुरुआती 30 दिन खरपतवार नियंत्रण रखें।"
+        }
+    },
+    "bajra": {
+        "names": {"en": "Bajra (Pearl Millet)", "mr": "बाजरी", "hi": "बाजरा"},
+        "icon": "🌾",
+        "n": 32.0, "p": 16.0, "k": 16.0, "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (8 kg/acre)",
+            "mr": "झिंक सल्फेट (८ किलो/एकर)",
+            "hi": "जिंक सल्फेट (8 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Tillering Stage (25-30 days): Remaining 50% Urea", "mr": "फुटवे फुटताना (२५-३० दिवस): उर्वरित ५०% युरिया", "hi": "कल्ले फूटते समय (25-30 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Extremely drought-tolerant nutri-cereal. Incorporate 4 tonnes FYM. Azospirillum seed treatment saves 20% urea.",
+            "mr": "बाजरी हे दुष्काळ सहन करणारे पौष्टिक तृणधान्य आहे. ४ टन शेणखत आणि ॲझोस्पिरीलम जिवाणू खताचा वापर करा.",
+            "hi": "कम पानी में होने वाला पोषक अनाज है। 4 टन गोबर खाद व एजोस्पिरिलम से बीज उपचार करें।"
+        }
+    },
+    "jowar": {
+        "names": {"en": "Jowar (Sorghum)", "mr": "ज्वारी", "hi": "ज्वार"},
+        "icon": "🌾",
+        "n": 32.0, "p": 16.0, "k": 16.0, "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (8 kg/acre)",
+            "mr": "झिंक सल्फेट (८ किलो/एकर)",
+            "hi": "जिंक सल्फेट (8 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Knee-high / Grand Growth (30-35 days): Remaining 50% Urea", "mr": "गुडघाभर उंचीच्या वेळी (३०-३५ दिवस): उर्वरित ५०% युरिया", "hi": "घुटने तक ऊंचाई होने पर (30-35 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Treat seeds with Azotobacter and PSB. Apply 4 tonnes FYM during land preparation to increase soil water retention.",
+            "mr": "पेरणीपूर्वी ॲझोटोबॅक्टर व पीएसबी जिवाणूंची बीजप्रक्रिया करा. जमिनीची ओलावा धरून ठेवण्याची क्षमता वाढवण्यासाठी ४ टन शेणखत द्या.",
+            "hi": "एजोटोबैक्टर और पीएसबी से बीज उपचार करें। 4 टन गोबर खाद डालकर खेत तैयार करें।"
+        }
     }
 }
 
+# --------------------------------------------------
+# Universal Agronomic Profiles & Dynamic Crop Resolver
+# Supports EVERY crop (vegetables, fruits, flowers, cash crops, millets, spices, plantations)
+# --------------------------------------------------
 
-def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre") -> dict:
-    cleaned_crop = crop.strip().lower()
-    crop_key = cleaned_crop
+AGRONOMIC_FAMILY_TEMPLATES = {
+    "fruit": {
+        "icon": "🌳",
+        "n": 50.0, "p": 25.0, "k": 50.0,
+        "fym_tonnes": 10.0,
+        "special_nutrient": {
+            "en": "Micronutrient Mixture (Zinc, Boron, Ferrous) + Calcium Nitrate (10 kg/acre)",
+            "mr": "सूक्ष्म अन्नद्रव्ये (झिंक, बोरॉन, फेरस) + कॅल्शियम नायट्रेट (१० किलो/एकर)",
+            "hi": "सूक्ष्म पोषक तत्व (जिंक, बोरॉन, फेरस) + कैल्शियम नाइट्रेट (10 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "Pruning / Rest breaking (Basal): 30% Urea + 100% DAP + 30% MOP + Well-rotted FYM", "mr": "छाटणी / विश्रांतीनंतर (पायाभूत): ३०% युरिया + १००% DAP + ३०% MOP + शेणखत", "hi": "कटाई-छंटाई के बाद: 30% यूरिया + 100% DAP + 30% MOP + गोबर खाद"},
+            {"en": "Flowering & Fruit Set: 30% Urea + 30% MOP + Foliar micronutrient spray", "mr": "फुलोरा ते फळधारणा: ३०% युरिया + ३०% MOP + सूक्ष्म अन्नद्रव्य फवारणी", "hi": "फूल व फल बनते समय: 30% यूरिया + 30% MOP + पर्णीय छिड़काव"},
+            {"en": "Fruit Development / Maturity: Remaining 40% Urea + 40% MOP", "mr": "फळे वाढीच्या व पक्वतेच्या वेळी: उर्वरित ४०% युरिया + ४०% MOP", "hi": "फल विकास के समय: शेष 40% यूरिया + 40% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Fruit crops thrive on organic mulching and potassium. Apply 10 tonnes FYM with Trichoderma and maintain good basin drainage.",
+            "mr": "फळझाडांना सेंद्रिय आच्छादन (मल्चिंग) आणि पोटॅशची जास्त गरज असते. १० टन शेणखतात ट्रायकोडर्मा मिसळून द्या आणि पाण्याचा निचरा चांगला ठेवा.",
+            "hi": "फलदार पेड़ों में जैविक मल्चिंग करें व पोटाश की पर्याप्त मात्रा दें। 10 टन गोबर खाद में ट्राइकोडर्मा मिलाकर डालें।"
+        }
+    },
+    "vegetable": {
+        "icon": "🥬",
+        "n": 40.0, "p": 25.0, "k": 25.0,
+        "fym_tonnes": 6.0,
+        "special_nutrient": {
+            "en": "Calcium Nitrate (8 kg) + Boron (1.5 kg/acre - prevents blossom end rot & flower drop)",
+            "mr": "कॅल्शियम नायट्रेट (८ किलो) + बोरॉन (१.५ किलो/एकर - फुलगळ व फळांची विकृती रोखण्यासाठी)",
+            "hi": "कैल्शियम नाइट्रेट (8 किग्रा) + बोरॉन (1.5 किग्रा/एकड़ - फूल झड़ने से रोकने हेतु)"
+        },
+        "stages": [
+            {"en": "Basal at transplanting/sowing: 40% Urea + 100% DAP + 50% MOP", "mr": "लागवडीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "बुआई/रोपाई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Vegetative Growth (20-30 days): 30% Urea", "mr": "शाकीय वाढीच्या वेळी (२०-३० दिवस): ३०% युरिया", "hi": "वानस्पतिक वृद्धि (20-30 दिन): 30% यूरिया"},
+            {"en": "Flowering & Fruiting (45-55 days): Remaining 30% Urea + 50% MOP", "mr": "फुलोरा व फळधारणेच्या वेळी (४५-५५ दिवस): उर्वरित ३०% युरिया + ५०% MOP", "hi": "फूल व फल आते समय (45-55 दिन): शेष 30% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Vegetables respond strongly to vermicompost and Neem cake. Incorporate 6 tonnes FYM and spray fermented buttermilk or Panchagavya.",
+            "mr": "भाजीपाला पिकांना गांडूळ खत आणि निंबोळी पेंडीचा मोठा फायदा होतो. ६ टन शेणखत मिसळा आणि आंबट ताक किंवा पंचगव्याची फवारणी करा.",
+            "hi": "सब्जियों में केंचुआ खाद और नीम खली का प्रयोग करें। 6 टन गोबर खाद मिलाएँ और खट्टी छाछ या पंचगव्य का छिड़काव करें।"
+        }
+    },
+    "pulse": {
+        "icon": "🌱",
+        "n": 10.0, "p": 20.0, "k": 10.0,
+        "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Sulphur (8-10 kg) + Zinc Sulphate (5 kg/acre)",
+            "mr": "सल्फर / गंधक (८-१० किलो) + झिंक सल्फेट (५ किलो/एकर)",
+            "hi": "सल्फर (8-10 किग्रा) + जिंक सल्फेट (5 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 100% DAP + 100% MOP + Starter Urea", "mr": "पेरणीवेळी (पायाभूत): १००% DAP + १००% MOP + सुरुवातीचा युरिया", "hi": "बुआई के समय: 100% DAP + 100% MOP + शुरुआती यूरिया"},
+            {"en": "Branching & Flowering (30-40 days): Foliar spray of 19:19:19 or 00:52:34 (5 g/L)", "mr": "फांद्या व फुलोरा (३०-४० दिवस): १९:१९:१९ किंवा ००:५२:३४ ची फवारणी (५ ग्रॅम/लिटर)", "hi": "शाखाएं व फूल (30-40 दिन): 19:19:19 या 00:52:34 का छिड़काव"}
+        ],
+        "organic_tips": {
+            "en": "Legumes fix atmospheric nitrogen through root nodules. Avoid heavy chemical urea. Treat seeds with Rhizobium culture and PSB before sowing.",
+            "mr": "कडधान्य पिके स्वतःचे नत्र स्वतः तयार करतात, त्यामुळे जास्त युरिया देऊ नका. पेरणीपूर्वी रायझोबियम व पीएसबी जिवाणूंची बीजप्रक्रिया आवर्जून करा.",
+            "hi": "दलहनी फसलें वायुमंडलीय नाइट्रोजन स्वयं स्थिर करती हैं। रासायनिक यूरिया अधिक न डालें। राइजोबियम कल्चर से बीज उपचार करें।"
+        }
+    },
+    "spice": {
+        "icon": "🌿",
+        "n": 48.0, "p": 24.0, "k": 36.0,
+        "fym_tonnes": 8.0,
+        "special_nutrient": {
+            "en": "Ferrous Sulphate (10 kg) + Zinc Sulphate (8 kg/acre)",
+            "mr": "फेरस सल्फेट (१० किलो) + झिंक सल्फेट (८ किलो/एकर)",
+            "hi": "फेरस सल्फेट (10 किग्रा) + जिंक सल्फेट (8 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Planting (Basal): 1/3rd Urea + 100% DAP + 50% MOP + Full FYM", "mr": "लागवडीवेळी (पायाभूत): १/३ युरिया + १००% DAP + ५०% MOP + शेणखत", "hi": "बुआई के समय: 1/3 यूरिया + 100% DAP + 50% MOP + गोबर खाद"},
+            {"en": "Vegetative Growth (40-45 days): 1/3rd Urea", "mr": "वाढीच्या वेळी (४०-४५ दिवस): १/३ युरिया", "hi": "वृद्धि के समय (40-45 दिन): 1/3 यूरिया"},
+            {"en": "Rhizome / Tuber Development (80-90 days): Remaining 1/3rd Urea + 50% MOP", "mr": "गड्डे / कंद पोसताना (८०-९० दिवस): उर्वरित १/३ युरिया + ५०% MOP", "hi": "कंद विकास (80-90 दिन): शेष 1/3 यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Spices and tuber crops are sensitive to rhizome rot. Mix Trichoderma viride in FYM during planting and apply neem cake.",
+            "mr": "कंद व मसाला पिकांना कंदकूज रोगाचा धोका असतो. लागवडीवेळी शेणखतात ट्रायकोडर्मा व्हिरिडी व निंबोळी पेंड मिसळा.",
+            "hi": "मसाला व कंद फसलों में सड़न रोकने हेतु गोबर खाद में ट्राइकोडर्मा और नीम खली मिलाकर डालें।"
+        }
+    },
+    "oilseed": {
+        "icon": "🌻",
+        "n": 25.0, "p": 20.0, "k": 15.0,
+        "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Elemental Sulphur (10 kg/acre - essential for increasing oil synthesis)",
+            "mr": "सल्फर / गंधक (१० किलो/एकर - तेलाचे प्रमाण वाढवण्यासाठी अत्यंत आवश्यक)",
+            "hi": "सल्फर / गंधक (10 किग्रा/एकड़ - तेल की मात्रा बढ़ाने हेतु)"
+        },
+        "stages": [
+            {"en": "Basal at Sowing: 50% Urea + 100% DAP + 100% MOP + Sulphur", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP + गंधक", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP + सल्फर"},
+            {"en": "Flowering / Seed Formation (30-35 days): Remaining 50% Urea", "mr": "फुलोरा व दाणे भरताना (३०-३५ दिवस): उर्वरित ५०% युरिया", "hi": "फूल व दाने बनते समय (30-35 दिन): शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Apply Sulphur and PSB biofertilizer. Avoid waterlogging at flowering stage.",
+            "mr": "सल्फर आणि पीएसबी जीवाणू वापरा. फुलोऱ्याच्या वेळी शेतात पाणी साचू देऊ नका.",
+            "hi": "सल्फर और पीएसबी का प्रयोग करें। फूल आते समय खेत में पानी न रुकने दें।"
+        }
+    },
+    "flower": {
+        "icon": "💐",
+        "n": 35.0, "p": 25.0, "k": 25.0,
+        "fym_tonnes": 5.0,
+        "special_nutrient": {
+            "en": "Micronutrient mixture (Zinc, Boron) for vibrant blooms and longer shelf life",
+            "mr": "फुलांचा आकर्षक रंग व टिकाऊपणा वाढवण्यासाठी सूक्ष्म अन्नद्रव्ये (झिंक, बोरॉन)",
+            "hi": "फूलों के रंग व ताजगी हेतु सूक्ष्म पोषक तत्व (जिंक, बोरॉन)"
+        },
+        "stages": [
+            {"en": "At Planting (Basal): 40% Urea + 100% DAP + 50% MOP", "mr": "लागवडीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "रोपाई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Vegetative & Bud Initiation: 30% Urea", "mr": "शाकीय वाढ व कळ्या लागताना: ३०% युरिया", "hi": "कलियां बनते समय: 30% यूरिया"},
+            {"en": "Flowering & Harvest: Remaining 30% Urea + 50% MOP", "mr": "फुलोरा व तोडणीच्या वेळी: उर्वरित ३०% युरिया + ५०% MOP", "hi": "फूल खिलते समय: शेष 30% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Pinch terminal shoots at 30 days to induce bushy growth with more flower buds. Apply vermicompost and neem extract.",
+            "mr": "लागवडीनंतर ३० दिवसांनी शेंडे खुडल्यास (Pinching) झाडाला भरपूर फांद्या फुटून कळ्या जास्त लागतात. गांडूळ खत वापरा.",
+            "hi": "30 दिन पर ऊपरी भाग तोड़ें (पिंचिंग) जिससे अधिक कलियां खिलें। केंचुआ खाद का प्रयोग करें।"
+        }
+    },
+    "cereal": {
+        "icon": "🌾",
+        "n": 32.0, "p": 16.0, "k": 16.0,
+        "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (8 kg/acre)",
+            "mr": "झिंक सल्फेट (८ किलो/एकर)",
+            "hi": "जिंक सल्फेट (8 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 50% Urea + 100% DAP + 100% MOP", "mr": "पेरणीवेळी (पायाभूत): ५०% युरिया + १००% DAP + १००% MOP", "hi": "बुआई के समय: 50% यूरिया + 100% DAP + 100% MOP"},
+            {"en": "Tillering / Knee-high stage: Remaining 50% Urea", "mr": "फुटवे फुटताना / वाढीच्या वेळी: उर्वरित ५०% युरिया", "hi": "कल्ले फूटते समय: शेष 50% यूरिया"}
+        ],
+        "organic_tips": {
+            "en": "Incorporate 4 tonnes FYM. Seed treatment with Azotobacter fixes nitrogen and enhances root growth.",
+            "mr": "४ टन शेणखत जमिनीत मिसळा. पेरणीपूर्वी ॲझोटोबॅक्टर जिवाणू संवर्धकाची प्रक्रिया करा.",
+            "hi": "4 टन गोबर खाद मिलाएँ। एजोटोबैक्टर से बीज उपचार करें।"
+        }
+    },
+    "general": {
+        "icon": "🌱",
+        "n": 35.0, "p": 20.0, "k": 20.0,
+        "fym_tonnes": 5.0,
+        "special_nutrient": {
+            "en": "Balanced Micronutrient mixture (Zinc, Iron, Boron - 5 kg/acre)",
+            "mr": "संतुलित सूक्ष्म अन्नद्रव्ये (झिंक, फेरस, बोरॉन - ५ किलो/एकर)",
+            "hi": "संतुलित सूक्ष्म पोषक तत्व (जिंक, लोहा, बोरॉन - 5 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "Basal at Sowing/Planting: 40% Urea + 100% DAP + 50% MOP", "mr": "पेरणीवेळी (पायाभूत): ४०% युरिया + १००% DAP + ५०% MOP", "hi": "बुआई के समय: 40% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Active Vegetative Growth: 30% Urea", "mr": "वाढीच्या मुख्य टप्प्यात: ३०% युरिया", "hi": "वानस्पतिक वृद्धि के समय: 30% यूरिया"},
+            {"en": "Flowering / Yield Stage: Remaining 30% Urea + 50% MOP", "mr": "फुलोरा व दाणे/फळे भरताना: उर्वरित ३०% युरिया + ५०% MOP", "hi": "फूल व उपज बनते समय: शेष 30% यूरिया + 50% MOP"}
+        ],
+        "organic_tips": {
+            "en": "Apply 5 tonnes FYM per acre. Practice integrated nutrient management with biofertilizers (Azotobacter/Rhizobium + PSB) and neem cake.",
+            "mr": "एकरी ५ टन शेणखत द्या. ॲझोटोबॅक्टर/रायझोबियम आणि पीएसबी जीवाणू खतांचा वापर करून एकात्मिक अन्नद्रव्य व्यवस्थापन करा.",
+            "hi": "प्रति एकड़ 5 टन गोबर खाद दें। जैव उर्वरकों और नीम खली के साथ एकीकृत पोषण प्रबंधन अपनाएं।"
+        }
+    }
+}
 
-    # Try exact match, alias match, or token match (e.g. "Groundnut / भुईमूग (मूंगफली)")
-    if crop_key not in CROP_FERTILIZER_RDF:
-        if crop_key in CROP_ALIASES:
-            crop_key = CROP_ALIASES[crop_key]
-        else:
-            tokens = [t.strip("() ,.-") for t in cleaned_crop.replace("/", " ").split()]
-            for token in tokens:
-                if token in CROP_ALIASES:
-                    crop_key = CROP_ALIASES[token]
-                    break
-                if token in CROP_FERTILIZER_RDF:
-                    crop_key = token
-                    break
+_dynamic_crop_rdf_cache: dict[str, dict] = {}
 
-    if crop_key not in CROP_FERTILIZER_RDF:
-        raise ValueError(
-            f"Unsupported crop '{crop}'. Supported crops: {', '.join(CROP_FERTILIZER_RDF.keys())}"
-        )
+
+def classify_crop_category(crop_name: str) -> str:
+    name = crop_name.lower()
+    if any(k in name for k in [
+        "fruit", "mango", "grape", "orange", "apple", "papaya", "guava", "pome", "citrus",
+        "lemon", "lime", "fig", "custard", "sitaphal", "chiku", "sapota", "watermelon",
+        "melon", "coconut", "cashew", "berry", "amla", "jamun", "dragon", "banana", "kiwi",
+        "avocado", "pear", "peach", "plum", "cherry", "litchi", "lychee",
+        "आंबा", "द्राक्ष", "पपई", "पेरू", "संत्रे", "मोसंबी", "लिंबू", "अंजीर", "सीताफळ", "चिकू",
+        "नारळ", "काजू", "कलिंगड", "केळी", "डाळिंब", "आम", "अंगूर", "पपीता", "अमरूद", "केला"
+    ]):
+        return "fruit"
+    if any(k in name for k in [
+        "vegetable", "tomato", "brinjal", "eggplant", "okra", "bhendi", "cabbage", "cauliflower",
+        "cucumber", "gourd", "spinach", "palak", "methi", "fenugreek", "coriander", "kothimbir",
+        "onion", "potato", "carrot", "radish", "beet", "capsicum", "chilli", "mirchi", "pea", "matar",
+        "bean", "french bean", "cluster bean", "gawar", "drumstick", "shevga",
+        "टोमॅटो", "वांगी", "भेंडी", "कोबी", "फ्लॉवर", "काकडी", "दुधी", "कारले", "पालक", "मेथी",
+        "कोथिंबीर", "कांदा", "बटाटा", "गाजर", "मुळा", "मिरची", "टमाटर", "बैंगन", "भिंडी", "प्याज", "आलू"
+    ]):
+        return "vegetable"
+    if any(k in name for k in [
+        "pulse", "gram", "chickpea", "harbhara", "tur", "arhar", "urad", "moong", "mung", "cowpea",
+        "chawli", "lentil", "masoor", "soybean", "dal", "legume", "rajma",
+        "हरभरा", "तूर", "उडीद", "मूग", "चवळी", "मसूर", "मटार", "सोयाबीन", "चना", "अरहर", "उड़द", "मटर"
+    ]):
+        return "pulse"
+    if any(k in name for k in [
+        "turmeric", "haldi", "ginger", "adrak", "ale", "garlic", "lasun", "lahsun", "cumin", "jeera",
+        "coriander seed", "cardamom", "clove", "pepper", "spice", "vanilla", "cinnamon",
+        "हळद", "हल्दी", "आले", "अदरक", "लसूण", "लहसुन", "जिरे", "जीरा", "वेलची", "काळी मिरी"
+    ]):
+        return "spice"
+    if any(k in name for k in [
+        "oilseed", "groundnut", "peanut", "mustard", "sarson", "sunflower", "sesame", "til", "safflower",
+        "kardi", "linseed", "alsi", "castor", "erand", "भुईमूग", "मूंगफली", "मोहरी", "सूर्यफूल", "तीळ", "करडई", "सरसों", "तिल"
+    ]):
+        return "oilseed"
+    if any(k in name for k in [
+        "flower", "marigold", "zendu", "genda", "rose", "gulab", "jasmine", "mogra", "chrysanthemum",
+        "shevanti", "gerbera", "carnation", "orchid", "tuberose", "nishigandha",
+        "झेंडू", "गेंदा", "गुलाब", "मोगरा", "शेवंती", "निशिगंध"
+    ]):
+        return "flower"
+    if any(k in name for k in [
+        "wheat", "rice", "paddy", "maize", "corn", "jowar", "sorghum", "bajra", "millet", "ragi",
+        "nachni", "barley", "oats", "गहू", "भात", "मका", "ज्वारी", "बाजरी", "नाचणी", "गेहूं", "धान", "मक्का", "ज्वार", "बाजरा"
+    ]):
+        return "cereal"
+    return "general"
+
+
+def build_agronomic_fallback_rdf(raw_crop: str) -> dict:
+    cat = classify_crop_category(raw_crop)
+    tmpl = AGRONOMIC_FAMILY_TEMPLATES.get(cat, AGRONOMIC_FAMILY_TEMPLATES["general"])
+    display_title = raw_crop.strip().title() if raw_crop.strip() else "Custom Crop"
+
+    return {
+        "names": {
+            "en": display_title,
+            "mr": display_title,
+            "hi": display_title,
+        },
+        "icon": tmpl["icon"],
+        "n": tmpl["n"],
+        "p": tmpl["p"],
+        "k": tmpl["k"],
+        "fym_tonnes": tmpl["fym_tonnes"],
+        "special_nutrient": tmpl["special_nutrient"],
+        "stages": tmpl["stages"],
+        "organic_tips": tmpl["organic_tips"],
+    }
+
+
+def _normalize_crop_input(crop: str) -> tuple[str, str]:
+    """Return (clean_display, normalized_key) handling datalists and punctuation."""
+    raw = crop.strip()
+    clean = raw
+    if " / " in raw:
+        clean = raw.split(" / ")[0].strip()
+    elif "/" in raw:
+        clean = raw.split("/")[0].strip()
+    return clean, clean.lower()
+
+
+def resolve_crop_rdf(crop: str) -> tuple[str, dict]:
+    """Synchronous crop resolver (pre-indexed database -> cache -> agronomic category fallback)."""
+    clean_display, crop_key = _normalize_crop_input(crop)
+
+    # 1. Exact match in pre-indexed ICAR database
+    if crop_key in CROP_FERTILIZER_RDF:
+        return crop_key, CROP_FERTILIZER_RDF[crop_key]
+
+    # 2. Alias match
+    if crop_key in CROP_ALIASES:
+        target = CROP_ALIASES[crop_key]
+        if target in CROP_FERTILIZER_RDF:
+            return target, CROP_FERTILIZER_RDF[target]
+
+    # 3. Token match
+    tokens = [t.strip("() ,.-") for t in clean_display.replace("/", " ").split()]
+    for token in tokens:
+        tok_low = token.lower()
+        if tok_low in CROP_ALIASES:
+            target = CROP_ALIASES[tok_low]
+            if target in CROP_FERTILIZER_RDF:
+                return target, CROP_FERTILIZER_RDF[target]
+        if tok_low in CROP_FERTILIZER_RDF:
+            return tok_low, CROP_FERTILIZER_RDF[tok_low]
+
+    # 4. In-memory dynamic AI cache
+    if crop_key in _dynamic_crop_rdf_cache:
+        return crop_key, _dynamic_crop_rdf_cache[crop_key]
+
+    # 5. Agronomic category fallback (guarantees universal support for every crop)
+    fallback = build_agronomic_fallback_rdf(clean_display)
+    return crop_key, fallback
+
+
+async def resolve_crop_rdf_async(crop: str) -> tuple[str, dict]:
+    """Asynchronous crop resolver: queries Gemini for custom crops with instant agronomic fallback."""
+    clean_display, crop_key = _normalize_crop_input(crop)
+
+    # Check pre-indexed ICAR data and cache first for instant sub-millisecond response
+    resolved_key, cached = resolve_crop_rdf(crop)
+    if resolved_key in CROP_FERTILIZER_RDF or crop_key in _dynamic_crop_rdf_cache:
+        return resolved_key, cached
+
+    # Query Gemini to generate dynamic ICAR RDF for this arbitrary crop
+    prompt = f"""You are an Indian agricultural scientist (ICAR / State Agricultural University).
+Provide the Recommended Dose of Fertilizers (RDF) per acre for the crop: '{clean_display}'.
+Return ONLY a valid JSON object matching this schema:
+{{
+  "names": {{"en": "{clean_display}", "mr": "{clean_display}", "hi": "{clean_display}"}},
+  "icon": "🌱",
+  "n": 40.0,
+  "p": 20.0,
+  "k": 20.0,
+  "fym_tonnes": 5.0,
+  "special_nutrient": {{"en": "Secondary nutrient recommendation", "mr": "दुय्यम अन्नद्रव्य शिफारस", "hi": "पोषक तत्व अनुशंसा"}},
+  "stages": [
+    {{"en": "Stage 1 application", "mr": "टप्पा १ खत मात्रा", "hi": "चरण 1 खाद मात्रा"}},
+    {{"en": "Stage 2 application", "mr": "टप्पा २ खत मात्रा", "hi": "चरण 2 खाद मात्रा"}}
+  ],
+  "organic_tips": {{"en": "Organic and biofertilizer advice", "mr": "सेंद्रिय व जैविक सल्ला", "hi": "जैविक सलाह"}}
+}}
+Values for n, p, k must be pure N, P2O5, K2O in kg/acre as floats.
+"""
+    for model_name in CANDIDATE_MODELS:
+        try:
+            response = await asyncio.to_thread(
+                client.models.generate_content,
+                model=model_name,
+                contents=prompt,
+                config=types.GenerateContentConfig(response_mime_type="application/json"),
+            )
+            if response and response.text:
+                data = json.loads(response.text)
+                if (
+                    isinstance(data, dict)
+                    and "n" in data
+                    and "p" in data
+                    and "k" in data
+                    and float(data["n"]) > 0
+                ):
+                    data["n"] = float(data["n"])
+                    data["p"] = float(data["p"])
+                    data["k"] = float(data["k"])
+                    data["fym_tonnes"] = float(data.get("fym_tonnes", 5.0))
+                    if "names" not in data or not isinstance(data["names"], dict):
+                        data["names"] = {"en": clean_display, "mr": clean_display, "hi": clean_display}
+                    if "icon" not in data:
+                        data["icon"] = build_agronomic_fallback_rdf(clean_display)["icon"]
+                    _dynamic_crop_rdf_cache[crop_key] = data
+                    logger.info(f"Dynamically generated RDF for crop '{clean_display}' via {model_name}.")
+                    return crop_key, data
+        except Exception as exc:
+            logger.warning(f"Dynamic RDF generation via {model_name} for '{clean_display}' failed: {exc}")
+            err_str = str(exc).lower()
+            if any(k in err_str for k in ["404", "not_found", "no longer available", "not found"]):
+                continue
+            if not is_transient_error(exc):
+                break
+
+    # If AI generation is offline or quota reached, use agronomic category fallback
+    fallback = build_agronomic_fallback_rdf(clean_display)
+    _dynamic_crop_rdf_cache[crop_key] = fallback
+    return crop_key, fallback
+
+
+def compute_fertilizer_recommendation(
+    crop: str,
+    area: float,
+    unit: str = "acre",
+    crop_info: dict | None = None,
+    resolved_key: str | None = None,
+) -> dict:
+    if not crop or not crop.strip():
+        raise ValueError("Please provide a crop name.")
 
     if area <= 0 or area > 10000:
         raise ValueError("Area must be a positive number greater than 0 and up to 10,000.")
@@ -2150,12 +2836,13 @@ def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre"
     else:
         raise ValueError("Invalid unit. Please choose 'acre', 'guntha', or 'hectare'.")
 
-    crop_info = CROP_FERTILIZER_RDF[crop_key]
+    if crop_info is None or resolved_key is None:
+        resolved_key, crop_info = resolve_crop_rdf(crop)
 
     # Required pure N-P-K nutrients in kg
-    total_n_kg = round(crop_info["n"] * acres, 1)
-    total_p_kg = round(crop_info["p"] * acres, 1)
-    total_k_kg = round(crop_info["k"] * acres, 1)
+    total_n_kg = round(float(crop_info.get("n", 35.0)) * acres, 1)
+    total_p_kg = round(float(crop_info.get("p", 20.0)) * acres, 1)
+    total_k_kg = round(float(crop_info.get("k", 20.0)) * acres, 1)
 
     # 1 bag DAP (50 kg) provides 23 kg P2O5 and 9 kg N
     # 1 bag Neem-coated Urea (45 kg) provides 20.7 kg N (46%)
@@ -2171,12 +2858,16 @@ def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre"
     mop_bags = round(total_k_kg / 30.0, 1)
     mop_kg = round(mop_bags * 50.0, 1)
 
-    fym_tonnes = round(crop_info["fym_tonnes"] * acres, 1)
+    fym_tonnes = round(float(crop_info.get("fym_tonnes", 5.0)) * acres, 1)
+
+    crop_names = crop_info.get("names", {"en": resolved_key, "mr": resolved_key, "hi": resolved_key})
+    if isinstance(crop_names, str):
+        crop_names = {"en": crop_names, "mr": crop_names, "hi": crop_names}
 
     return {
-        "crop_key": crop_key,
-        "crop_name": crop_info["names"],
-        "icon": crop_info["icon"],
+        "crop_key": resolved_key,
+        "crop_name": crop_names,
+        "icon": crop_info.get("icon", "🌱"),
         "input_area": area,
         "input_unit": unit_norm,
         "acres": round(acres, 2),
@@ -2206,16 +2897,37 @@ def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre"
             },
         },
         "organic_fym_tonnes": fym_tonnes,
-        "special_nutrient": crop_info["special_nutrient"],
-        "stages": crop_info["stages"],
-        "organic_tips": crop_info["organic_tips"],
-        "disclaimer": "Recommended dosage based on ICAR recommended dose of fertilizers (RDF). Actual requirement varies with soil test results, crop variety, and agro-climatic conditions. Consult your local KVK for custom soil test based recommendations.",
+        "special_nutrient": crop_info.get(
+            "special_nutrient",
+            {
+                "en": "Balanced Micronutrient mixture",
+                "mr": "संतुलित सूक्ष्म अन्नद्रव्ये",
+                "hi": "संतुलित सूक्ष्म पोषक तत्व",
+            },
+        ),
+        "stages": crop_info.get("stages", []),
+        "organic_tips": crop_info.get(
+            "organic_tips",
+            {
+                "en": "Apply well-rotted FYM and biofertilizers.",
+                "mr": "चांगले कुजलेले शेणखत व जिवाणू खते वापरा.",
+                "hi": "सड़ी गोबर खाद व जैव उर्वरक प्रयोग करें।",
+            },
+        ),
+        "disclaimer": (
+            "Recommended dosage based on ICAR recommended dose of fertilizers (RDF). "
+            "Actual requirement varies with soil test results, crop variety, and agro-climatic conditions. "
+            "Consult your local KVK for custom soil test based recommendations."
+        ),
     }
 
 
 @app.post("/fertilizer/calculate")
-def calculate_fertilizer(req: FertilizerCalculateRequest):
+async def calculate_fertilizer(req: FertilizerCalculateRequest):
     try:
-        return compute_fertilizer_recommendation(req.crop, req.area, req.unit)
+        resolved_key, crop_info = await resolve_crop_rdf_async(req.crop)
+        return compute_fertilizer_recommendation(
+            req.crop, req.area, req.unit, crop_info=crop_info, resolved_key=resolved_key
+        )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
