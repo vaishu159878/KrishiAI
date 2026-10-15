@@ -1810,3 +1810,73 @@ footer {
 .danger-button:hover {
     background: #b91c1c;
 }
+
+/* AI Caution Banner for Crop Disease Diagnosis */
+.ai-caution-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff8e6;
+    border: 1px solid #f6d289;
+    border-left: 5px solid #d97706;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 18px;
+    color: #78350f;
+}
+
+.ai-caution-banner .caution-icon {
+    font-size: 22px;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+.ai-caution-banner .caution-content strong {
+    display: block;
+    font-size: 14px;
+    font-weight: 700;
+    color: #92400e;
+    margin-bottom: 3px;
+}
+
+.ai-caution-banner .caution-content p {
+    font-size: 13px;
+    line-height: 1.45;
+    margin: 0;
+}
+
+/* Guest Mode Banners & Badges */
+.guest-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #eaf6ec;
+    border: 1px solid #b5e2bf;
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13.5px;
+    color: #1a5628;
+}
+
+.guest-notice-box {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: #f1f8f3;
+    border: 1px dashed #7fc691;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1e5c2d;
+}
+
+.guest-notice-box a {
+    color: #16823b;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Fertilizer Result Empty State Guarantee */
+#fertResult.hidden,
+.fert-result.hidden {
+    display: none !important;
+}
