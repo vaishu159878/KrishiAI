@@ -766,7 +766,33 @@ const translations = {
         confirmClearHistory: "Are you sure you want to delete all your saved crop analyses?",
         confirmDeleteAccount: "Are you sure you want to permanently delete your KrishiAI account and all data? This cannot be undone.",
         historyClearedSuccess: "All crop analysis history has been deleted.",
-        accountDeletedSuccess: "Your account and all associated data have been permanently deleted."
+        accountDeletedSuccess: "Your account and all associated data have been permanently deleted.",
+        navCropDoctor: "📷 Crop Doctor",
+        navFertilizer: "🧪 Fertilizer",
+        navWeather: "🌦️ Weather",
+        navMandi: "📈 Mandi Rates",
+        navHelpline: "📞 Helplines",
+        cardCropTitle: "Crop Doctor",
+        cardCropDesc: "Instant photo diagnosis of pests, diseases & nutrient deficiencies with 3-tier remedies.",
+        cardCropCta: "Diagnose Crop →",
+        cardFertTitle: "Fertilizer Calculator",
+        cardFertDesc: "ICAR-based bag dosage for Urea, DAP, Potash & FYM compost tailored to your soil type.",
+        cardFertCta: "Calculate Bags →",
+        cardWeatherTitle: "Farm Weather",
+        cardWeatherDesc: "Village-level 5-day forecast, rain chance, and weather-linked spraying advice.",
+        cardWeatherCta: "Check Weather →",
+        cardMandiTitle: "Mandi Rates",
+        cardMandiDesc: "Live Maharashtra APMC market prices from Agmarknet & MSAMB with quick filters.",
+        cardMandiCta: "View Prices →",
+        fertEmptyStateTitle: "Enter your crop and farm details to calculate",
+        fertEmptyStateDesc: "Select any crop, enter land area in Acres or Gunthas, and choose soil type to get scientific ICAR dosage, split schedule, and compost needs.",
+        fertDapCreditTitle: "DAP Nitrogen Credit Included:",
+        fertDapCreditNote: "DAP (18:46:0) supplies 9 kg pure Nitrogen per 50 kg bag. This has been deducted from the Urea requirement above to prevent excessive nitrogen and crop damage.",
+        fertShcAdvisory: "Soil Health Card & KVK Note: For highest yields and soil fertility, balance chemical fertilizers with 2-3 tonnes of Farm Yard Manure (FYM) and get your soil tested every 2 years at your local Krishi Vigyan Kendra.",
+        weatherGpsButton: "📍 Use My Location",
+        weatherGpsLocating: "Detecting GPS location...",
+        weatherGpsError: "Could not detect GPS location. Please type your village name.",
+        currentLocation: "Current Farm Location"
     },
 
     mr: {
@@ -988,7 +1014,33 @@ const translations = {
         confirmClearHistory: "तुम्हाला खरोखर सर्व जतन केलेले पीक विश्लेषण हटवायचे आहे का?",
         confirmDeleteAccount: "तुम्हाला तुमचे KrishiAI खाते आणि सर्व डेटा कायमचा हटवायचा आहे का? ही क्रिया पूर्ववत केली जाऊ शकत नाही.",
         historyClearedSuccess: "सर्व पीक विश्लेषण इतिहास यशस्वीपणे हटवला आहे.",
-        accountDeletedSuccess: "तुमचे खाते आणि सर्व डेटा कायमचा हटवला गेला आहे."
+        accountDeletedSuccess: "तुमचे खाते आणि सर्व डेटा कायमचा हटवला गेला आहे.",
+        navCropDoctor: "📷 पीक डॉक्टर",
+        navFertilizer: "🧪 खत मोजणी",
+        navWeather: "🌦️ हवामान अंदाज",
+        navMandi: "📈 बाजार भाव",
+        navHelpline: "📞 हेल्पलाइन",
+        cardCropTitle: "पीक डॉक्टर",
+        cardCropDesc: "पिकांवरील किडी, रोग व अन्नद्रव्य कमतरतेचे फोटोद्वारे झटपट निदान आणि ३-स्तरीय उपाय.",
+        cardCropCta: "पीक तपासा →",
+        cardFertTitle: "खत मोजणी कैलकुलेटर",
+        cardFertDesc: "जमिनीच्या प्रकारानुसार युरिया, डीएपी, पोटॅश आणि शेणखताची अचूक गोणी मोजणी.",
+        cardFertCta: "खत मोजा →",
+        cardWeatherTitle: "शेताचे हवामान",
+        cardWeatherDesc: "गावनिहाय ५ दिवसांचा हवामान अंदाज, पावसाची शक्यता आणि फवारणी सल्ला.",
+        cardWeatherCta: "हवामान पहा →",
+        cardMandiTitle: "बाजार भाव (APMC)",
+        cardMandiDesc: "अ‍ॅगमार्कनेट आणि पणन मंडळाचे महाराष्ट्रातील प्रमुख बाजार समित्यांचे थेट दर.",
+        cardMandiCta: "भाव तपासा →",
+        fertEmptyStateTitle: "खत मोजणीसाठी तुमचे पीक आणि क्षेत्र निवडा",
+        fertEmptyStateDesc: "कोणतेही पीक निवडा, एकर किंवा गुंठ्यात क्षेत्र टाका आणि अचूक खतांची पोती, रासायनिक वेळापत्रक व शेणखताचे प्रमाण मिळवा.",
+        fertDapCreditTitle: "डीएपी नत्र वजावट समाविष्ट:",
+        fertDapCreditNote: "डीएपी (१८:४६:०) खतातून प्रति ५० किलो पोत्यामागे ९ किलो शुद्ध नत्र मिळते. यामुळे पिकांचे अतिनत्रापासून रक्षण होण्यासाठी युरियाच्या एकूण पोत्यांमधून ही मात्रा आधीच वजा केली आहे.",
+        fertShcAdvisory: "माती परीक्षण व केव्हीके सल्ला: जमिनीची सुपीकता टिकवून भरघोस उत्पादनासाठी रासायनिक खतांसोबत २-३ टन शेणखताचा वापर करा आणि दर २ वर्षांनी जवळच्या कृषी विज्ञान केंद्रात माती परीक्षण करून घ्या.",
+        weatherGpsButton: "📍 माझे चालू स्थान वापरा",
+        weatherGpsLocating: "जीपीएस स्थान शोधत आहे...",
+        weatherGpsError: "जीपीएस स्थान मिळू शकले नाही. कृपया गावाचे नाव टाईप करा.",
+        currentLocation: "चालू शेत स्थान"
     },
 
     hi: {
@@ -1210,7 +1262,33 @@ const translations = {
         confirmClearHistory: "क्या आप वाकई अपने सभी सहेजे गए फसल विश्लेषण हटाना चाहते हैं?",
         confirmDeleteAccount: "क्या आप वाकई अपना KrishiAI खाता और सारा डेटा हमेशा के लिए हटाना चाहते हैं? यह क्रिया वापस नहीं ली जा सकती।",
         historyClearedSuccess: "सभी फसल विश्लेषण इतिहास सफलतापूर्वक हटा दिया गया है।",
-        accountDeletedSuccess: "आपका खाता और सारा डेटा हमेशा के लिए हटा दिया गया है।"
+        accountDeletedSuccess: "आपका खाता और सारा डेटा हमेशा के लिए हटा दिया गया है।",
+        navCropDoctor: "📷 क्रॉप डॉक्टर",
+        navFertilizer: "🧪 उर्वरक कैलकुलेटर",
+        navWeather: "🌦️ मौसम पूर्वानुमान",
+        navMandi: "📈 मंडी भाव",
+        navHelpline: "📞 हेल्पलाइन",
+        cardCropTitle: "क्रॉप डॉक्टर",
+        cardCropDesc: "कीट, रोग और पोषक तत्वों की कमी का फोटो द्वारा तुरंत निदान व 3-स्तरीय उपचार।",
+        cardCropCta: "रोग पहचानें →",
+        cardFertTitle: "उर्वरक कैलकुलेटर",
+        cardFertDesc: "मिट्टी के प्रकार अनुसार यूरिया, डीएपी, पोटाश व गोबर खाद की सटीक बोरी गणना।",
+        cardFertCta: "खाद गणना करें →",
+        cardWeatherTitle: "खेत का मौसम",
+        cardWeatherDesc: "गाँव अनुसार 5-दिवसीय मौसम पूर्वानुमान, बारिश की संभावना और छिड़काव सलाह।",
+        cardWeatherCta: "मौसम देखें →",
+        cardMandiTitle: "मंडी भाव (APMC)",
+        cardMandiDesc: "एगमार्कनेट व विपणन बोर्ड के महाराष्ट्र मंडियों के ताजा जिंस भाव।",
+        cardMandiCta: "भाव देखें →",
+        fertEmptyStateTitle: "उर्वरक गणना के लिए अपनी फसल और खेत का विवरण भरें",
+        fertEmptyStateDesc: "कोई भी फसल चुनें, एकड़ या गुंठा में क्षेत्रफल भरें और सटीक खाद की बोरियाँ, रासायनिक समय-सारणी व कम्पोस्ट की मात्रा प्राप्त करें।",
+        fertDapCreditTitle: "डीएपी नाइट्रोजन समायोजन शामिल:",
+        fertDapCreditNote: "डीएपी (18:46:0) से प्रति 50 किग्रा बोरी में 9 किग्रा शुद्ध नाइट्रोजन मिलती है। फसल को अत्यधिक नाइट्रोजन के नुकसान से बचाने हेतु इसे यूरिया की आवश्यकता में से घटा दिया गया है।",
+        fertShcAdvisory: "मृदा स्वास्थ्य कार्ड व केवीके सलाह: बेहतर पैदावार और मिट्टी की उर्वरता बनाए रखने हेतु रासायनिक खादों के साथ 2-3 टन गोबर की खाद का प्रयोग करें तथा हर 2 वर्ष में कृषि विज्ञान केंद्र से मिट्टी की जांच कराएं।",
+        weatherGpsButton: "📍 मेरा वर्तमान स्थान",
+        weatherGpsLocating: "जीपीएस लोकेशन खोज रहे हैं...",
+        weatherGpsError: "जीपीएस स्थान नहीं मिल सका। कृपया गाँव का नाम लिखें।",
+        currentLocation: "वर्तमान खेत स्थान"
     }
 };
 
@@ -1875,6 +1953,39 @@ document.getElementById("weatherPlaces").addEventListener("click", event => {
         selectPlace(Number(button.dataset.index));
     }
 });
+
+function useCurrentLocationWeather() {
+    if (!navigator.geolocation) {
+        setWeatherStatus(t("weatherGpsError"));
+        return;
+    }
+
+    setWeatherStatus(t("weatherGpsLocating"));
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            const lat = Number(position.coords.latitude.toFixed(4));
+            const lon = Number(position.coords.longitude.toFixed(4));
+            selectedPlace = {
+                id: `gps-${lat}-${lon}`,
+                name: t("currentLocation") || "Current Farm Location",
+                admin1: "GPS",
+                country: "India",
+                latitude: lat,
+                longitude: lon
+            };
+            savePlace(selectedPlace);
+            const searchInput = document.getElementById("weatherSearch");
+            if (searchInput) searchInput.value = selectedPlace.name;
+            await loadWeather();
+        },
+        (error) => {
+            console.warn("Geolocation failed:", error);
+            setWeatherStatus(t("weatherGpsError"));
+        },
+        { timeout: 10000, enableHighAccuracy: true }
+    );
+}
 // ---- End weather insights -----------------------------------------------
 
 function syncLanguageButtons() {
@@ -2692,6 +2803,9 @@ async function calculateFertilizer() {
         lastFertilizerData = data;
         renderFertilizerResult(data);
 
+        const emptyState = document.getElementById("fertEmptyState");
+        if (emptyState) emptyState.classList.add("hidden");
+
         const resultEl = document.getElementById("fertResult");
         resultEl.classList.remove("hidden");
         resultEl.style.display = "block";
@@ -2702,6 +2816,8 @@ async function calculateFertilizer() {
         if (offlineData) {
             lastFertilizerData = offlineData;
             renderFertilizerResult(offlineData);
+            const emptyState = document.getElementById("fertEmptyState");
+            if (emptyState) emptyState.classList.add("hidden");
             const resultEl = document.getElementById("fertResult");
             resultEl.classList.remove("hidden");
             resultEl.style.display = "block";

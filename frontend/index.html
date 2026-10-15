@@ -6,7 +6,7 @@
     <title>KrishiAI - AI Farming Assistant</title>
     <meta name="theme-color" content="#16823b">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
 </head>
 
 <body>
@@ -17,6 +17,14 @@
 
     <header class="navbar">
         <div class="logo">🌱 KrishiAI</div>
+
+        <nav class="navbar-links" aria-label="Main Navigation">
+            <a href="#analyzer" class="nav-pill" data-i18n="navCropDoctor">📷 Crop Doctor</a>
+            <a href="#fertilizerSection" class="nav-pill" data-i18n="navFertilizer">🧪 Fertilizer</a>
+            <a href="#weatherSection" class="nav-pill" data-i18n="navWeather">🌦️ Weather</a>
+            <a href="#mandiSection" class="nav-pill" data-i18n="navMandi">📈 Mandi Rates</a>
+            <a href="#helplineSection" class="nav-pill" data-i18n="navHelpline">📞 Helplines</a>
+        </nav>
 
         <div class="language-switcher" role="group" aria-labelledby="languageLabel">
             <span id="languageLabel" class="language-label" data-i18n="languageLabel">Language</span>
@@ -63,38 +71,35 @@
             <div class="hero-icon">🌱</div>
         </section>
 
-        <section class="features">
-            <div class="feature-card">
+        <!-- 4 Core Feature Cards with Direct Links -->
+        <section class="features" aria-label="Core Tools">
+            <a href="#analyzer" class="feature-card interactive-card">
                 <div class="feature-icon">📷</div>
-                <h3 data-i18n="featureImageTitle">Upload Crop Image</h3>
-                <p data-i18n="featureImageDescription">
-                    Upload a crop photo for analysis.
-                </p>
-            </div>
+                <h3 data-i18n="cardCropTitle">Crop Doctor</h3>
+                <p data-i18n="cardCropDesc">Instant photo diagnosis of pests, diseases & nutrient deficiencies with 3-tier remedies.</p>
+                <span class="feature-card-cta" data-i18n="cardCropCta">Diagnose Crop →</span>
+            </a>
 
-            <div class="feature-card">
-                <div class="feature-icon">🤖</div>
-                <h3 data-i18n="featureAITitle">AI Guidance</h3>
-                <p data-i18n="featureAIDescription">
-                    Get simple agricultural recommendations.
-                </p>
-            </div>
+            <a href="#fertilizerSection" class="feature-card interactive-card">
+                <div class="feature-icon">🧪</div>
+                <h3 data-i18n="cardFertTitle">Fertilizer Calculator</h3>
+                <p data-i18n="cardFertDesc">ICAR-based bag dosage for Urea, DAP, Potash & FYM compost tailored to your soil type.</p>
+                <span class="feature-card-cta" data-i18n="cardFertCta">Calculate Bags →</span>
+            </a>
 
-            <div class="feature-card">
+            <a href="#weatherSection" class="feature-card interactive-card">
                 <div class="feature-icon">🌦️</div>
-                <h3 data-i18n="featureWeatherTitle">Weather Insights</h3>
-                <p data-i18n="featureWeatherDescription">
-                    Understand weather-related crop risks.
-                </p>
-            </div>
+                <h3 data-i18n="cardWeatherTitle">Farm Weather</h3>
+                <p data-i18n="cardWeatherDesc">Village-level 5-day forecast, rain chance, and weather-linked spraying advice.</p>
+                <span class="feature-card-cta" data-i18n="cardWeatherCta">Check Weather →</span>
+            </a>
 
-            <div class="feature-card">
-                <div class="feature-icon">🌐</div>
-                <h3 data-i18n="featureLanguageTitle">Multiple Languages</h3>
-                <p data-i18n="featureLanguageDescription">
-                    Marathi, Hindi and English support.
-                </p>
-            </div>
+            <a href="#mandiSection" class="feature-card interactive-card">
+                <div class="feature-icon">📈</div>
+                <h3 data-i18n="cardMandiTitle">Mandi Rates</h3>
+                <p data-i18n="cardMandiDesc">Live Maharashtra APMC market prices from Agmarknet & MSAMB with quick filters.</p>
+                <span class="feature-card-cta" data-i18n="cardMandiCta">View Prices →</span>
+            </a>
         </section>
 
         <!-- Crop Analysis (Guest Mode Supported) -->
@@ -316,6 +321,15 @@
                         data-i18n="weatherSearchButton">
                         Search
                     </button>
+                    <button
+                        id="weatherGpsButton"
+                        class="secondary-button location-gps-btn"
+                        type="button"
+                        onclick="useCurrentLocationWeather()"
+                        data-i18n="weatherGpsButton"
+                        title="Detect your current farm location using GPS">
+                        📍 Use My Location
+                    </button>
                 </div>
 
                 <p id="weatherStatus" role="status" aria-live="polite"></p>
@@ -413,6 +427,13 @@
 
                 <p id="fertStatus" role="status" aria-live="polite" class="field-hint"></p>
 
+                <!-- Empty state placeholder (visible before first calculation) -->
+                <div id="fertEmptyState" class="fert-empty-state">
+                    <div class="fert-empty-icon">🌱</div>
+                    <h3 data-i18n="fertEmptyStateTitle">Enter your crop and farm details to calculate</h3>
+                    <p data-i18n="fertEmptyStateDesc">Select any crop, enter land area in Acres or Gunthas, and choose soil type to get scientific ICAR dosage, split schedule, and compost needs.</p>
+                </div>
+
                 <!-- Results container (hidden by default until calculation runs) -->
                 <div id="fertResult" class="fert-result hidden" style="display: none;" aria-live="polite">
                     <div class="fert-result-header">
@@ -439,6 +460,15 @@
                     <div class="fert-quick-disclaimer">
                         <span>⚠️</span>
                         <small data-i18n="fertQuickDisclaimer">Estimated dosage based on ICAR guidelines. Exact dosage varies with soil test, crop variety & irrigation. Confirm with your local KVK.</small>
+                    </div>
+
+                    <!-- DAP Nitrogen Credit Note -->
+                    <div class="fert-n-credit-banner">
+                        <span class="fert-credit-icon">ℹ️</span>
+                        <div>
+                            <strong data-i18n="fertDapCreditTitle">DAP Nitrogen Credit Included:</strong>
+                            <p data-i18n="fertDapCreditNote">DAP (18:46:0) supplies 9 kg pure Nitrogen per 50 kg bag. This has been deducted from the Urea requirement above to prevent excessive nitrogen and crop damage.</p>
+                        </div>
                     </div>
 
                     <!-- Commercial Fertilizer Bags Summary -->
@@ -546,6 +576,12 @@
                         <p id="fertOrganicTips" class="fert-organic-text"></p>
                     </div>
 
+                    <!-- Soil Health Card & KVK Note -->
+                    <div class="fert-shc-note">
+                        <span class="fert-shc-icon">🌾</span>
+                        <p data-i18n="fertShcAdvisory">Soil Health Card & KVK Note: For highest yields and soil fertility, balance chemical fertilizers with 2-3 tonnes of Farm Yard Manure (FYM) and get your soil tested every 2 years at your local Krishi Vigyan Kendra.</p>
+                    </div>
+
                     <div class="fert-disclaimer">
                         <small data-i18n="fertDisclaimer">⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).</small>
                     </div>
@@ -593,7 +629,56 @@
             </div>
         </section>
 
-        <!-- User Authentication -->
+        <!-- Emergency Farmer Helplines -->
+        <section id="helplineSection" class="helpline-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="helplineTagline">📞 24/7 Expert Support</p>
+                <h2 data-i18n="helplineTitle">Emergency Farmer Helplines</h2>
+                <p data-i18n="helplineDescription">
+                    Speak directly with agricultural experts and government advisors for immediate emergency assistance.
+                </p>
+            </div>
+
+            <div class="helpline-grid">
+                <div class="helpline-card">
+                    <div class="helpline-icon">🌾</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="kccTitle">Kisan Call Center (KCC)</h3>
+                        <p class="helpline-desc" data-i18n="kccDesc">Government of India toll-free helpline. Free consultation in 22 languages from 6 AM to 10 PM daily.</p>
+                        <span class="helpline-number">1800-180-1551</span>
+                    </div>
+                    <a href="tel:18001801551" class="helpline-call-button" data-i18n="callKcc">
+                        📞 Call 1800-180-1551
+                    </a>
+                </div>
+
+                <div class="helpline-card">
+                    <div class="helpline-icon">🛡️</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="pmfbyTitle">Crop Insurance Helpline (PMFBY)</h3>
+                        <p class="helpline-desc" data-i18n="pmfbyDesc">Assistance for crop damage claims, drought/flood insurance claims, and policy status.</p>
+                        <span class="helpline-number">14447</span>
+                    </div>
+                    <a href="tel:14447" class="helpline-call-button" data-i18n="callPmfby">
+                        📞 Call 14447
+                    </a>
+                </div>
+
+                <div class="helpline-card">
+                    <div class="helpline-icon">🔬</div>
+                    <div class="helpline-info">
+                        <h3 data-i18n="kvkTitle">Krishi Vigyan Kendra (KVK)</h3>
+                        <p class="helpline-desc" data-i18n="kvkDesc">District agricultural research centers for seed testing, pest outbreaks, and soil health consultation.</p>
+                        <span class="helpline-number">District KVK Network</span>
+                    </div>
+                    <a href="https://kvk.icar.gov.in" target="_blank" rel="noopener noreferrer" class="helpline-link-button" data-i18n="findKvk">
+                        🌐 Find Your KVK
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Authentication & Account Management -->
         <section id="authSection" class="history-section">
             <div class="history-header">
                 <div>
@@ -697,68 +782,17 @@
                 Loading your saved analyses...
             </p>
 
-
-	    <div class="history-filter">
-    	    	<label for="historyLanguageFilter" data-i18n="filterLabel">Filter by language:</label>
-    	    	<select id="historyLanguageFilter">
-        	    <option value="all" data-i18n="allLanguages">All languages</option>
-        	    <option value="en">English</option>
-        	    <option value="mr">मराठी (Marathi)</option>
-        	    <option value="hi">हिन्दी (Hindi)</option>
-    	    	</select>
-	    </div>
-
+            <div class="history-filter">
+                <label for="historyLanguageFilter" data-i18n="filterLabel">Filter by language:</label>
+                <select id="historyLanguageFilter">
+                    <option value="all" data-i18n="allLanguages">All languages</option>
+                    <option value="en">English</option>
+                    <option value="mr">मराठी (Marathi)</option>
+                    <option value="hi">हिन्दी (Hindi)</option>
+                </select>
+            </div>
 
             <div id="historyList" class="history-list"></div>
-        </section>
-
-        <!-- Emergency Farmer Helplines -->
-        <section id="helplineSection" class="helpline-section">
-            <div class="section-title">
-                <p class="tagline" data-i18n="helplineTagline">📞 24/7 Expert Support</p>
-                <h2 data-i18n="helplineTitle">Emergency Farmer Helplines</h2>
-                <p data-i18n="helplineDescription">
-                    Speak directly with agricultural experts and government advisors for immediate emergency assistance.
-                </p>
-            </div>
-
-            <div class="helpline-grid">
-                <div class="helpline-card">
-                    <div class="helpline-icon">🌾</div>
-                    <div class="helpline-info">
-                        <h3 data-i18n="kccTitle">Kisan Call Center (KCC)</h3>
-                        <p class="helpline-desc" data-i18n="kccDesc">Government of India toll-free helpline. Free consultation in 22 languages from 6 AM to 10 PM daily.</p>
-                        <span class="helpline-number">1800-180-1551</span>
-                    </div>
-                    <a href="tel:18001801551" class="helpline-call-button" data-i18n="callKcc">
-                        📞 Call 1800-180-1551
-                    </a>
-                </div>
-
-                <div class="helpline-card">
-                    <div class="helpline-icon">🛡️</div>
-                    <div class="helpline-info">
-                        <h3 data-i18n="pmfbyTitle">Crop Insurance Helpline (PMFBY)</h3>
-                        <p class="helpline-desc" data-i18n="pmfbyDesc">Assistance for crop damage claims, drought/flood insurance claims, and policy status.</p>
-                        <span class="helpline-number">14447</span>
-                    </div>
-                    <a href="tel:14447" class="helpline-call-button" data-i18n="callPmfby">
-                        📞 Call 14447
-                    </a>
-                </div>
-
-                <div class="helpline-card">
-                    <div class="helpline-icon">🔬</div>
-                    <div class="helpline-info">
-                        <h3 data-i18n="kvkTitle">Krishi Vigyan Kendra (KVK)</h3>
-                        <p class="helpline-desc" data-i18n="kvkDesc">District agricultural research centers for seed testing, pest outbreaks, and soil health consultation.</p>
-                        <span class="helpline-number">District KVK Network</span>
-                    </div>
-                    <a href="https://kvk.icar.gov.in" target="_blank" rel="noopener noreferrer" class="helpline-link-button" data-i18n="findKvk">
-                        🌐 Find Your KVK
-                    </a>
-                </div>
-            </div>
         </section>
 
     </main>
@@ -769,6 +803,6 @@
         </p>
     </footer>
 
-    <script src="app.js?v=4"></script>
+    <script src="app.js?v=6"></script>
 </body>
 </html>
