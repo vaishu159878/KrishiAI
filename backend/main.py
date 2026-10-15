@@ -312,6 +312,39 @@ def check_guest_analysis_rate_limit(client_ip: str) -> None:
         attempts.append(now)
 
 
+# --------------------------------------------------
+# Authenticated analysis burst rate limiting (per user)
+# --------------------------------------------------
+USER_ANALYSIS_MAX_PER_MINUTE = 6
+USER_ANALYSIS_WINDOW_SECONDS = 60
+
+_user_analysis_history: dict[int, deque] = {}
+_user_analysis_lock = threading.Lock()
+
+
+def check_user_analysis_rate_limit(user_id: int) -> None:
+    now = time.monotonic()
+    with _user_analysis_lock:
+        if len(_user_analysis_history) > 10000:
+            _user_analysis_history.clear()
+
+        attempts = _user_analysis_history.get(user_id)
+        if attempts is None:
+            attempts = deque(maxlen=USER_ANALYSIS_MAX_PER_MINUTE)
+            _user_analysis_history[user_id] = attempts
+
+        while attempts and now - attempts[0] > USER_ANALYSIS_WINDOW_SECONDS:
+            attempts.popleft()
+
+        if len(attempts) >= USER_ANALYSIS_MAX_PER_MINUTE:
+            raise HTTPException(
+                status_code=429,
+                detail="Too many analysis requests in a short time. Please wait a minute before submitting another crop analysis.",
+            )
+
+        attempts.append(now)
+
+
 # Used so that unknown emails take as long to reject as wrong passwords,
 # which stops response timing from revealing which emails are registered.
 DUMMY_PASSWORD_HASH = hash_password("not-a-real-password-for-timing-only")
@@ -1044,9 +1077,19 @@ def root():
 
 @app.get("/health")
 def health():
+    db_status = "connected"
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+    except Exception:
+        db_status = "unavailable"
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_status == "connected" else "degraded",
         "service": "KrishiAI API",
+        "database": db_status,
     }
 
 
@@ -1654,6 +1697,7 @@ async def analyze_crop(
                 status_code=429,
                 detail=f"Daily analysis quota reached ({DAILY_ANALYSIS_QUOTA} per 24 hours). Please try again tomorrow.",
             )
+        check_user_analysis_rate_limit(current_user_id)
     else:
         # Protect Gemini quota for guests via IP rate limiting
         check_guest_analysis_rate_limit(client_ip)

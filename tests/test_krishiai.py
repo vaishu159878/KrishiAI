@@ -466,3 +466,32 @@ def test_apmc_mandi_rates():
     solapur_rates = get_mandi_rates(market="Solapur")
     assert len(solapur_rates["rates"]) >= 1
     assert "Solapur" in solapur_rates["rates"][0]["market"]
+
+
+def test_user_analysis_burst_rate_limit():
+    from main import check_user_analysis_rate_limit, _user_analysis_history
+    from fastapi import HTTPException
+
+    test_uid = 99999
+    _user_analysis_history.pop(test_uid, None)
+
+    # First 6 calls within 60s should succeed
+    for _ in range(6):
+        check_user_analysis_rate_limit(test_uid)
+
+    # 7th call should raise 429
+    with pytest.raises(HTTPException) as exc_info:
+        check_user_analysis_rate_limit(test_uid)
+    assert exc_info.value.status_code == 429
+    assert "Too many analysis requests" in exc_info.value.detail
+
+
+def test_health_check_endpoint():
+    from main import health
+
+    res = health()
+    assert "status" in res
+    assert res["status"] in ("healthy", "degraded")
+    assert "database" in res
+    assert "service" in res
+
