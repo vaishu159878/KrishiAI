@@ -39,9 +39,12 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development").lower()
 is_production = ENVIRONMENT == "production"
 
-# Candidate models in priority order for automatic resilience against deprecations
+# Candidate models in priority order for automatic resilience against deprecations and rate limits
 CANDIDATE_MODELS = list(dict.fromkeys([
     GEMINI_MODEL,
+    "gemini-3.1-flash-lite",
+    "gemini-3.5-flash-lite",
+    "gemini-flash-lite-latest",
     "gemini-flash-latest",
     "gemini-3.8-flash",
     "gemini-3.5-flash",
@@ -1067,9 +1070,337 @@ def database_health():
 
 
 # --------------------------------------------------
+# Indian Agricultural Crop Aliases (English / Marathi / Hindi)
+# --------------------------------------------------
+CROP_ALIASES = {
+    # Groundnut / Peanut
+    "groundnut": "groundnut", "peanut": "groundnut", "peanuts": "groundnut",
+    "bhuimug": "groundnut", "भुईमूग": "groundnut", "मूंगफली": "groundnut", "mungfali": "groundnut",
+    # Sugarcane
+    "sugarcane": "sugarcane", "cane": "sugarcane", "ऊस": "sugarcane", "गन्ना": "sugarcane", "us": "sugarcane", "ganna": "sugarcane",
+    # Cotton
+    "cotton": "cotton", "kapas": "cotton", "कापूस": "cotton", "कपास": "cotton", "kapus": "cotton",
+    # Soybean
+    "soybean": "soybean", "soya": "soybean", "सोयाबीन": "soybean",
+    # Wheat
+    "wheat": "wheat", "गहू": "wheat", "गेहूं": "wheat", "gehu": "wheat", "gahu": "wheat",
+    # Rice
+    "rice": "rice", "paddy": "rice", "भात": "rice", "चावल": "rice", "धान": "rice", "dhan": "rice", "bhat": "rice",
+    # Tomato
+    "tomato": "tomato", "टोमॅटो": "tomato", "टमाटर": "tomato", "tamatar": "tomato",
+    # Onion
+    "onion": "onion", "कांदा": "onion", "प्याज": "onion", "kanda": "onion", "pyaz": "onion",
+    # Chickpea / Harbhara
+    "chickpea": "chickpea", "gram": "chickpea", "chana": "chickpea", "harbhara": "chickpea", "हरभरा": "chickpea", "चना": "chickpea",
+    # Tur / Pigeon Pea
+    "tur": "tur", "arhar": "tur", "pigeonpea": "tur", "pigeon pea": "tur", "तूर": "tur", "अरहर": "tur",
+    # Maize
+    "maize": "maize", "corn": "maize", "मका": "maize", "मक्का": "maize", "maka": "maize",
+    # Potato
+    "potato": "potato", "बटाटा": "potato", "आलू": "potato", "batata": "potato", "aloo": "potato",
+    # Chilli
+    "chilli": "chilli", "chili": "chilli", "मिरची": "chilli", "मिर्च": "chilli", "mirchi": "chilli",
+    # Banana
+    "banana": "banana", "केळी": "banana", "केला": "banana", "keli": "banana", "kela": "banana",
+    # Pomegranate
+    "pomegranate": "pomegranate", "डाळिंब": "pomegranate", "अनार": "pomegranate", "dalimb": "pomegranate", "anar": "pomegranate",
+}
+
+# --------------------------------------------------
+# Standard Agricultural Expert Advisory Knowledge Base
+# (Fallback for high resilience during third-party AI outages)
+# --------------------------------------------------
+OFFLINE_CROP_KNOWLEDGE = {
+    "groundnut": {
+        "en": """### 1. Possible crop problem or disease
+- **Tikka Leaf Spot (Cercospora arachidicola)** or **Rust (Puccinia arachidis)**
+- **Collar Rot (Aspergillus niger)** or **White Grub (Root Pest)**
+
+### 2. Symptoms observed
+- Small circular brown-black spots with yellow rings on upper leaves, leading to premature leaf fall.
+- Orange-brown pustules on the lower leaf surface.
+- Sudden wilting of plants or seedling collar zone rotting.
+
+### 3. Recommended actions
+- Foliar spray of **Mancozeb 75% WP** (2.5 g per litre water) or **Hexaconazole 5% SC** (1.5 ml per litre water) at first sign of leaf spots.
+- For collar rot / root wilt: drench root zone with **Trichoderma viride** (5 g/L water) or **Carbendazim 50% WP** (1 g/L water).
+- For white grub: apply **Metarhizium anisopliae** (2.5 kg/acre mixed in FYM) in the root zone.
+
+### 4. Prevention measures
+- Apply **Gypsum (200 kg/acre)** at flowering / pegging stage (30-40 days) for solid pod development and higher oil content.
+- Seed treatment: Always treat seeds with **Thiram (2g/kg)** followed by **Rhizobium** and **PSB** biofertilizer before sowing.
+- Maintain adequate soil moisture during flowering and pegging stages.
+
+### 5. Weather-related considerations
+- Humid and cloudy weather accelerates fungal leaf spot. Avoid spraying when rain is forecasted within 4 hours.
+- For certified local advice, consult your district Krishi Vigyan Kendra (KVK) or call the toll-free Kisan Call Center at 1800-180-1551.""",
+        "mr": """### १. संभाव्य पीक रोग व समस्या
+- **टिक्का रोग (पानावरील काळे ठिपके)** आणि **तांबेरा रोग (Rust)**
+- **कॉलर रॉट (बुंधा कुज)** किंवा **हुमणी अळी (White Grub)**
+
+### २. दिसून येणारी लक्षणे
+- पानांवर लहान गोलाकार तपकिरी-काळे ठिपके ज्याभोवती पिवळे वलय दिसते, पाने वाळून अकाली गळतात.
+- पानांच्या खालच्या बाजूला तांबूस-तपकिरी रंगाचे फोड येणे.
+- झाडे अचानक सुकणे किंवा मुळांजवळील बुंधा काळा पडून कुजणे.
+
+### ३. शिफारसित उपाय व फवारणी
+- टिक्का व तांबेऱ्यासाठी: **मॅन्कोझेब ७५% डब्ल्यूपी** (२.५ ग्रॅम प्रति लिटर पाणी) किंवा **हेक्झाकोनॅझोल ५% एससी** (१.५ मिली प्रति लिटर पाणी) फवारावे.
+- बुंधा कुज / मर रोगासाठी: **ट्रायकोडर्मा व्हिरिडी** (५ ग्रॅम प्रति लिटर) किंवा **कार्बेन्डाझिम ५०% डब्ल्यूपी** (१ ग्रॅम प्रति लिटर) मुळाशी आळवणी (ड्रेंचिंग) करावी.
+- हुमणी नियंत्रणासाठी: **मेटारायझियम अ‍ॅनिमोपली** (२.५ किलो/एकर शेणखतात मिसळून) जमिनीत द्यावे.
+
+### ४. प्रतिबंधात्मक उपाय
+- आरे व शेंगा लागण्याच्या वेळी (३०-४० दिवस) **जिप्सम २०० किलो प्रति एकर** द्यावे; यामुळे शेंगा पोचट न राहता दाणे टपोरे भरतात व तेल वाढते.
+- पेरणीपूर्वी बियाण्यास **थायरम (२ ग्रॅम/किलो)** आणि **रायझोबियम जीवाणू संवर्धकाची** बीजप्रक्रिया आवर्जून करा.
+- आरे सुटताना आणि शेंगा भरताना जमिनीत ओलावा टिकवून ठेवा.
+
+### ५. हवामान सल्ला व हेल्पलाइन
+- ढगाळ आणि दमट हवामानात टिक्का रोगाचा प्रसार वेगाने होतो. पाऊस येणार असल्यास फवारणी पुढे ढकला.
+- अधिक मार्गदर्शनासाठी जवळच्या कृषी विज्ञान केंद्राशी (KVK) किंवा टोल-फ्री **किसान कॉल सेंटर १८००-१८०-१५५१** शी संपर्क साधा.""",
+        "hi": """### 1. संभावित फसल रोग एवं समस्या
+- **टिक्का रोग (पत्ती धब्बा)** एवं **गेरुई / रतुआ (Rust)**
+- **कॉलर रॉट (तना सड़न)** अथवा **सफेद लट (White Grub)**
+
+### 2. मुख्य लक्षण
+- पत्तियों पर गहरे भूरे-काले गोल धब्बे जिनके चारों ओर पीला घेरा होता है।
+- निचली पत्तियों पर भूरे दाने उभरना जिससे पत्तियां सूखकर जल्दी झड़ने लगती हैं।
+- पौधे का अचानक सूखना या जड़ों के पास तना काला पड़कर सड़ना।
+
+### 3. अनुशंसित उपचार व छिड़काव
+- टिक्का व रतुआ हेतु: **मैनकोजेब 75% WP** (2.5 ग्राम प्रति लीटर पानी) या **हेक्साकोनाजोल 5% SC** (1.5 मिली प्रति लीटर पानी) का छिड़काव करें।
+- तना सड़न / उकठा हेतु: **ट्राइकोडर्मा विरिडी** (5 ग्राम प्रति लीटर) से जड़ों के पास ड्रेंचिंग करें।
+- सफेद लट के लिए: **मेटाराइजियम** (2.5 किग्रा/एकड़ गोबर खाद में मिलाकर) डालें।
+
+### 4. रोकथाम के उपाय
+- फूल व खूंटी बनते समय (30-40 दिन) **जिप्सम (200 किग्रा प्रति एकड़)** अवश्य डालें, इससे फलियां ठोस बनती हैं।
+- बुआई से पहले **थिरम (2 ग्राम/किग्रा)** और **राइजोबियम कल्चर** से बीज उपचार करें।
+- फूल व फली बनते समय खेत में नमी बनाए रखें।
+
+### 5. मौसम संबंधित सुझाव एवं हेल्पलाइन
+- अत्यधिक आर्द्र व बादलों वाले मौसम में फफूंद जनित रोगों का प्रकोप बढ़ता है। बारिश की संभावना हो तो छिड़काव टालें।
+- सटीक परामर्श हेतु निकटतम कृषि विज्ञान केंद्र (KVK) अथवा टोल-फ्री **किसान कॉल सेंटर 1800-180-1551** पर संपर्क करें।"""
+    },
+    "sugarcane": {
+        "en": """### 1. Possible crop problem or disease
+- **Early Shoot Borer (Chilo infuscatellus)** or **White Grub**
+- **Red Rot (Colletotrichum falcatum)** or **Pokkah Boeng**
+
+### 2. Symptoms observed
+- "Dead heart" in central whorl of young tillers which dries up and pulls out easily with foul odor.
+- Discoloration of inner cane pith turning dull red with white transverse bands.
+- Top leaves distorted, chlorotic, or wrinkled.
+
+### 3. Recommended actions
+- For Shoot Borer: Soil drench **Chlorantraniliprole 18.5% SC** (0.4 ml per litre water, 150 ml/acre) along the cane base at 30-45 days.
+- For Red Rot: Immediately remove and burn affected clumps to stop soil spread; avoid water-logging.
+- For Pokkah Boeng: Spray **Copper Oxychloride 50% WP** (2.5 g/L) or **Carbendazim** (1 g/L).
+
+### 4. Prevention measures
+- Earthing up at 45 and 90 days prevents shoot borer egg-laying.
+- Sett treatment with **Trichoderma harzianum** and **Acetobacter** before planting.
+- Apply 10 tonnes of FYM or press mud to enhance beneficial soil microbes.
+
+### 5. Weather-related considerations
+- Hot and dry weather accelerates shoot borer. High humidity promotes fungal rot.
+- Consult your sugar factory agronomist or call the Kisan Call Center at 1800-180-1551.""",
+        "mr": """### १. संभाव्य पीक रोग व कीड
+- **खोडकिड (Early Shoot Borer)** किंवा **हुमणी अळी (White Grub)**
+- **तांबोरा / लाल कूज (Red Rot)** किंवा **पोक्का बोईंग (Pokkah Boeng)**
+
+### २. दिसून येणारी लक्षणे
+- उसाच्या सुरुवातीच्या अवस्थेत मधला कोंब वाळतो (डेड हार्ट) आणि ओढल्यास सहज बाहेर येतो व दुर्गंधी येते.
+- उसाचे कांडे आतून लाल पडणे आणि पांढरे पट्टे दिसणे.
+- शेंड्याची पाने पिवळी पडून चुरमडणे.
+
+### ३. शिफारसित उपाय व फवारणी
+- खोडकिडीसाठी: लागवडीनंतर ३० ते ४५ दिवसांनी **क्लोरअँट्रानिलीप्रोल १८.५% एससी (कोराजन)** ०.४ मिली प्रति लिटर (६० मिली प्रति एकर) उसाच्या बुंध्याशी ड्रेंचिंग करावे.
+- तांबोरा/लाल कूज: रोगट उसाची बेटे समूळ उपटून नष्ट करावीत. शेतात पाणी साचू देऊ नका.
+- पोक्का बोईंगसाठी: **कॉपर ऑक्सिक्लोराईड** २.५ ग्रॅम प्रति लिटर पाण्यात मिसळून फवारावे.
+
+### ४. प्रतिबंधात्मक उपाय
+- ४५ आणि ९० दिवसांनी उसाला भर लावावी (मोठी बांधणी), यामुळे खोडकिडीचा शिरकाव रोखला जातो.
+- बेणे प्रक्रिया: लागवडीपूर्वी उसाच्या कांड्यांना **ॲसिटोबॅक्टर** आणि **ट्रायकोडर्मा** जीवाणूंची प्रक्रिया करावी.
+- जमिनीची सुपीकता वाढवण्यासाठी शेणखत किंवा मळी खताचा वापर करा.
+
+### ५. हवामान सल्ला व हेल्पलाइन
+- उष्ण हवामानात खोडकिडीचा प्रादुर्भाव वाढतो. नियमित पाणी द्यावे.
+- अधिक माहितीसाठी नजीकच्या कृषी विज्ञान केंद्राशी किंवा टोल-फ्री **किसान कॉल सेंटर १८००-१८०-१५५१** शी संपर्क साधा.""",
+        "hi": """### 1. संभावित फसल रोग एवं कीट
+- **कंसुआ / तना छेदक (Shoot Borer)** अथवा **सफेद लट**
+- **लाल सड़न (Red Rot)** अथवा **पोक्का बोइंग**
+
+### 2. मुख्य लक्षण
+- गन्ने के बीच का गोभ सूख जाता है (डेड हार्ट) और खींचने पर आसानी से बदबू के साथ निकल जाता है।
+- तने को फाड़ने पर अंदर का गूदा लाल दिखाई देता है।
+- ऊपरी पत्तियों का पीला पड़ना व विकास रुकना।
+
+### 3. अनुशंसित उपचार
+- तना छेदक हेतु: बुआई के 30-45 दिन बाद **क्लोरएंट्रानिलिप्रोल 18.5% SC** (0.4 मिली प्रति लीटर पानी) जड़ों के पास डालें।
+- लाल सड़न के रोगी पौधों को उखाड़कर नष्ट करें।
+- **कॉपर ऑक्सीक्लोराइड 50% WP** (2.5 ग्राम/लीटर) का छिड़काव करें।
+
+### 4. रोकथाम के उपाय
+- 45 और 90 दिन पर गन्ने में मिट्टी अवश्य चढ़ाएं।
+- गूलर / टुकड़ों को बुआई से पहले ट्राइकोडर्मा और एसीटोबैक्टर से उपचारित करें।
+- 10 टन गोबर खाद या प्रेसमड का उपयोग करें।
+
+### 5. मौसम संबंधित सुझाव एवं हेल्पलाइन
+- सूखा व गर्म मौसम कीटों को बढ़ावा देता है, उचित अंतराल पर पानी दें।
+- अधिक जानकारी हेतु टोल-फ्री **किसान कॉल सेंटर 1800-180-1551** पर संपर्क करें।"""
+    },
+    "cotton": {
+        "en": """### 1. Possible crop problem or disease
+- **Pink Bollworm (Pectinophora gossypiella)** or **Sucking Pests (Aphids, Jassids, Thrips, Whitefly)**
+- **Bacterial Blight / Angular Leaf Spot**
+
+### 2. Symptoms observed
+- Rosetted flowers, premature boll opening, stained lint with pink larvae.
+- Leaves curling upwards (thrips) or downwards (aphids) with chlorotic spots.
+
+### 3. Recommended actions
+- For Sucking Pests: Spray **Flonicamid 50% WG** (0.3 g/L) or **Thiamethoxam 25% WG** (0.2 g/L).
+- For Bollworm: Install **Pheromone traps** (8 per acre). If ETL crossed, spray **Profenofos 50% EC** (2 ml/L) or **Emamectin Benzoate 5% SG** (0.5 g/L).
+- For Bacterial Blight: Spray **Copper Oxychloride** (2.5 g/L) + **Streptocycline** (1 g per 10 L).
+
+### 4. Prevention measures
+- Install yellow and blue sticky traps (20 per acre) early in the season.
+- Avoid excessive nitrogenous fertilizer application which invites sucking pests.
+- Incorporate 250 kg Neem cake per acre during land preparation.
+
+### 5. Weather-related considerations
+- Cloudy, warm weather favors bollworm multiplication.
+- Contact your nearest KVK or call the Kisan Call Center at 1800-180-1551.""",
+        "mr": """### १. संभाव्य पीक रोग व कीड
+- **गुलाबी बोंडअळी (Pink Bollworm)** किंवा **रसशोषक किडी (मावा, तुडतुडे, थ्रिप्स, पांढरी माशी)**
+- **दहिया रोग किंवा जिवाणूजन्य करपा (Bacterial Blight)**
+
+### २. दिसून येणारी लक्षणे
+- फुले चक्राकार बंद राहणे, बोंडांना छिद्र पडून अळी आत शिरणे, बोंडे अकाली उमलणे.
+- पाने वाकडी होणे (चुरडा-मुरडा), पानांच्या कडा पिवळ्या पडणे.
+
+### ३. शिफारसित उपाय व फवारणी
+- रसशोषक किडींसाठी: **फ्लोनिकामिड ५०% डब्ल्यूजी** (०.३ ग्रॅम/लिटर) किंवा **थायमेथोक्साम २५% डब्ल्यूजी** (०.२ ग्रॅम/लिटर) फवारावे.
+- गुलाबी बोंडअळीसाठी: एकरी ८ **कामगंध सापळे** लावा. प्रादुर्भाव वाढल्यास **इमामेक्टिन बेन्झोएट ५% एसजी** (०.५ ग्रॅम/लिटर) किंवा **प्रोफेनोफॉस ५०% ईसी** (२ मिली/लिटर) फवारावे.
+- करपा रोगासाठी: **कॉपर ऑक्सिक्लोराईड** २.५ ग्रॅम + **स्ट्रेप्टोसायक्लिन** १ ग्रॅम प्रति १० लिटर पाण्यात मिसळून फवारावे.
+
+### ४. प्रतिबंधात्मक उपाय
+- एकरी २० ते २५ पिवळे व निळे चिकट सापळे लावा.
+- जास्त युरिया दिल्यास रसशोषक किडींचा प्रादुर्भाव वाढतो, म्हणून शिफारशीनुसारच खत द्या.
+- पेरणीवेळी २५० किलो निंबोळी पेंड जमिनीत मिसळा.
+
+### ५. हवामान सल्ला व हेल्पलाइन
+- दमट व ढगाळ हवामानात बोंडअळीचा प्रादुर्भाव वेगाने वाढतो.
+- अधिक मार्गदर्शनासाठी जवळच्या कृषी विज्ञान केंद्राशी किंवा **किसान कॉल सेंटर १८००-१८०-१५५१** वर संपर्क साधा.""",
+        "hi": """### 1. संभावित फसल रोग एवं कीट
+- **गुलाबी सुंडी (Pink Bollworm)** अथवा **रस चूसक कीट (माहू, हरा तेला, थ्रिप्स, सफेद मक्खी)**
+- **जीवाणु पत्ती झुलसा**
+
+### 2. मुख्य लक्षण
+- फूलों का बंद रहना (गुलाब जैसा दिखना), गूलर में छेद और गिरना।
+- पत्तियों का किनारों से मुड़ना, पीला पड़ना व रस सूखना।
+
+### 3. अनुशंसित उपचार
+- रस चूसक कीटों हेतु: **फ्लोनिकामिड 50% WG** (0.3 ग्राम/लीटर) या **थायमेथोक्सम 25% WG** (0.2 ग्राम/लीटर) का छिड़काव करें।
+- गुलाबी सुंडी के लिए: प्रति एकड़ 8 फेरोमोन ट्रैप लगाएं। प्रकोप होने पर **इमामेक्टिन बेंजोएट 5% SG** (0.5 ग्राम/लीटर) छिड़कें।
+- पत्ती झुलसा के लिए: **कॉपर ऑक्सीक्लोराइड** (2.5 ग्राम/लीटर) + **स्ट्रेप्टोसाइक्लिन** (1 ग्राम/10 लीटर) छिड़कें।
+
+### 4. रोकथाम के उपाय
+- खेत में पीले और नीले चिपचिपे कार्ड लगाएं।
+- अधिक यूरिया के प्रयोग से बचें।
+- बुआई के समय नीम की खली 250 किग्रा प्रति एकड़ डालें।
+
+### 5. मौसम संबंधित सुझाव एवं हेल्पलाइन
+- टोल-फ्री **किसान कॉल सेंटर 1800-180-1551** पर संपर्क करें।"""
+    },
+    "general": {
+        "en": """### 1. Possible crop problem or disease
+- **Integrated Pest & Nutrient Management (IPM) Advisory**
+- Common sucking pests, fungal leaf blight, or nutrient deficiency.
+
+### 2. Symptoms observed
+- Discoloration, wilting, leaf curling, or irregular spots on plant foliage.
+
+### 3. Recommended actions
+- For fungal leaf spots: Spray **Mancozeb 75% WP** (2.5 g/L) or **Copper Oxychloride 50% WP** (2.5 g/L).
+- For sucking pests (aphids, thrips): Spray **Neem oil 1500 ppm** (3-4 ml/L) or **Thiamethoxam 25% WG** (0.3 g/L).
+- For nutrient deficiency: Apply balanced foliar nutrition **19:19:19** (5 g/L).
+
+### 4. Prevention measures
+- Conduct soil testing every 2-3 years at your district Krishi Vigyan Kendra (KVK).
+- Treat seeds with biological **Trichoderma** (5g/kg) before sowing.
+- Install yellow sticky traps (15-20 per acre) for insect monitoring.
+
+### 5. Weather-related considerations
+- Avoid pesticide spray during windy days (>15 km/h) or immediately preceding rain.
+- For emergency field queries, call the Government of India toll-free Kisan Call Center at 1800-180-1551.""",
+        "mr": """### १. संभाव्य पीक रोग व समस्या
+- **एकात्मिक कीड व रोग व्यवस्थापन (IPM) मार्गदर्शक**
+- पानांवरील बुरशीजन्य करपा, रसशोषक किडी किंवा अन्नद्रव्यांची कमतरता.
+
+### २. दिसून येणारी लक्षणे
+- पानांचा रंग बदलणे, पाने पिवळी पडणे किंवा चुरमडणे, पानांवर ठिपके येणे.
+
+### ३. शिफारसित उपाय व फवारणी
+- बुरशीजन्य करप्यासाठी: **मॅन्कोझेब ७५% डब्ल्यूपी** (२.५ ग्रॅम/लिटर) किंवा **कॉपर ऑक्सिक्लोराईड** (२.५ ग्रॅम/लिटर) फवारावे.
+- रसशोषक किडींसाठी (मावा, थ्रिप्स): **५% निंबोळी अर्क** किंवा **थायमेथोक्साम २५% डब्ल्यूजी** (०.३ ग्रॅम/लिटर) फवारावे.
+- सूक्ष्म अन्नद्रव्यांसाठी: **१९:१९:१९** विद्राव्य खत (५ ग्रॅम/लिटर) फवारावे.
+
+### ४. प्रतिबंधात्मक उपाय
+- दर २ ते ३ वर्षांनी जवळच्या कृषी विज्ञान केंद्रात (KVK) माती परीक्षण करून घ्या.
+- पेरणीपूर्वी बियाण्यास **ट्रायकोडर्मा** (५ ग्रॅम/किलो) ची बीजप्रक्रिया करा.
+- किडींच्या निरीक्षणासाठी एकरी १५ ते २० पिवळे व निळे चिकट सापळे लावा.
+
+### ५. हवामान सल्ला व हेल्पलाइन
+- वादळी वाऱ्याच्या वेळी किंवा पावसाची शक्यता असताना फवारणी टाळा.
+- तातडीच्या कृषी सल्ल्यासाठी शासकीय **किसान कॉल सेंटर १८००-१८०-१५५१** (टोल-फ्री) वर संपर्क साधा.""",
+        "hi": """### 1. संभावित फसल रोग एवं समस्या
+- **एकीकृत कीट एवं पोषण प्रबंधन (IPM) मार्गदर्शन**
+- पत्तियों पर फफूंद जनित झुलसा, रस चूसक कीट अथवा पोषक तत्वों की कमी।
+
+### 2. मुख्य लक्षण
+- पत्तियों का रंग बदलना, पीला पड़ना, किनारों से मुड़ना या धब्बे पड़ना।
+
+### 3. अनुशंसित उपचार व छिड़काव
+- फफूंद जनित रोगों हेतु: **मैनकोजेब 75% WP** (2.5 ग्राम/लीटर) या **कॉपर ऑक्सीक्लोराइड** (2.5 ग्राम/लीटर) का छिड़काव करें।
+- रस चूसक कीटों हेतु: **नीम का तेल 1500 ppm** (3-4 मिली/लीटर) या **थायमेथोक्सम** (0.3 ग्राम/लीटर) छिड़कें।
+- सूक्ष्म पोषक तत्वों हेतु: **19:19:19** (5 ग्राम/लीटर) का पर्णीय छिड़काव करें।
+
+### 4. रोकथाम के उपाय
+- मिट्टी परीक्षण के आधार पर संतुलित खाद का प्रयोग करें।
+- बुआई से पहले **ट्राइकोडर्मा** (5 ग्राम/किग्रा) से बीज उपचार करें।
+- खेत में पीले चिपचिपे कार्ड लगाएं।
+
+### 5. मौसम संबंधित सुझाव एवं हेल्पलाइन
+- बारिश व तेज हवा के समय छिड़काव न करें।
+- निःशुल्क परामर्श हेतु **किसान कॉल सेंटर 1800-180-1551** पर कॉल करें।"""
+    }
+}
+
+
+def get_offline_crop_guidance(crop: str, problem: str, language_code: str) -> str:
+    """Provide reliable ICAR/SAU agricultural advisory when third-party AI service is busy or offline."""
+    lang = language_code.lower() if language_code and language_code.lower() in ("mr", "hi", "en") else "en"
+    crop_lower = crop.strip().lower()
+
+    matched_key = "general"
+    if crop_lower:
+        for key in OFFLINE_CROP_KNOWLEDGE:
+            if key != "general" and (key in crop_lower or crop_lower in key):
+                matched_key = key
+                break
+        if matched_key == "general":
+            for alias, target in CROP_ALIASES.items():
+                if alias in crop_lower and target in OFFLINE_CROP_KNOWLEDGE:
+                    matched_key = target
+                    break
+
+    profile = OFFLINE_CROP_KNOWLEDGE.get(matched_key, OFFLINE_CROP_KNOWLEDGE["general"])
+    guidance = profile.get(lang, profile["en"])
+    return guidance
+
+
+# --------------------------------------------------
 # Analyze crop
 # --------------------------------------------------
-
 
 MAX_CROP_LENGTH = 100
 MAX_PROBLEM_LENGTH = 2000
@@ -1143,16 +1474,30 @@ async def analyze_crop(
         # Protect Gemini quota for guests via IP rate limiting
         check_guest_analysis_rate_limit(client_ip)
 
-    crop_details = crop if crop else "Not specified"
+    # Normalize datalist crop selections e.g. "Groundnut / भुईमूग (मूंगफली)" -> "Groundnut"
+    raw_crop = crop.strip()
+    clean_crop = raw_crop
+    if " / " in raw_crop:
+        clean_crop = raw_crop.split(" / ")[0].strip()
+    elif "/" in raw_crop:
+        clean_crop = raw_crop.split("/")[0].strip()
 
-    problem_details = (
-        problem
-        if problem
-        else (
+    crop_details = clean_crop if clean_crop else "Not specified"
+
+    if problem:
+        problem_details = problem
+    elif not image and clean_crop:
+        problem_details = (
+            f"The farmer is requesting guidance for '{clean_crop}'. "
+            f"Provide a comprehensive seasonal health guide for this crop: "
+            f"common diseases and pests affecting '{clean_crop}' in India, early identification symptoms, "
+            f"recommended preventive measures, university-approved sprays, and plant protection tips."
+        )
+    else:
+        problem_details = (
             "No written description provided. "
             "Analyze the uploaded image if available."
         )
-    )
 
     weather_details = (
         weather_context
@@ -1286,9 +1631,9 @@ Return the complete response in {selected_language}.
                 )
 
                 err_str = str(exc).lower()
-                # If model is deprecated or not found (404), break immediately to try next candidate
-                if "404" in err_str or "not_found" in err_str or "no longer available" in err_str or "not found" in err_str:
-                    logger.info(f"Model {model_name} deprecated/unavailable, falling back to next model...")
+                # If model is deprecated (404) or quota exhausted (429), break immediately to try next candidate
+                if any(k in err_str for k in ["404", "not_found", "no longer available", "not found", "429", "resource_exhausted", "quota"]):
+                    logger.info(f"Model {model_name} unavailable/exhausted, falling back to next candidate model...")
                     break
 
                 if not is_transient_error(exc):
@@ -1306,13 +1651,10 @@ Return the complete response in {selected_language}.
             break
 
     if not response or not response.text:
-        logger.error(f"All candidate Gemini models failed. Last exception: {last_exception}")
-        raise HTTPException(
-            status_code=503,
-            detail=selected["error"],
-        )
-
-    analysis_text = response.text
+        logger.warning(f"All candidate Gemini models failed. Last exception: {last_exception}. Invoking expert agricultural knowledge fallback...")
+        analysis_text = get_offline_crop_guidance(crop_details, problem, language_code)
+    else:
+        analysis_text = response.text
 
     # Save the successful analysis to PostgreSQL for authenticated users.
     analysis_id = None
@@ -1644,12 +1986,151 @@ CROP_FERTILIZER_RDF = {
             "mr": "बटाट्याला पोटॅश आणि सेंद्रिय खतांची जास्त गरज असते. चांगल्या कुजलेल्या शेणखताचा किंवा गांडूळ खताचा भरपूर वापर करा.",
             "hi": "आलू को पोटाश और जैविक खाद की अधिक आवश्यकता होती है। 8 टन सड़ी गोबर खाद या 2 टन केंचुआ खाद प्रयोग करें।"
         }
+    },
+    "groundnut": {
+        "names": {"en": "Groundnut (Peanut)", "mr": "भुईमूग", "hi": "मूंगफली"},
+        "icon": "🥜",
+        "n": 10.0, "p": 20.0, "k": 10.0,
+        "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Gypsum (200 kg/acre at flowering/pegging - crucial for pod filling)",
+            "mr": "जिप्सम (२०० किलो/एकर आरे व शेंगा लागण्याच्या वेळी - टपोऱ्या शेंगांसाठी)",
+            "hi": "जिप्सम (200 किग्रा/एकड़ फूल व खूंटी बनते समय - दानों के भराव हेतु)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 100% DAP + 100% MOP + Starter Urea", "mr": "पेरणीवेळी (पायाभूत): १००% DAP + १००% MOP + सुरुवातीचा युरिया", "hi": "बुआई के समय: 100% DAP + 100% MOP + शुरुआती यूरिया"},
+            {"en": "Pegging / Flowering Stage (30-35 days): Apply Gypsum (200 kg/acre) & light hoeing", "mr": "आरे सुटताना (३०-३५ दिवस): २०० किलो जिप्सम देऊन खुरपणी / हलकी कोळपणी करावी", "hi": "खूंटी बनते समय (30-35 दिन): 200 किग्रा जिप्सम डालकर हल्की गुड़ाई करें"},
+        ],
+        "organic_tips": {
+            "en": "Groundnut is an oilseed legume. Treat seeds with Rhizobium and Trichoderma. Avoid excess urea as it causes heavy vines and empty pods.",
+            "mr": "भुईमुगाला पेरणीपूर्वी रायझोबियम व ट्रायकोडर्माची बीजप्रक्रिया करा. जास्त युरिया दिल्यास झाडांची अनावश्यक वाढ होऊन शेंगा पोचट राहतात.",
+            "hi": "मूंगफली में बुआई से पहले राइजोबियम व ट्राइकोडर्मा से बीज उपचार करें। अधिक यूरिया न डालें नहीं तो फलियां खोखली रह जाएंगी।"
+        }
+    },
+    "chickpea": {
+        "names": {"en": "Gram / Chickpea (Harbhara)", "mr": "हरभरा (चना)", "hi": "चना (हरभरा)"},
+        "icon": "🧆",
+        "n": 10.0, "p": 20.0, "k": 10.0,
+        "fym_tonnes": 3.0,
+        "special_nutrient": {
+            "en": "Sulphur (8-10 kg) + Zinc Sulphate (5 kg/acre)",
+            "mr": "सल्फर / गंधक (८-१० किलो) + झिंक सल्फेट (५ किलो/एकर)",
+            "hi": "सल्फर (8-10 किग्रा) + जिंक सल्फेट (5 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 100% DAP + 100% MOP + Starter Urea", "mr": "पेरणीवेळी (पायाभूत): १००% DAP + १००% MOP + सुरुवातीचा युरिया", "hi": "बुआई के समय: 100% DAP + 100% MOP + शुरुआती यूरिया"},
+            {"en": "Branching Stage (25-30 days): Foliar spray of 19:19:19 (5g/L water)", "mr": "फांद्या फुटताना (२५-३० दिवस): १९:१९:१९ ची फवारणी (५ ग्रॅम/लिटर पाणी)", "hi": "शाखाएं बनते समय (25-30 दिन): 19:19:19 का छिड़काव (5 ग्राम/लीटर)"},
+        ],
+        "organic_tips": {
+            "en": "Treat seeds with Rhizobium and PSB culture. Nip terminal shoots (खुडणी) at 30-35 days to induce more lateral branches and pods.",
+            "mr": "पेरणीपूर्वी रायझोबियम व पीएसबी जिवाणूंची बीजप्रक्रिया करा. ३०-३५ दिवसांनी हरभऱ्याचे शेंडे खुडल्यास भरपूर फांद्या फुटून घाटे जास्त लागतात.",
+            "hi": "राइजोबियम व पीएसबी से बीज उपचार करें। 30-35 दिन पर खूंटाई (ऊपरी भाग तोड़ना) करने से अधिक शाखाएं व फलियां बनती हैं।"
+        }
+    },
+    "tur": {
+        "names": {"en": "Tur / Pigeon Pea (Arhar)", "mr": "तूर (अरहर)", "hi": "तूर / अरहर"},
+        "icon": "🌿",
+        "n": 10.0, "p": 20.0, "k": 10.0,
+        "fym_tonnes": 4.0,
+        "special_nutrient": {
+            "en": "Zinc Sulphate (10 kg) + Sulphur (8 kg/acre)",
+            "mr": "झिंक सल्फेट (१० किलो) + गंधक (८ किलो/एकर)",
+            "hi": "जिंक सल्फेट (10 किग्रा) + सल्फर (8 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "At Sowing (Basal): 100% DAP + 100% MOP", "mr": "पेरणीवेळी (पायाभूत): १००% DAP + १००% MOP", "hi": "बुआई के समय: 100% DAP + 100% MOP"},
+            {"en": "Flowering & Pod Formation (60-70 days): Foliar spray of 00:52:34 + Boron (1g/L)", "mr": "फुलोरा व शेंगा धरताना (६०-७० दिवस): ००:५२:३४ + बोरॉनची फवारणी", "hi": "फूल व फली बनते समय (60-70 दिन): 00:52:34 + बोरॉन का छिड़काव"},
+        ],
+        "organic_tips": {
+            "en": "Deep rooted pulse crop. Inoculate with Rhizobium. Spray Neem seed kernel extract (NSKE 5%) at 50% flowering to control pod borer naturally.",
+            "mr": "तुरीला मर रोगापासून वाचवण्यासाठी ट्रायकोडर्माची बीजप्रक्रिया करा. फुलोऱ्याच्या वेळी ५% निंबोळी अर्काची फवारणी शेंगा पोखरणारी अळी रोखते.",
+            "hi": "उकठा रोग से बचाव हेतु ट्राइकोडर्मा से बीज उपचार करें। फूल आने पर 5% नीम अर्क का छिड़काव फली छेदक कीट रोकता है।"
+        }
+    },
+    "chilli": {
+        "names": {"en": "Chilli", "mr": "मिरची", "hi": "मिर्च"},
+        "icon": "🌶️",
+        "n": 40.0, "p": 20.0, "k": 20.0,
+        "fym_tonnes": 6.0,
+        "special_nutrient": {
+            "en": "Calcium Nitrate (10 kg) + Micronutrient mix (prevents flower & fruit drop)",
+            "mr": "कॅल्शियम नायट्रेट (१० किलो) + सूक्ष्म अन्नद्रव्ये (फुलगळ व फळगळ रोखण्यासाठी)",
+            "hi": "कैल्शियम नाइट्रेट (10 किग्रा) + सूक्ष्म पोषक तत्व (फूल व फल झड़ने से रोकने हेतु)"
+        },
+        "stages": [
+            {"en": "Transplanting (Basal): 50% Urea + 100% DAP + 50% MOP", "mr": "लागवडीवेळी (पायाभूत): ५०% युरिया + १००% DAP + ५०% MOP", "hi": "रोपाई के समय: 50% यूरिया + 100% DAP + 50% MOP"},
+            {"en": "Vegetative & Flowering (30-40 days): 25% Urea + 50% MOP", "mr": "शाकीय वाढ व फुलोरा (३०-४० दिवस): २५% युरिया + ५०% MOP", "hi": "वानस्पतिक वृद्धि व फूल (30-40 दिन): 25% यूरिया + 50% MOP"},
+            {"en": "First Picking / Harvest (60-70 days): Remaining 25% Urea", "mr": "पहिला तोडा (६०-७० दिवस): उर्वरित २५% युरिया", "hi": "पहली तुड़ाई (60-70 दिन): शेष 25% यूरिया"},
+        ],
+        "organic_tips": {
+            "en": "Install blue and yellow sticky traps to control thrips and whiteflies which cause leaf curl virus (Churda-Murda). Spray sour buttermilk with asafoetida.",
+            "mr": "चुरडा-मुरडा (बोकड्या) रोग पसरवणाऱ्या थ्रिप्स व पांढरी माशीसाठी एकरी २५ निळे व पिवळे चिकट सापळे लावा. आंबट ताक व हिंगाची फवारणी प्रतिकारशक्ती वाढवते.",
+            "hi": "पत्ती मरोड़ रोग फैलाने वाले थ्रिप्स और सफेद मक्खी के लिए नीले व पीले कार्ड लगाएं। खट्टी छाछ व हींग का छिड़काव करें।"
+        }
+    },
+    "banana": {
+        "names": {"en": "Banana", "mr": "केळी", "hi": "केला"},
+        "icon": "🍌",
+        "n": 80.0, "p": 30.0, "k": 80.0,
+        "fym_tonnes": 12.0,
+        "special_nutrient": {
+            "en": "Magnesium Sulphate (15 kg) + Zinc Sulphate (10 kg/acre)",
+            "mr": "मॅग्नेशियम सल्फेट (१५ किलो) + झिंक सल्फेट (१० किलो/एकर)",
+            "hi": "मैग्नीशियम सल्फेट (15 किग्रा) + जिंक सल्फेट (10 किग्रा/एकड़)"
+        },
+        "stages": [
+            {"en": "Month 2 to 3 (Vegetative): 30% Urea + 50% DAP + 20% MOP", "mr": "२ ते ३ महिने (शाकीय वाढ): ३०% युरिया + ५०% DAP + २०% MOP", "hi": "2 से 3 महीने (वानस्पतिक): 30% यूरिया + 50% DAP + 20% MOP"},
+            {"en": "Month 4 to 5 (Shooting growth): 40% Urea + 50% DAP + 40% MOP", "mr": "४ ते ५ महिने (जोमदार वाढ): ४०% युरिया + ५०% DAP + ४०% MOP", "hi": "4 से 5 महीने (तीव्र वृद्धि): 40% यूरिया + 50% DAP + 40% MOP"},
+            {"en": "Month 6 to 7 (Bunch emergence): Remaining 30% Urea + 40% MOP", "mr": "६ ते ७ महिने (घड बाहेर पडताना): उर्वरित ३०% युरिया + ४०% MOP", "hi": "6 से 7 महीने (घार निकलते समय): शेष 30% यूरिया + 40% MOP"},
+        ],
+        "organic_tips": {
+            "en": "Banana requires heavy potassium and organic mulching. Mulch with sugarcane trash or dry leaves to retain root zone moisture and deter weeds.",
+            "mr": "केळीला पोटॅशची खूप गरज असते. खोडाभोवती उसाच्या पाचटाचे आच्छादन (मल्चिंग) करा. हुमणी व खोडकिडीसाठी निंबोळी पेंड वापरा.",
+            "hi": "केले को पोटाश और जैविक मल्चिंग की सबसे ज्यादा आवश्यकता होती है। तने के पास नीम खली का प्रयोग करें।"
+        }
+    },
+    "pomegranate": {
+        "names": {"en": "Pomegranate", "mr": "डाळिंब", "hi": "अनार"},
+        "icon": "🍎",
+        "n": 50.0, "p": 25.0, "k": 50.0,
+        "fym_tonnes": 10.0,
+        "special_nutrient": {
+            "en": "Boron (2 kg) + Calcium Nitrate (10 kg) + Zinc (prevents fruit cracking)",
+            "mr": "बोरॉन (२ किलो) + कॅल्शियम नायट्रेट (१० किलो) + झिंक (फळे तडकणे रोखण्यासाठी)",
+            "hi": "बोरॉन (2 किग्रा) + कैल्शियम नाइट्रेट (10 किग्रा) + जिंक (फल फटने से बचाव हेतु)"
+        },
+        "stages": [
+            {"en": "Bahar Treatment (Rest breaking): 30% Urea + 100% DAP + 30% MOP + FYM", "mr": "बहार धरताना (विश्रांतीनंतर): ३०% युरिया + १००% DAP + ३०% MOP + शेणखत", "hi": "बहार के समय: 30% यूरिया + 100% DAP + 30% MOP + गोबर खाद"},
+            {"en": "Flowering to Fruit Set: 30% Urea + 30% MOP + Micronutrient spray", "mr": "फुलोरा ते फळधारणा: ३०% युरिया + ३०% MOP + सूक्ष्म अन्नद्रव्ये फवारणी", "hi": "फूल व फल बनते समय: 30% यूरिया + 30% MOP + सूक्ष्म पोषक छिड़काव"},
+            {"en": "Fruit Development: Remaining 40% Urea + 40% MOP + Calcium Nitrate", "mr": "फळे पोसताना: उर्वरित ४०% युरिया + ४०% MOP + कॅल्शियम नायट्रेट", "hi": "फल विकास: शेष 40% यूरिया + 40% MOP + कैल्शियम नाइट्रेट"},
+        ],
+        "organic_tips": {
+            "en": "Maintain excellent soil drainage to prevent Bacterial Blight (Telya / तेल्या) and wilt. Apply Trichoderma and Pseudomonas through drip irrigation.",
+            "mr": "तेल्या रोग (Bacterial Blight) आणि मर रोगापासून संरक्षणासाठी बागेत पाण्याचा निचरा उत्तम ठेवा. ड्रीपमधून ट्रायकोडर्मा व स्युडोमोनास जीवाणू सोडा.",
+            "hi": "जीवाणु झुलसा (तेलिया) से बचाव के लिए खेत में जल निकासी सही रखें और ड्रिप से ट्राइकोडर्मा चलाएं।"
+        }
     }
 }
 
 
 def compute_fertilizer_recommendation(crop: str, area: float, unit: str = "acre") -> dict:
-    crop_key = crop.strip().lower()
+    cleaned_crop = crop.strip().lower()
+    crop_key = cleaned_crop
+
+    # Try exact match, alias match, or token match (e.g. "Groundnut / भुईमूग (मूंगफली)")
+    if crop_key not in CROP_FERTILIZER_RDF:
+        if crop_key in CROP_ALIASES:
+            crop_key = CROP_ALIASES[crop_key]
+        else:
+            tokens = [t.strip("() ,.-") for t in cleaned_crop.replace("/", " ").split()]
+            for token in tokens:
+                if token in CROP_ALIASES:
+                    crop_key = CROP_ALIASES[token]
+                    break
+                if token in CROP_FERTILIZER_RDF:
+                    crop_key = token
+                    break
+
     if crop_key not in CROP_FERTILIZER_RDF:
         raise ValueError(
             f"Unsupported crop '{crop}'. Supported crops: {', '.join(CROP_FERTILIZER_RDF.keys())}"
