@@ -1813,34 +1813,43 @@ Local farm weather forecast & conditions:
 {weather_details}
 
 Analyze the uploaded image(s) (Image 1 is a close-up symptom; Image 2 if attached shows wide canopy or plant context).
-If symptoms are distinct and clear, assign a High Confidence rating (85-95%).
-If symptoms could match multiple pests/diseases or are partially ambiguous, assign Moderate Confidence (65-80%) or Low Confidence (<60% with advice to seek immediate verification from the local Krishi Vigyan Kendra or Kisan Call Centre).
+
+Critical Diagnostic & Trust Guidelines:
+- If the image is blurry, out-of-focus, or taken from too far away to distinguish symptoms, explicitly state: "The image is too blurry or distant to diagnose safely. Please take a sharp close-up photo of the affected leaf/fruit in daylight without shadow."
+- Visual identification is an advisory tool, not a confirmed laboratory diagnosis.
+- Calibrate your confidence realistically:
+  * High Confidence (85-95%): Unmistakable, distinct diagnostic symptoms.
+  * Moderate Confidence (65-80%): Symptoms match more than one pathogen or are in early stage.
+  * Low Confidence (<60%): Ambiguous symptoms or unclear image. Recommend immediate confirmation with local KVK before chemical treatment.
 
 Structure your answer with these exact headings translated into {selected_language}:
 
-1. Diagnosis & Confidence Level
-State the probable crop pest, disease, or nutrient deficiency and include an estimated confidence tag: e.g. [High Confidence (85-90%)] or [Moderate Confidence (70%)].
+1. Primary Diagnosis & Calibrated Confidence
+State the suspected pest, disease, or nutrient deficiency with an explicit confidence badge: e.g. [High Confidence (88%)] or [Moderate Confidence (70%)] or [Low Confidence (<60%)].
 
-2. Symptoms Observed
-Detail the visible lesions, discoloration, pest damage, or wilting observed.
+2. Alternative Possibilities (Differential Diagnosis)
+List 1-2 alternate conditions that can cause similar symptoms (e.g. Early Blight vs Alternaria Leaf Spot, or Nitrogen Deficiency vs Root Rot) so the farmer understands visual uncertainty.
 
-3. 🌿 Biological & Organic Remedies
-Detail eco-friendly biological controls (e.g. Neem Oil 10,000 ppm @ 3-5 ml/L, Trichoderma viride, Dashparni Ark, Jeevamrut, Beauveria bassiana).
+3. Observed Symptoms & Diagnostic Reasoning
+Describe visible symptoms (lesions, concentric rings, chlorosis, wilting, pest frass) and explain the reasoning behind the diagnosis.
 
-4. 🧪 Approved Chemical Controls (with Safety Protocol)
-- State approved university/CIBRC recommended chemical formulation and exact mixing dosage (e.g. per liter or per acre).
+4. 🌿 Tier 1: Cultural & Biological Controls
+Eco-friendly botanical or bio-agent remedies (e.g. Neem Oil 10,000 ppm @ 3-5 ml/L, Trichoderma viride, Dashparni Ark, Beauveria bassiana, pheromone / sticky traps).
+
+5. 🧪 Tier 2: Targeted Chemical Remedies (with Safety Protocols)
+- University/CIBRC approved chemical active ingredient and exact dilution (e.g. per liter or per acre).
 - Pre-Harvest Interval (PHI) / Withholding days before harvest.
-- Essential Personal Protective Equipment (gloves, mask, spray in early morning or evening; avoid spraying in strong wind).
+- Personal Protective Equipment (mask, gloves, rubber boots, avoid spraying during midday heat or high wind).
 
-5. Weather & Spraying Advisory
-Connect local weather forecast (temperature, humidity, rain chance) directly to farming actions (e.g. holding off on spray if rain is expected, or irrigating early morning during heat).
+6. 🛡️ Tier 3: Prevention & Cultural Practices
+Crop rotation, certified disease-free seeds, balanced irrigation, and soil sanitation.
 
-6. Preventive Cultural Practices
-Sanitation, clean seeds, crop rotation, and soil health management.
+7. Weather-Linked Spraying Window
+Connect current forecast directly to farm actions (e.g. holding spray if rain is expected in 48h, or warning of fungal spore spread under high humidity).
 
 Important safety requirements:
-- Visual identification cannot be 100% certain.
-- Always recommend consulting local KVK or agricultural officer before large-scale spraying.
+- Visual identification is for advisory guidance only.
+- Advise consulting local Krishi Vigyan Kendra (KVK) or calling Kisan Call Center (1800-180-1551) before major chemical spraying.
 - Never recommend burning infected crop material.
 
 Return the complete response in {selected_language}.
