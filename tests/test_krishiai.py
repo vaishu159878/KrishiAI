@@ -426,5 +426,43 @@ def test_crop_category_classification():
     assert classify_crop_category("Ragi") == "cereal"
 
 
+def test_soil_type_and_modern_fertilizer_alternatives():
+    # 1. Medium black baseline
+    res_base = compute_fertilizer_recommendation("cotton", 1.0, "acre", soil_type="medium_black")
+    # 2. Black cotton soil reduces K requirement (-15%)
+    res_bc = compute_fertilizer_recommendation("cotton", 1.0, "acre", soil_type="black_cotton")
+    assert res_bc["pure_nutrients_kg"]["potassium_k"] < res_base["pure_nutrients_kg"]["potassium_k"]
+    assert "black_cotton" in res_bc["soil_type"]
+    assert "potash" in res_bc["soil_advisory"]["en"].lower()
+
+    # 3. Red laterite soil increases P requirement (+20%)
+    res_red = compute_fertilizer_recommendation("cotton", 1.0, "acre", soil_type="red_laterite")
+    assert res_red["pure_nutrients_kg"]["phosphorus_p"] > res_base["pure_nutrients_kg"]["phosphorus_p"]
+    assert "red_laterite" in res_red["soil_type"]
+
+    # 4. Check modern alternatives (Nano Urea & SSP)
+    assert "liquid_and_modern_alternatives" in res_base
+    assert "nano_urea" in res_base["liquid_and_modern_alternatives"]
+    assert res_base["liquid_and_modern_alternatives"]["nano_urea"]["bottles_500ml"] >= 1
+    assert "ssp_dap_substitute" in res_base["liquid_and_modern_alternatives"]
+    assert res_base["liquid_and_modern_alternatives"]["ssp_dap_substitute"]["ssp_bags_50kg"] > 0
 
 
+def test_apmc_mandi_rates():
+    from main import get_mandi_rates, APMC_MANDI_RATES
+
+    assert len(APMC_MANDI_RATES) >= 8
+    # Test all rates
+    all_rates = get_mandi_rates()
+    assert len(all_rates["rates"]) == len(APMC_MANDI_RATES)
+
+    # Test filtering by commodity (Groundnut)
+    gn_rates = get_mandi_rates(commodity="Groundnut")
+    assert len(gn_rates["rates"]) >= 1
+    assert "Groundnut" in gn_rates["rates"][0]["commodity"]
+    assert gn_rates["rates"][0]["modal_price"] > 0
+
+    # Test filtering by market (Solapur)
+    solapur_rates = get_mandi_rates(market="Solapur")
+    assert len(solapur_rates["rates"]) >= 1
+    assert "Solapur" in solapur_rates["rates"][0]["market"]
