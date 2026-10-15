@@ -1,0 +1,11 @@
+docker-compose.override.yml
+compose.yaml
+.git/
+.gitignore
+.github/
+tests/
+.pytest_cache/
+backend/.env
+backend/.env.*
+backend/requirements-dev.txt
+README.md
