@@ -178,40 +178,91 @@
                     placeholder="Example: Tomato leaves are turning yellow..."></textarea>
 
 
+                <!-- Camera Photo Guide -->
+                <div class="photo-guide-card">
+                    <div class="photo-guide-title">
+                        <span>📸</span>
+                        <strong data-i18n="photoGuideTitle">Photo Guide for Accurate AI Diagnosis:</strong>
+                    </div>
+                    <ul class="photo-guide-list">
+                        <li data-i18n="photoTip1">🔍 Hold camera 6-12 inches from infected leaf/fruit.</li>
+                        <li data-i18n="photoTip2">☀️ Use good natural daylight; avoid deep shadows or flash glare.</li>
+                        <li data-i18n="photoTip3">🌿 Keep leaf sharp and focused for higher diagnostic accuracy.</li>
+                    </ul>
+                </div>
+
                 <label for="image" data-i18n="imageLabel">
-                    Upload Crop Image
+                    1️⃣ Primary Photo: Close-up of Problem / Leaf
                 </label>
 
-            <div class="image-options">
-                <label for="image" class="image-option-button">
-                    📁 Choose Photo
-                </label>
-                <input
-                    type="file"
-                    id="image"
-                    accept="image/*">
+                <div class="image-options">
+                    <label for="image" class="image-option-button">
+                        📁 Choose Photo
+                    </label>
+                    <input
+                        type="file"
+                        id="image"
+                        accept="image/*">
 
-                <label for="cameraInput" class="image-option-button">
-                    📷 Take Photo
-                </label>
-                <input
-                    type="file"
-                    id="cameraInput"
-                    accept="image/*"
-                    capture="environment">
-            </div>
+                    <label for="cameraInput" class="image-option-button">
+                        📷 Take Photo
+                    </label>
+                    <input
+                        type="file"
+                        id="cameraInput"
+                        accept="image/*"
+                        capture="environment">
+                </div>
 
-            <img
-                id="imagePreview"
-                class="hidden"
-                alt="Selected crop photo preview">
+                <img
+                    id="imagePreview"
+                    class="hidden"
+                    alt="Selected crop photo preview">
 
-            <button
-                type="button"
-                id="removeImage"
-                class="hidden">
-                Remove Photo
-            </button>
+                <button
+                    type="button"
+                    id="removeImage"
+                    class="hidden text-button">
+                    ✕ Remove Photo
+                </button>
+
+                <!-- Optional Secondary Image (Wide plant / field context) -->
+                <div class="secondary-image-section">
+                    <label for="secondaryImage" class="secondary-image-label" data-i18n="secondaryImageLabel">
+                        2️⃣ Optional: Wide View of Whole Plant / Field (Improves Accuracy)
+                    </label>
+
+                    <div class="image-options">
+                        <label for="secondaryImage" class="image-option-button secondary-opt-btn">
+                            📁 Add Wide Photo
+                        </label>
+                        <input
+                            type="file"
+                            id="secondaryImage"
+                            accept="image/*">
+
+                        <label for="secondaryCameraInput" class="image-option-button secondary-opt-btn">
+                            📷 Take Wide Photo
+                        </label>
+                        <input
+                            type="file"
+                            id="secondaryCameraInput"
+                            accept="image/*"
+                            capture="environment">
+                    </div>
+
+                    <img
+                        id="secondaryImagePreview"
+                        class="hidden"
+                        alt="Selected wide photo preview">
+
+                    <button
+                        type="button"
+                        id="removeSecondaryImage"
+                        class="hidden text-button">
+                        ✕ Remove Wide Photo
+                    </button>
+                </div>
 
 
                 <button
@@ -336,6 +387,17 @@
                                 <option value="hectare" data-i18n="unitHectare">Hectares (हेक्टर)</option>
                             </select>
                         </div>
+
+                        <div class="fert-field">
+                            <label for="fertSoilType" data-i18n="fertSoilTypeLabel">Soil Type (मातीचा प्रकार)</label>
+                            <select id="fertSoilType">
+                                <option value="medium_black" data-i18n="soilMediumBlack">Medium Black Soil (मध्यम काळी जमीन - Default)</option>
+                                <option value="black_cotton" data-i18n="soilBlackCotton">Deep Black Cotton Soil (काळी / भारी जमीन)</option>
+                                <option value="red_laterite" data-i18n="soilRedLaterite">Red / Laterite Soil (तांबडी / जांभी जमीन)</option>
+                                <option value="sandy" data-i18n="soilSandy">Sandy Loam / Light Soil (हलकी / वाळूमिश्रित जमीन)</option>
+                                <option value="alluvial_loam" data-i18n="soilAlluvial">Alluvial Loam Soil (गाळाची सुपीक जमीन)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="submit" id="fertCalculateButton" class="primary-button fert-calculate-btn">
@@ -366,6 +428,11 @@
                                 <span data-i18n="shareDosage">Share on WhatsApp</span>
                             </button>
                         </div>
+                    </div>
+
+                    <div class="fert-quick-disclaimer">
+                        <span>⚠️</span>
+                        <small data-i18n="fertQuickDisclaimer">Estimated dosage based on ICAR guidelines. Exact dosage varies with soil test, crop variety & irrigation. Confirm with your local KVK.</small>
                     </div>
 
                     <!-- Commercial Fertilizer Bags Summary -->
@@ -408,6 +475,45 @@
                         </div>
                     </div>
 
+                    <!-- Liquid Alternatives (Nano Urea) & Dealer Options -->
+                    <div id="fertModernAlternatives" class="fert-modern-alternatives">
+                        <h4 class="fert-section-subtitle" data-i18n="modernAlternativesTitle">🧪 Modern Liquid Alternatives & Dealer Options:</h4>
+                        <div class="fert-alt-grid">
+                            <div class="fert-alt-card nano-card">
+                                <div class="alt-header">
+                                    <span class="alt-badge">Liquid Foliar Spray</span>
+                                    <strong class="alt-title">IFFCO Nano Urea (500 ml)</strong>
+                                </div>
+                                <div class="alt-main">
+                                    <span id="fertNanoBottles" class="alt-count">0</span>
+                                    <span class="alt-unit">Bottles (500 ml)</span>
+                                </div>
+                                <p id="fertNanoNote" class="alt-desc">1 bottle replaces 1 bag of 45 kg granular Urea. Spray @ 2-4 ml/L water at tillering and flowering.</p>
+                            </div>
+
+                            <div class="fert-alt-card ssp-card">
+                                <div class="alt-header">
+                                    <span class="alt-badge">Dealer Alternative</span>
+                                    <strong class="alt-title">SSP Option (Single Super Phosphate)</strong>
+                                </div>
+                                <div class="alt-main">
+                                    <span id="fertSspBags" class="alt-count">0</span>
+                                    <span class="alt-unit">Bags (50 kg)</span>
+                                </div>
+                                <p id="fertSspNote" class="alt-desc">If DAP is unavailable, SSP provides 16% P₂O₅ plus 11% essential Sulphur.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Soil Specific Advisory -->
+                    <div id="fertSoilAdvisoryCard" class="fert-soil-card">
+                        <div class="fert-soil-header">
+                            <span>🌍</span>
+                            <strong data-i18n="soilAdvisoryTitle">Soil-Specific Advisory:</strong>
+                        </div>
+                        <p id="fertSoilAdvisoryText" class="fert-soil-text"></p>
+                    </div>
+
                     <!-- Pure Nutrients & Secondary -->
                     <div class="fert-details-row">
                         <div class="fert-nutrient-box">
@@ -438,6 +544,32 @@
                         <small data-i18n="fertDisclaimer">⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).</small>
                     </div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Live APMC Mandi Rates -->
+        <section id="mandiSection" class="mandi-section">
+            <div class="section-title">
+                <p class="tagline" data-i18n="mandiTagline">📈 Live APMC Market Rates</p>
+                <h2 data-i18n="mandiTitle">Maharashtra Mandi Prices (बाजार भाव)</h2>
+                <p data-i18n="mandiDescription">
+                    Daily commodity prices from key APMC markets across Maharashtra (Agmarknet & MSAMB).
+                </p>
+            </div>
+
+            <div class="mandi-card">
+                <div class="mandi-filter-bar">
+                    <input type="text" id="mandiSearch" placeholder="Search crop or APMC market (e.g. Groundnut, Solapur, Latur)..." oninput="filterMandiRates()">
+                    <button type="button" class="action-btn mandi-refresh-btn" onclick="loadMandiRates()">
+                        <span>🔄</span>
+                        <span data-i18n="refreshRates">Refresh Rates</span>
+                    </button>
+                </div>
+
+                <div id="mandiRatesContainer" class="mandi-rates-grid">
+                    <div class="mandi-loading">Loading latest mandi rates...</div>
+                </div>
+                <p class="mandi-footer-note">ℹ️ Source: Agmarknet & Maharashtra State Agricultural Marketing Board (MSAMB). Rates per Quintal (100 kg).</p>
             </div>
         </section>
 
