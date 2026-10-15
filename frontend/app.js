@@ -286,6 +286,53 @@ function updateAuthUI() {
         if (accountEmail) {
             accountEmail.textContent = "";
         }
+        const historyStatus = document.getElementById("historyStatus");
+        if (historyStatus && !window.krishiAIHistoryRecords?.length) {
+            historyStatus.textContent = t("historyLogin");
+        }
+    }
+}
+
+function switchAuthTab(tab) {
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const tabLogin = document.getElementById("tabBtnLogin");
+    const tabRegister = document.getElementById("tabBtnRegister");
+
+    if (tab === "register") {
+        if (loginForm) {
+            loginForm.classList.add("hidden");
+            loginForm.style.display = "none";
+        }
+        if (registerForm) {
+            registerForm.classList.remove("hidden");
+            registerForm.style.display = "block";
+        }
+        if (tabLogin) {
+            tabLogin.classList.remove("active");
+            tabLogin.setAttribute("aria-selected", "false");
+        }
+        if (tabRegister) {
+            tabRegister.classList.add("active");
+            tabRegister.setAttribute("aria-selected", "true");
+        }
+    } else {
+        if (registerForm) {
+            registerForm.classList.add("hidden");
+            registerForm.style.display = "none";
+        }
+        if (loginForm) {
+            loginForm.classList.remove("hidden");
+            loginForm.style.display = "block";
+        }
+        if (tabRegister) {
+            tabRegister.classList.remove("active");
+            tabRegister.setAttribute("aria-selected", "false");
+        }
+        if (tabLogin) {
+            tabLogin.classList.add("active");
+            tabLogin.setAttribute("aria-selected", "true");
+        }
     }
 }
 
@@ -792,7 +839,34 @@ const translations = {
         weatherGpsButton: "📍 Use My Location",
         weatherGpsLocating: "Detecting GPS location...",
         weatherGpsError: "Could not detect GPS location. Please type your village name.",
-        currentLocation: "Current Farm Location"
+        currentLocation: "Current Farm Location",
+        navHistory: "📚 My Records",
+        cardHistoryTitle: "My Records",
+        cardHistoryDesc: "Access and review all your previously saved crop diagnoses and treatment histories.",
+        cardHistoryCta: "View History →",
+        cardHelpTitle: "Farmer Helplines",
+        cardHelpDesc: "Direct toll-free lines to Kisan Call Center (1800-180-1551) & Crop Insurance experts.",
+        cardHelpCta: "Call Experts →",
+        fertDetailsSummary: "View Scientific Breakdown & Application Schedule (सविस्तर माहिती व वेळापत्रक)",
+        helplineTagline: "📞 Toll-Free Expert Helplines (6 AM – 10 PM)",
+        navCropDoctorShort: "Doctor",
+        navFertilizerShort: "Fertilizer",
+        navWeatherShort: "Weather",
+        navMandiShort: "Mandi",
+        navRecordsShort: "Records",
+        navHelplineShort: "Help",
+        noAccountPrompt: "Don't have an account?",
+        switchToRegister: "Create Account",
+        hasAccountPrompt: "Already have an account?",
+        switchToLogin: "Sign In",
+        privacyPoint1: "📷 Image Processing: Uploaded crop photos are analyzed in volatile memory exclusively for botanical pathology diagnosis. Photos are never used for commercial profiling or shared with third parties.",
+        privacyPoint2: "🌾 Farm Records: Your crop symptoms and fertilizer dosage estimates are encrypted and stored solely in your private account.",
+        privacyPoint3: "🗑️ Right to Erasure: You can wipe your analysis history or delete your entire account permanently at any moment.",
+        sprayFavorable: "🟢 Favorable Spraying Window (Calm wind, no rain expected today)",
+        sprayUnfavorable: "🔴 Spraying Not Recommended (Risk of rain washout or wind drift)",
+        sprayModerate: "🟡 Moderate Spraying Window (Spray early morning before 9 AM or evening)",
+        weatherMetaText: "📍 {place} · Updated {time} · Data: Open-Meteo High-Resolution Agro Model",
+        agriRiskTitle: "🌾 Agricultural Weather Implications"
     },
 
     mr: {
@@ -1040,7 +1114,34 @@ const translations = {
         weatherGpsButton: "📍 माझे चालू स्थान वापरा",
         weatherGpsLocating: "जीपीएस स्थान शोधत आहे...",
         weatherGpsError: "जीपीएस स्थान मिळू शकले नाही. कृपया गावाचे नाव टाईप करा.",
-        currentLocation: "चालू शेत स्थान"
+        currentLocation: "चालू शेत स्थान",
+        navHistory: "📚 माझा इतिहास",
+        cardHistoryTitle: "माझा इतिहास",
+        cardHistoryDesc: "मागील सर्व पीक निदान आणि उपचारांचा इतिहास पहा.",
+        cardHistoryCta: "इतिहास पहा →",
+        cardHelpTitle: "शेतकरी हेल्पलाइन",
+        cardHelpDesc: "किसान कॉल सेंटर (१८००-१८०-१५५१) आणि पीक विमा तज्ज्ञांशी थेट संपर्क.",
+        cardHelpCta: "तज्ज्ञांना कॉल करा →",
+        fertDetailsSummary: "सविस्तर शास्त्रीय विश्लेषण आणि खत वेळापत्रक पहा",
+        helplineTagline: "📞 टोल-फ्री शेतकरी हेल्पलाइन (सकाळी ६ ते रात्री १०)",
+        navCropDoctorShort: "डॉक्टर",
+        navFertilizerShort: "खत",
+        navWeatherShort: "हवामान",
+        navMandiShort: "बाजार",
+        navRecordsShort: "नोंदी",
+        navHelplineShort: "मदत",
+        noAccountPrompt: "खाते नाही का?",
+        switchToRegister: "नवीन खाते तयार करा",
+        hasAccountPrompt: "आधीच खाते आहे का?",
+        switchToLogin: "लॉगिन करा",
+        privacyPoint1: "📷 फोटो प्रक्रिया: अपलोड केलेले फोटो केवळ रोगनिदानासाठी वापरले जातात. ते कोणत्याही जाहिरातदार किंवा तृतीय पक्षांसोबत सामायिक केले जात नाहीत.",
+        privacyPoint2: "🌾 शेत नोंदी: तुमची पिकांची लक्षणे आणि खत मोजणी केवळ तुमच्या खात्यात सुरक्षित साठवली जाते.",
+        privacyPoint3: "🗑️ माहिती हटवण्याचा अधिकार: तुम्ही तुमचा इतिहास किंवा खाते कधीही एका क्लिकवर कायमचे हटवू शकता.",
+        sprayFavorable: "🟢 फवारणीसाठी अनुकूल हवामान (हवा शांत व पावसाची शक्यता नाही)",
+        sprayUnfavorable: "🔴 फवारणी टाळा (पाऊस किंवा वेगवान वाऱ्याचा धोका)",
+        sprayModerate: "🟡 मध्यम फवारणी वेळ (सकाळी ९ च्या आधी किंवा संध्याकाळी फवारणी करा)",
+        weatherMetaText: "📍 {place} · अपडेट: {time} · स्रोत: ओपन-मेटिओ कृषी हवामान मॉडेल",
+        agriRiskTitle: "🌾 हवामानाचे शेतीवरील परिणाम व दक्षता"
     },
 
     hi: {
@@ -1288,7 +1389,34 @@ const translations = {
         weatherGpsButton: "📍 मेरा वर्तमान स्थान",
         weatherGpsLocating: "जीपीएस लोकेशन खोज रहे हैं...",
         weatherGpsError: "जीपीएस स्थान नहीं मिल सका। कृपया गाँव का नाम लिखें।",
-        currentLocation: "वर्तमान खेत स्थान"
+        currentLocation: "वर्तमान खेत स्थान",
+        navHistory: "📚 मेरे रिकॉर्ड",
+        cardHistoryTitle: "मेरे रिकॉर्ड",
+        cardHistoryDesc: "अपने पहले के सभी फसल निदान और उपचार इतिहास देखें।",
+        cardHistoryCta: "इतिहास देखें →",
+        cardHelpTitle: "किसान हेल्पलाइन",
+        cardHelpDesc: "किसान कॉल सेंटर (1800-180-1551) और फसल बीमा विशेषज्ञों से सीधी बात।",
+        cardHelpCta: "विशेषज्ञों को कॉल करें →",
+        fertDetailsSummary: "विस्तृत वैज्ञानिक विश्लेषण व खाद समय-सारणी देखें",
+        helplineTagline: "📞 टोल-फ्री किसान हेल्पलाइन (प्रातः 6 से रात्रि 10 बजे)",
+        navCropDoctorShort: "डॉक्टर",
+        navFertilizerShort: "उर्वरक",
+        navWeatherShort: "मौसम",
+        navMandiShort: "मंडी",
+        navRecordsShort: "रिकॉर्ड",
+        navHelplineShort: "सहायता",
+        noAccountPrompt: "खाता नहीं है?",
+        switchToRegister: "खाता बनाएँ",
+        hasAccountPrompt: "पहले से खाता है?",
+        switchToLogin: "साइन इन करें",
+        privacyPoint1: "📷 फ़ोटो सुरक्षा: अपलोड की गई फ़ोटो केवल रोग पहचान के लिए प्रोसेस की जाती है और कभी भी किसी तीसरे पक्ष से साझा नहीं की जाती।",
+        privacyPoint2: "🌾 कृषि रिकॉर्ड: आपके फसल लक्षण व खाद अनुमान आपके निजी खाते में सुरक्षित रहते हैं।",
+        privacyPoint3: "🗑️ डेटा हटाने का अधिकार: आप कभी भी अपना इतिहास या पूरा खाता हमेशा के लिए हटा सकते हैं।",
+        sprayFavorable: "🟢 छिड़काव के लिए अनुकूल मौसम (शांत हवा, आज बारिश नहीं)",
+        sprayUnfavorable: "🔴 छिड़काव न करें (बारिश या तेज हवा का जोखिम)",
+        sprayModerate: "🟡 सामान्य छिड़काव समय (सुबह 9 बजे से पहले या शाम को छिड़कें)",
+        weatherMetaText: "📍 {place} · अपडेट: {time} · स्रोत: ओपन-मेटिओ कृषि मौसम मॉडल",
+        agriRiskTitle: "🌾 मौसम के कृषि पर प्रभाव एवं सतर्कता"
     }
 };
 
@@ -1765,6 +1893,27 @@ function renderWeather() {
     const { current, daily, advice } = lastWeather;
     const group = weatherGroup(current.code);
 
+    // 1. Spraying Suitability Decision Engine
+    const todayRain = daily[0]?.rain_mm || 0;
+    const windKmh = current.wind_kmh || 0;
+    let sprayClass = "spray-badge-good";
+    let sprayText = t("sprayFavorable");
+
+    if (windKmh > 20 || todayRain > 2.0 || current.rain_mm > 0.5) {
+        sprayClass = "spray-badge-bad";
+        sprayText = t("sprayUnfavorable");
+    } else if (windKmh > 14 || todayRain > 0.5) {
+        sprayClass = "spray-badge-warn";
+        sprayText = t("sprayModerate");
+    }
+
+    // 2. Metadata: Location, timestamp, and source
+    const nowTime = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const metaStr = (t("weatherMetaText") || "📍 {place} · Updated {time} · Data: Open-Meteo High-Resolution Agro Model")
+        .replace("{place}", placeLabel(selectedPlace))
+        .replace("{time}", nowTime);
+
+    // 3. 5-Day Forecast Cards
     const forecast = daily.map((day, index) => {
         const dayGroup = weatherGroup(day.code);
 
@@ -1778,6 +1927,7 @@ function renderWeather() {
         `;
     }).join("");
 
+    // 4. Actionable Agricultural Implications
     const tips = advice.length
         ? advice.map(item => {
             const dayIndex = daily.findIndex(day => day.date === item.date);
@@ -1790,7 +1940,14 @@ function renderWeather() {
         : `<li>${escapeHtml(t("weatherNoAdvice"))}</li>`;
 
     box.innerHTML = `
-        <h3>${escapeHtml(placeLabel(selectedPlace))}</h3>
+        <div class="weather-meta-banner">
+            <span>${escapeHtml(metaStr)}</span>
+        </div>
+
+        <div class="weather-spray-window ${sprayClass}">
+            <span class="spray-window-icon">🚜</span>
+            <strong>${escapeHtml(sprayText)}</strong>
+        </div>
 
         <div class="weather-now">
             <div class="weather-now-icon">${WEATHER_ICONS[group]}</div>
@@ -1808,7 +1965,7 @@ function renderWeather() {
         <h3>${escapeHtml(t("weatherForecastTitle"))}</h3>
         <div class="weather-forecast">${forecast}</div>
 
-        <h3>${escapeHtml(t("weatherAdviceTitle"))}</h3>
+        <h3>${escapeHtml(t("agriRiskTitle") || "🌾 Agricultural Weather Implications")}</h3>
         <ul class="weather-advice">${tips}</ul>
 
         <p class="weather-note">${escapeHtml(t("weatherNote"))}</p>
@@ -3031,7 +3188,7 @@ function renderMandiRates(rates) {
     if (!container) return;
 
     if (!rates || rates.length === 0) {
-        container.innerHTML = `<div class="mandi-empty">No commodity rates found.</div>`;
+        container.innerHTML = `<div class="mandi-empty">⚠️ No matching APMC market arrivals found. Try searching for Soybean, Cotton, Onion, or Groundnut.</div>`;
         return;
     }
 
@@ -3055,6 +3212,7 @@ function renderMandiRates(rates) {
                 <div class="mandi-meta-row">
                     <span class="mandi-market">📍 ${escapeHtml(rate.market)} (${escapeHtml(rate.district)})</span>
                     <span class="mandi-range">Range: ₹${Number(rate.min_price).toLocaleString("en-IN")} - ₹${Number(rate.max_price).toLocaleString("en-IN")}</span>
+                    <span class="mandi-date-badge">📅 ${escapeHtml(rate.price_date || "Daily APMC Trading Session")}</span>
                 </div>
             </div>
         `;

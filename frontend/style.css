@@ -2627,22 +2627,189 @@ footer {
     border-color: #6ee7b7;
 }
 
-/* Mobile Touch Target Standards (>= 44px) */
+/* Fertilizer Scientific Details Accordion */
+.fert-scientific-details {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    margin: 20px 0;
+    overflow: hidden;
+    transition: all 0.2s ease;
+}
+
+.fert-details-summary {
+    padding: 14px 18px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    background: #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    list-style: none;
+}
+
+.fert-details-summary::-webkit-details-marker {
+    display: none;
+}
+
+.fert-details-summary .summary-arrow {
+    margin-left: auto;
+    font-size: 12px;
+    color: #64748b;
+    transition: transform 0.2s ease;
+}
+
+.fert-scientific-details[open] .summary-arrow {
+    transform: rotate(180deg);
+}
+
+.fert-details-body {
+    padding: 16px 18px;
+}
+
+/* Auth Tabs */
+.auth-tab-bar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 4px;
+}
+
+.auth-tab-btn {
+    flex: 1;
+    padding: 12px 16px;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 15px;
+    font-weight: 700;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.auth-tab-btn.active {
+    color: #16823b;
+    border-bottom-color: #16823b;
+}
+
+.auth-switch-hint {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #64748b;
+    text-align: center;
+}
+
+.auth-switch-hint a {
+    color: #16823b;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+/* Weather Spraying Window & Meta Banner */
+.weather-meta-banner {
+    background: #f1f5f9;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #475569;
+    margin-bottom: 12px;
+}
+
+.weather-spray-window {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+    font-size: 14.5px;
+    font-weight: 600;
+}
+
+.spray-badge-good {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.spray-badge-warn {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.spray-badge-bad {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+/* Mandi Date Badge */
+.mandi-date-badge {
+    background: #f1f5f9;
+    color: #475569;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Mobile Sticky Bottom Navigation Bar */
+.mobile-bottom-nav {
+    display: none;
+}
+
 @media (max-width: 768px) {
-    .nav-pill {
-        min-height: 44px;
-        padding: 10px 16px;
+    body {
+        padding-bottom: 72px;
     }
 
-    .primary-button, .secondary-button, .action-btn, .helpline-call-button, .helpline-link-button {
-        min-height: 44px;
+    .mobile-bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #ffffff;
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.08);
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        padding: 6px 0;
+        z-index: 999;
     }
 
-    .navbar-links {
-        overflow-x: auto;
-        white-space: nowrap;
-        padding-bottom: 6px;
-        width: 100%;
+    .bottom-nav-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        text-decoration: none;
+        font-size: 11px;
+        font-weight: 600;
+        min-height: 48px;
+        min-width: 48px;
+        padding: 2px 6px;
+        transition: color 0.2s ease;
+    }
+
+    .bottom-nav-item:hover, .bottom-nav-item:active, .bottom-nav-item:focus {
+        color: #16823b;
+    }
+
+    .bottom-nav-icon {
+        font-size: 20px;
+        line-height: 1.2;
+    }
+
+    .bottom-nav-label {
+        font-size: 11px;
+        margin-top: 2px;
     }
 }
 

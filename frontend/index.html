@@ -6,7 +6,7 @@
     <title>KrishiAI - AI Farming Assistant</title>
     <meta name="theme-color" content="#16823b">
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 
 <body>
@@ -23,6 +23,7 @@
             <a href="#fertilizerSection" class="nav-pill" data-i18n="navFertilizer">🧪 Fertilizer</a>
             <a href="#weatherSection" class="nav-pill" data-i18n="navWeather">🌦️ Weather</a>
             <a href="#mandiSection" class="nav-pill" data-i18n="navMandi">📈 Mandi Rates</a>
+            <a href="#historySection" class="nav-pill" data-i18n="navHistory">📚 My Records</a>
             <a href="#helplineSection" class="nav-pill" data-i18n="navHelpline">📞 Helplines</a>
         </nav>
 
@@ -71,7 +72,7 @@
             <div class="hero-icon">🌱</div>
         </section>
 
-        <!-- 4 Core Feature Cards with Direct Links -->
+        <!-- 6 Core Dashboard Feature Cards -->
         <section class="features" aria-label="Core Tools">
             <a href="#analyzer" class="feature-card interactive-card">
                 <div class="feature-icon">📷</div>
@@ -99,6 +100,20 @@
                 <h3 data-i18n="cardMandiTitle">Mandi Rates</h3>
                 <p data-i18n="cardMandiDesc">Live Maharashtra APMC market prices from Agmarknet & MSAMB with quick filters.</p>
                 <span class="feature-card-cta" data-i18n="cardMandiCta">View Prices →</span>
+            </a>
+
+            <a href="#historySection" class="feature-card interactive-card">
+                <div class="feature-icon">📚</div>
+                <h3 data-i18n="cardHistoryTitle">My Records</h3>
+                <p data-i18n="cardHistoryDesc">Access and review all your previously saved crop diagnoses and treatment histories.</p>
+                <span class="feature-card-cta" data-i18n="cardHistoryCta">View History →</span>
+            </a>
+
+            <a href="#helplineSection" class="feature-card interactive-card">
+                <div class="feature-icon">📞</div>
+                <h3 data-i18n="cardHelpTitle">Farmer Helplines</h3>
+                <p data-i18n="cardHelpDesc">Direct toll-free lines to Kisan Call Center (1800-180-1551) & Crop Insurance experts.</p>
+                <span class="feature-card-cta" data-i18n="cardHelpCta">Call Experts →</span>
             </a>
         </section>
 
@@ -462,15 +477,6 @@
                         <small data-i18n="fertQuickDisclaimer">Estimated dosage based on ICAR guidelines. Exact dosage varies with soil test, crop variety & irrigation. Confirm with your local KVK.</small>
                     </div>
 
-                    <!-- DAP Nitrogen Credit Note -->
-                    <div class="fert-n-credit-banner">
-                        <span class="fert-credit-icon">ℹ️</span>
-                        <div>
-                            <strong data-i18n="fertDapCreditTitle">DAP Nitrogen Credit Included:</strong>
-                            <p data-i18n="fertDapCreditNote">DAP (18:46:0) supplies 9 kg pure Nitrogen per 50 kg bag. This has been deducted from the Urea requirement above to prevent excessive nitrogen and crop damage.</p>
-                        </div>
-                    </div>
-
                     <!-- Commercial Fertilizer Bags Summary -->
                     <h4 class="fert-section-subtitle" data-i18n="fertBagsTitle">🛍️ Recommended Bags to Purchase (RDF Estimate):</h4>
                     <div class="fert-bags-grid">
@@ -517,14 +523,14 @@
                         <div class="fert-alt-grid">
                             <div class="fert-alt-card nano-card">
                                 <div class="alt-header">
-                                    <span class="alt-badge">Liquid Foliar Spray</span>
+                                    <span class="alt-badge">Supplementary Foliar Spray</span>
                                     <strong class="alt-title">IFFCO Nano Urea (500 ml)</strong>
                                 </div>
                                 <div class="alt-main">
                                     <span id="fertNanoBottles" class="alt-count">0</span>
                                     <span class="alt-unit">Bottles (500 ml)</span>
                                 </div>
-                                <p id="fertNanoNote" class="alt-desc">1 bottle replaces 1 bag of 45 kg granular Urea. Spray @ 2-4 ml/L water at tillering and flowering.</p>
+                                <p id="fertNanoNote" class="alt-desc">Supplementary foliar spray @ 2-4 ml/L at active tillering & flowering. Can reduce granular urea top-dressing by 25–50% based on soil testing and crop stage; not a blanket 1-to-1 basal substitute.</p>
                             </div>
 
                             <div class="fert-alt-card ssp-card">
@@ -541,46 +547,66 @@
                         </div>
                     </div>
 
-                    <!-- Soil Specific Advisory -->
-                    <div id="fertSoilAdvisoryCard" class="fert-soil-card">
-                        <div class="fert-soil-header">
-                            <span>🌍</span>
-                            <strong data-i18n="soilAdvisoryTitle">Soil-Specific Advisory:</strong>
-                        </div>
-                        <p id="fertSoilAdvisoryText" class="fert-soil-text"></p>
-                    </div>
+                    <!-- Progressive Disclosure: Detailed Scientific Breakdown & Schedule -->
+                    <details class="fert-scientific-details" id="fertScientificDetails">
+                        <summary class="fert-details-summary">
+                            <span class="summary-icon">🔬</span>
+                            <span data-i18n="fertDetailsSummary">View Scientific Breakdown & Application Schedule (सविस्तर माहिती व वेळापत्रक)</span>
+                            <span class="summary-arrow">▼</span>
+                        </summary>
 
-                    <!-- Pure Nutrients & Secondary -->
-                    <div class="fert-details-row">
-                        <div class="fert-nutrient-box">
-                            <span class="fert-box-label" data-i18n="pureNutrients">Pure Nutrients (N-P-K):</span>
-                            <span id="fertNpkText" class="fert-box-val"></span>
-                        </div>
-                        <div class="fert-nutrient-box">
-                            <span class="fert-box-label" data-i18n="microNutrient">Micro / Secondary Nutrient:</span>
-                            <span id="fertSpecialNutrient" class="fert-box-val"></span>
-                        </div>
-                    </div>
+                        <div class="fert-details-body">
+                            <!-- DAP Nitrogen Credit Note -->
+                            <div class="fert-n-credit-banner">
+                                <span class="fert-credit-icon">ℹ️</span>
+                                <div>
+                                    <strong data-i18n="fertDapCreditTitle">DAP Nitrogen Credit Included:</strong>
+                                    <p data-i18n="fertDapCreditNote">DAP (18:46:0) supplies 9 kg pure Nitrogen per 50 kg bag. This has been deducted from the Urea requirement above to prevent excessive nitrogen and crop damage.</p>
+                                </div>
+                            </div>
 
-                    <!-- Split Dosing Schedule -->
-                    <h4 class="fert-section-subtitle" data-i18n="fertScheduleTitle">📅 When & How to Apply (Split Schedule):</h4>
-                    <div id="fertScheduleList" class="fert-schedule-timeline"></div>
+                            <!-- Soil Specific Advisory -->
+                            <div id="fertSoilAdvisoryCard" class="fert-soil-card">
+                                <div class="fert-soil-header">
+                                    <span>🌍</span>
+                                    <strong data-i18n="soilAdvisoryTitle">Soil-Specific Advisory:</strong>
+                                </div>
+                                <p id="fertSoilAdvisoryText" class="fert-soil-text"></p>
+                            </div>
 
-                    <!-- Organic & Soil Health Boosters -->
-                    <div class="fert-organic-card">
-                        <div class="fert-organic-header">
-                            <span>🌱</span>
-                            <strong data-i18n="organicBoostersTitle">Organic & Soil Health Boosters</strong>
+                            <!-- Pure Nutrients & Secondary -->
+                            <div class="fert-details-row">
+                                <div class="fert-nutrient-box">
+                                    <span class="fert-box-label" data-i18n="pureNutrients">Pure Nutrients (N-P-K):</span>
+                                    <span id="fertNpkText" class="fert-box-val"></span>
+                                </div>
+                                <div class="fert-nutrient-box">
+                                    <span class="fert-box-label" data-i18n="microNutrient">Micro / Secondary Nutrient:</span>
+                                    <span id="fertSpecialNutrient" class="fert-box-val"></span>
+                                </div>
+                            </div>
+
+                            <!-- Split Dosing Schedule -->
+                            <h4 class="fert-section-subtitle" data-i18n="fertScheduleTitle">📅 When & How to Apply (Split Schedule):</h4>
+                            <div id="fertScheduleList" class="fert-schedule-timeline"></div>
+
+                            <!-- Organic & Soil Health Boosters -->
+                            <div class="fert-organic-card">
+                                <div class="fert-organic-header">
+                                    <span>🌱</span>
+                                    <strong data-i18n="organicBoostersTitle">Organic & Soil Health Boosters</strong>
+                                </div>
+                                <p id="fertFymText" class="fert-fym-highlight"></p>
+                                <p id="fertOrganicTips" class="fert-organic-text"></p>
+                            </div>
+
+                            <!-- Soil Health Card & KVK Note -->
+                            <div class="fert-shc-note">
+                                <span class="fert-shc-icon">🌾</span>
+                                <p data-i18n="fertShcAdvisory">Soil Health Card & KVK Note: For highest yields and soil fertility, balance chemical fertilizers with 2-3 tonnes of Farm Yard Manure (FYM) and get your soil tested every 2 years at your local Krishi Vigyan Kendra.</p>
+                            </div>
                         </div>
-                        <p id="fertFymText" class="fert-fym-highlight"></p>
-                        <p id="fertOrganicTips" class="fert-organic-text"></p>
-                    </div>
-
-                    <!-- Soil Health Card & KVK Note -->
-                    <div class="fert-shc-note">
-                        <span class="fert-shc-icon">🌾</span>
-                        <p data-i18n="fertShcAdvisory">Soil Health Card & KVK Note: For highest yields and soil fertility, balance chemical fertilizers with 2-3 tonnes of Farm Yard Manure (FYM) and get your soil tested every 2 years at your local Krishi Vigyan Kendra.</p>
-                    </div>
+                    </details>
 
                     <div class="fert-disclaimer">
                         <small data-i18n="fertDisclaimer">⚠️ Recommendation based on ICAR / State Agricultural University standards. For precision farming, get your soil tested every 2 years at your nearest Krishi Vigyan Kendra (KVK).</small>
@@ -632,7 +658,7 @@
         <!-- Emergency Farmer Helplines -->
         <section id="helplineSection" class="helpline-section">
             <div class="section-title">
-                <p class="tagline" data-i18n="helplineTagline">📞 24/7 Expert Support</p>
+                <p class="tagline" data-i18n="helplineTagline">📞 Toll-Free Expert Helplines (6 AM – 10 PM)</p>
                 <h2 data-i18n="helplineTitle">Emergency Farmer Helplines</h2>
                 <p data-i18n="helplineDescription">
                     Speak directly with agricultural experts and government advisors for immediate emergency assistance.
@@ -690,8 +716,13 @@
 
             <p id="authStatus" role="status" aria-live="polite"></p>
 
-            <div id="authForms">
-                <form id="loginForm">
+            <div id="authForms" class="auth-forms-container">
+                <div class="auth-tab-bar" role="tablist">
+                    <button type="button" id="tabBtnLogin" class="auth-tab-btn active" onclick="switchAuthTab('login')" role="tab" aria-selected="true" data-i18n="loginTitle">Login</button>
+                    <button type="button" id="tabBtnRegister" class="auth-tab-btn" onclick="switchAuthTab('register')" role="tab" aria-selected="false" data-i18n="registerTitle">Create Account</button>
+                </div>
+
+                <form id="loginForm" class="auth-card-form">
                     <h3 data-i18n="loginTitle">Login</h3>
 
                     <label for="loginEmail" data-i18n="emailLabel">Email</label>
@@ -703,11 +734,13 @@
                            autocomplete="current-password" required>
 
                     <button type="submit" data-i18n="loginButton">Login</button>
+                    <p class="auth-switch-hint">
+                        <span data-i18n="noAccountPrompt">Don't have an account?</span>
+                        <a href="#" onclick="switchAuthTab('register'); return false;" data-i18n="switchToRegister">Create Account</a>
+                    </p>
                 </form>
 
-                <hr>
-
-                <form id="registerForm">
+                <form id="registerForm" class="auth-card-form hidden" style="display: none;">
                     <h3 data-i18n="registerTitle">Create Account</h3>
 
                     <label for="registerUsername" data-i18n="usernameLabel">Username</label>
@@ -727,6 +760,10 @@
                     <small class="field-hint" data-i18n="passwordHint">At least 8 characters.</small>
 
                     <button type="submit" data-i18n="registerButton">Create Account</button>
+                    <p class="auth-switch-hint">
+                        <span data-i18n="hasAccountPrompt">Already have an account?</span>
+                        <a href="#" onclick="switchAuthTab('login'); return false;" data-i18n="switchToLogin">Sign In</a>
+                    </p>
                 </form>
             </div>
 
@@ -748,11 +785,13 @@
                 <div class="privacy-notice-card">
                     <div class="privacy-notice-header">
                         <span class="privacy-icon">🔒</span>
-                        <strong data-i18n="privacyTitle">Privacy & Data Control</strong>
+                        <strong data-i18n="privacyTitle">Privacy & Image Retention Policy</strong>
                     </div>
-                    <p class="privacy-notice-text" data-i18n="privacyNotice">
-                        Your crop descriptions and diagnosis records are securely stored in your private account. Voice inputs use your browser's speech recognition service (which sends audio to device/Google speech servers). You can clear your analysis history or delete your account at any time.
-                    </p>
+                    <div class="privacy-notice-text">
+                        <p data-i18n="privacyPoint1">📷 <strong>Image Processing:</strong> Uploaded crop photos are analyzed in volatile memory exclusively for botanical pathology diagnosis. Photos are never used for commercial profiling or shared with third parties.</p>
+                        <p data-i18n="privacyPoint2">🌾 <strong>Farm Records:</strong> Your crop symptoms and fertilizer dosage estimates are encrypted and stored solely in your private account.</p>
+                        <p data-i18n="privacyPoint3">🗑️ <strong>Right to Erasure:</strong> You can wipe your analysis history or delete your entire account permanently at any moment.</p>
+                    </div>
                     <div class="account-danger-actions">
                         <button type="button" id="clearHistoryBtn" class="danger-outline-button" onclick="confirmClearHistory()" data-i18n="clearHistoryButton">
                             🗑️ Clear All History
@@ -779,7 +818,7 @@
             </div>
 
             <p id="historyStatus" role="status" aria-live="polite">
-                Loading your saved analyses...
+                Sign in above to view and save your previous crop analyses.
             </p>
 
             <div class="history-filter">
@@ -797,12 +836,40 @@
 
     </main>
 
+    <!-- Mobile Sticky Bottom Navigation Bar (Persistent on phones) -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <a href="#analyzer" class="bottom-nav-item">
+            <span class="bottom-nav-icon">📷</span>
+            <span class="bottom-nav-label" data-i18n="navCropDoctorShort">Doctor</span>
+        </a>
+        <a href="#fertilizerSection" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🧪</span>
+            <span class="bottom-nav-label" data-i18n="navFertilizerShort">Fertilizer</span>
+        </a>
+        <a href="#weatherSection" class="bottom-nav-item">
+            <span class="bottom-nav-icon">🌦️</span>
+            <span class="bottom-nav-label" data-i18n="navWeatherShort">Weather</span>
+        </a>
+        <a href="#mandiSection" class="bottom-nav-item">
+            <span class="bottom-nav-icon">📈</span>
+            <span class="bottom-nav-label" data-i18n="navMandiShort">Mandi</span>
+        </a>
+        <a href="#historySection" class="bottom-nav-item">
+            <span class="bottom-nav-icon">📚</span>
+            <span class="bottom-nav-label" data-i18n="navRecordsShort">Records</span>
+        </a>
+        <a href="#helplineSection" class="bottom-nav-item">
+            <span class="bottom-nav-icon">📞</span>
+            <span class="bottom-nav-label" data-i18n="navHelplineShort">Help</span>
+        </a>
+    </nav>
+
     <footer>
         <p data-i18n="footer">
             🌱 KrishiAI — AI-powered agricultural assistance for Indian farmers
         </p>
     </footer>
 
-    <script src="app.js?v=6"></script>
+    <script src="app.js?v=7"></script>
 </body>
 </html>
