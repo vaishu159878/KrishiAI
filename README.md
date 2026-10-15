@@ -9,6 +9,10 @@
 > 🔗 **[https://d1safklmglvdi3.cloudfront.net](https://d1safklmglvdi3.cloudfront.net)**  
 > *(Direct Elastic Beanstalk Endpoint: [http://krishiai.ap-south-1.elasticbeanstalk.com](http://krishiai.ap-south-1.elasticbeanstalk.com))*
 
+<p align="center">
+  <img src="assets/krishiai-showcase.jpg" alt="KrishiAI Showcase Banner" width="100%" />
+</p>
+
 ---
 
 Hi everyone! 👋
