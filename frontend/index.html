@@ -142,12 +142,21 @@
                     <option value="Potato / बटाटा (आलू)"></option>
                     <option value="Banana / केळी (केला)"></option>
                     <option value="Pomegranate / डाळिंब (अनार)"></option>
+                    <option value="Turmeric / हळद (हल्दी)"></option>
                     <option value="Ginger / आले (अदरक)"></option>
                     <option value="Garlic / लसूण (लहसुन)"></option>
                     <option value="Grapes / द्राक्षे (अंगूर)"></option>
+                    <option value="Mango / आंबा (आम)"></option>
+                    <option value="Watermelon / कलिंगड (तरबूज)"></option>
+                    <option value="Custard Apple / सीताफळ (शरीफा)"></option>
+                    <option value="Dragon Fruit / ड्रॅगन फ्रूट"></option>
+                    <option value="Marigold / झेंडू (गेंदा)"></option>
+                    <option value="Mustard / मोहरी (सरसों)"></option>
+                    <option value="Bajra / बाजरी (बाजरा)"></option>
+                    <option value="Jowar / ज्वारी (ज्वार)"></option>
                 </datalist>
 
-                <small class="field-hint" data-i18n="cropFieldHint">💡 Type or choose any crop in Marathi, Hindi, or English (e.g. Groundnut, भुईमूग, कापूस).</small>
+                <small class="field-hint" data-i18n="cropFieldHint">💡 Works for ALL crops: Type or choose any crop in Marathi, Hindi, or English (e.g. Groundnut, भुईमूग, हळद, Dragon Fruit).</small>
 
                 <div class="field-header">
                     <label for="problem" data-i18n="problemLabel">
@@ -277,24 +286,41 @@
                 <form id="fertilizerForm" onsubmit="event.preventDefault(); calculateFertilizer();">
                     <div class="fert-input-grid">
                         <div class="fert-field">
-                            <label for="fertCrop" data-i18n="fertCropLabel">Select Crop</label>
-                            <select id="fertCrop" required>
-                                <option value="groundnut">🥜 Groundnut (भुईमूग / मूंगफली)</option>
-                                <option value="sugarcane">🎋 Sugarcane (ऊस / गन्ना)</option>
-                                <option value="cotton">☁️ Cotton (कापूस / कपास)</option>
-                                <option value="soybean">🌱 Soybean (सोयाबीन)</option>
-                                <option value="chickpea">🧆 Gram / Harbhara (हरभरा / चना)</option>
-                                <option value="tur">🌿 Tur / Pigeon Pea (तूर / अरहर)</option>
-                                <option value="wheat">🌾 Wheat (गहू / गेहूं)</option>
-                                <option value="rice">🍚 Rice / Paddy (भात / धान)</option>
-                                <option value="tomato">🍅 Tomato (टोमॅटो / टमाटर)</option>
-                                <option value="onion">🧅 Onion (कांदा / प्याज)</option>
-                                <option value="chilli">🌶️ Chilli (मिरची / मिर्च)</option>
-                                <option value="maize">🌽 Maize (मका / मक्का)</option>
-                                <option value="potato">🥔 Potato (बटाटा / आलू)</option>
-                                <option value="banana">🍌 Banana (केळी / केला)</option>
-                                <option value="pomegranate">🍎 Pomegranate (डाळिंब / अनार)</option>
-                            </select>
+                            <label for="fertCrop" data-i18n="fertCropLabel">Crop Name (Any Crop / कोणतेही पीक)</label>
+                            <input type="text" id="fertCrop" list="fertCropSuggestions" required
+                                   maxlength="100"
+                                   data-i18n-placeholder="fertCropPlaceholder"
+                                   placeholder="Select or type ANY crop (e.g. Turmeric, हळद, Dragon Fruit, टोमॅटो)...">
+                            <datalist id="fertCropSuggestions">
+                                <option value="Groundnut / भुईमूग (मूंगफली)"></option>
+                                <option value="Sugarcane / ऊस (गन्ना)"></option>
+                                <option value="Cotton / कापूस (कपास)"></option>
+                                <option value="Soybean / सोयाबीन"></option>
+                                <option value="Gram / Harbhara / हरभरा (चना)"></option>
+                                <option value="Tur / Pigeon Pea / तूर (अरहर)"></option>
+                                <option value="Wheat / गहू (गेहूं)"></option>
+                                <option value="Rice / Paddy / भात (धान)"></option>
+                                <option value="Tomato / टोमॅटो (टमाटर)"></option>
+                                <option value="Onion / कांदा (प्याज)"></option>
+                                <option value="Chilli / मिरची (मिर्च)"></option>
+                                <option value="Maize / मका (मक्का)"></option>
+                                <option value="Potato / बटाटा (आलू)"></option>
+                                <option value="Banana / केळी (केला)"></option>
+                                <option value="Pomegranate / डाळिंब (अनार)"></option>
+                                <option value="Turmeric / हळद (हल्दी)"></option>
+                                <option value="Ginger / आले (अदरक)"></option>
+                                <option value="Garlic / लसूण (लहसुन)"></option>
+                                <option value="Grapes / द्राक्षे (अंगूर)"></option>
+                                <option value="Mango / आंबा (आम)"></option>
+                                <option value="Watermelon / कलिंगड (तरबूज)"></option>
+                                <option value="Custard Apple / सीताफळ (शरीफा)"></option>
+                                <option value="Dragon Fruit / ड्रॅगन फ्रूट"></option>
+                                <option value="Marigold / झेंडू (गेंदा)"></option>
+                                <option value="Mustard / मोहरी (सरसों)"></option>
+                                <option value="Bajra / बाजरी (बाजरा)"></option>
+                                <option value="Jowar / ज्वारी (ज्वार)"></option>
+                            </datalist>
+                            <small class="field-hint" data-i18n="fertCropHint">💡 Works for ALL crops: vegetables, fruits, flowers, cash crops, spices, grains & pulses.</small>
                         </div>
 
                         <div class="fert-field">
