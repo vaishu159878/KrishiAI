@@ -611,8 +611,9 @@ const translations = {
         findKvk: "🌐 Find Your KVK",
         fertTagline: "🧪 Smart Nutrition",
         fertTitle: "Fertilizer & Dosage Calculator",
-        fertDescription: "Calculate recommended bags of Urea, DAP, Potash and organic compost based on ICAR guidelines. Actual dosage depends on soil test results and local conditions.",
-        fertCropLabel: "Select Crop",
+        fertCropLabel: "Crop Name (Any Crop / कोणतेही पीक)",
+        fertCropPlaceholder: "Select or type ANY crop (e.g. Turmeric, Dragon Fruit, Tomato)...",
+        fertCropHint: "💡 Works for ALL crops: vegetables, fruits, flowers, cash crops, spices, grains & pulses.",
         fertAreaLabel: "Farm Size / Area",
         fertUnitLabel: "Land Unit",
         unitAcre: "Acres (एकर)",
@@ -805,7 +806,9 @@ const translations = {
         fertTagline: "🧪 स्मार्ट खत व्यवस्थापन",
         fertTitle: "खताचे प्रमाण कॅल्क्युलेटर",
         fertDescription: "ICAR च्या मार्गदर्शक तत्त्वांवर आधारित युरिया, DAP, पोटॅश आणि सेंद्रिय खतांच्या शिफारसित गोण्यांचे प्रमाण मोजा. प्रत्यक्ष प्रमाण माती परीक्षणानुसार बदलावे.",
-        fertCropLabel: "पीक निवडा",
+        fertCropLabel: "पिकाचे नाव (कोणतेही पीक)",
+        fertCropPlaceholder: "निवडा किंवा कोणत्याही पिकाचे नाव लिहा (उदा. हळद, ड्रॅगन फ्रूट, कांदा)...",
+        fertCropHint: "💡 सर्व पिकांसाठी लागू: भाजीपाला, फळबागा, फुले, नगदी पिके, मसाले, तृणधान्ये व कडधान्ये.",
         fertAreaLabel: "शेताचे क्षेत्रफळ",
         fertUnitLabel: "क्षेत्रफळ एकक",
         unitAcre: "एकर (Acres)",
@@ -998,7 +1001,9 @@ const translations = {
         fertTagline: "🧪 स्मार्ट पोषण प्रबंधन",
         fertTitle: "खाद और खुराक कैलकुलेटर",
         fertDescription: "ICAR दिशानिर्देशों के अनुसार अपनी फसल के लिए यूरिया, डीएपी, पोटाश और जैविक खाद के अनुशंसित बोरों का अनुमान लगाएँ। सटीक मात्रा मृदा परीक्षण पर निर्भर करती है।",
-        fertCropLabel: "फसल चुनें",
+        fertCropLabel: "फसल का नाम (कोई भी फसल)",
+        fertCropPlaceholder: "चुनें या किसी भी फसल का नाम लिखें (जैसे हल्दी, ड्रैगन फ्रूट, टमाटर)...",
+        fertCropHint: "💡 सभी फसलों के लिए उपयोगी: सब्जियां, फल, फूल, नकदी फसलें, मसाले, अनाज व दलहन।",
         fertAreaLabel: "खेत का आकार / क्षेत्रफल",
         fertUnitLabel: "इकाई",
         unitAcre: "एकड़ (Acres)",
@@ -2254,12 +2259,17 @@ async function confirmDeleteAccount() {
 let lastFertilizerData = null;
 
 async function calculateFertilizer() {
-    const crop = document.getElementById("fertCrop").value;
+    const crop = document.getElementById("fertCrop").value.trim();
     const areaInput = document.getElementById("fertArea").value;
     const unit = document.getElementById("fertUnit").value;
     const statusEl = document.getElementById("fertStatus");
     const button = document.getElementById("fertCalculateButton");
     const buttonText = document.getElementById("fertButtonText");
+
+    if (!crop) {
+        statusEl.textContent = t("fertCropPlaceholder") || "Please select or type a crop name.";
+        return;
+    }
 
     const area = parseFloat(areaInput);
     if (!area || isNaN(area) || area <= 0) {
